@@ -3,6 +3,7 @@ import { AramButton } from '@/app/components/aram/AramButton';
 import { AramCard } from '@/app/components/aram/AramCard';
 import { AramInput } from '@/app/components/aram/AramInput';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { validateForm as globalValidateForm, validationRules, validationMessages } from '../../utils/validations';
 
 interface SignInProps {
   onSignIn: (email: string, password: string) => void | Promise<void>;
@@ -18,10 +19,22 @@ export function SignIn({ onSignIn, onCreateAccount, onBack }: SignInProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async () => {
-    const newErrors: any = {};
-    if (!emailOrPhone.trim()) newErrors.emailOrPhone = 'Email or phone is required';
-    if (!password) newErrors.password = 'Password is required';
+    const formData = {
+      emailOrPhone: emailOrPhone.trim(),
+      password,
+    };
 
+    const fieldRules = {
+      emailOrPhone: validationRules.emailOrPhone,
+      password: validationRules.password,
+    };
+
+    const fieldMessages = {
+      emailOrPhone: validationMessages.emailOrPhone,
+      password: validationMessages.password,
+    };
+
+    const newErrors = globalValidateForm(formData, fieldRules, fieldMessages);
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
@@ -80,7 +93,7 @@ export function SignIn({ onSignIn, onCreateAccount, onBack }: SignInProps) {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-[14px] top-[38px]"
               >
-                {showPassword ? <EyeOff size={18} color="#6E6E6E" /> : <Eye size={18} color="#6E6E6E" />}
+                {showPassword ? <Eye size={18} color="#6E6E6E" /> : <EyeOff size={18} color="#6E6E6E" />}
               </button>
             </div>
 

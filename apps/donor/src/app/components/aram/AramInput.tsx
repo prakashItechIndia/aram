@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface AramInputProps {
   label?: string;
   placeholder?: string;
@@ -11,6 +9,8 @@ interface AramInputProps {
   helperText?: string;
   disabled?: boolean;
   className?: string;
+  prefix?: React.ReactNode;
+  style?: React.CSSProperties;
 }
 
 export function AramInput({
@@ -23,7 +23,8 @@ export function AramInput({
   error,
   helperText,
   disabled = false,
-  className = ''
+  className = '',
+  prefix
 }: AramInputProps) {
   return (
     <div className={`flex flex-col gap-[6px] ${className}`}>
@@ -33,17 +34,31 @@ export function AramInput({
           {required && <span className="text-[#F36A4F]"> *</span>}
         </label>
       )}
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        disabled={disabled}
-        className={`h-[44px] px-[14px] py-[12px] rounded-[16px] border ${
-          error ? 'border-[#F36A4F]' : 'border-[#DBDBDB]'
-        } bg-white focus:outline-none focus:border-[#F36A4F] disabled:bg-[#F3F3F3] disabled:cursor-not-allowed`}
-        style={{ fontSize: '14px', lineHeight: '20px', fontWeight: 400, color: '#3D3D3D' }}
-      />
+      <div className="relative flex items-center">
+        {prefix && (
+          <div
+            className="absolute left-[14px] flex items-center h-full z-10"
+          >
+            {prefix}
+          </div>
+        )}
+        <input
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={`h-[44px] w-full py-[12px] rounded-[16px] border ${error ? 'border-[#F36A4F]' : 'border-[#DBDBDB]'
+            } bg-white focus:outline-none focus:border-[#F36A4F] disabled:bg-[#F3F3F3] disabled:cursor-not-allowed`}
+          style={{
+            fontSize: '14px',
+            lineHeight: '20px',
+            fontWeight: 400,
+            color: '#3D3D3D',
+            paddingLeft: prefix ? 'var(--prefix-width, 50px)' : '14px'
+          }}
+        />
+      </div>
       {error && (
         <span style={{ fontSize: '13px', lineHeight: '18px', color: '#F36A4F' }}>
           {error}

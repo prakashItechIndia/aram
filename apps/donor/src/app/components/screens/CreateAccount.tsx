@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
-import { AramButton } from '@/app/components/aram/AramButton';
-import { AramCard } from '@/app/components/aram/AramCard';
-import { AramInput } from '@/app/components/aram/AramInput';
+import { AramButton } from '../aram/AramButton';
+import { AramCard } from '../aram/AramCard';
+import { AramInput } from '../aram/AramInput';
+import { AramSelect } from '../aram/AramSelect';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { validateForm as globalValidateForm, validationRules, validationMessages, sanitizeInput, countryPhoneConfigs, getMobileValidation } from '../../utils/validations';
+
+const countries = [
+  { value: 'india', label: '+91' },
+  { value: 'usa', label: '+1' },
+  { value: 'uk', label: '+44' },
+  { value: 'canada', label: '+1' },
+];
 
 interface CreateAccountProps {
   onCreateAccount: (data: any) => void;
@@ -19,22 +28,71 @@ export function CreateAccount({ onCreateAccount, onSignIn, onBack }: CreateAccou
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [country, setCountry] = useState('india');
   const [errors, setErrors] = useState<any>({});
 
-  const validateForm = () => {
-    const newErrors: any = {};
+  // Erase phone number when country changes
+  React.useEffect(() => {
+    setPhone('');
+    setErrors((prev: any) => ({ ...prev, phone: undefined }));
+  }, [country]);
 
-    if (!name.trim()) newErrors.name = 'Name is required';
-    if (!email.trim()) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Email format is invalid';
-    if (!phone.trim()) newErrors.phone = 'Phone number is required';
-    else if (!/^\d{10}$/.test(phone)) newErrors.phone = 'Phone must be 10 digits';
-    if (!password) newErrors.password = 'Password is required';
-    else if (password.length < 8) newErrors.password = 'Password must be at least 8 characters';
-    else if (!/[A-Z]/.test(password)) newErrors.password = 'Password must contain uppercase letter';
-    else if (!/[0-9]/.test(password)) newErrors.password = 'Password must contain a number';
-    else if (!/[!@#$%^&*]/.test(password)) newErrors.password = 'Password must contain special character';
-    if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+  const handleMobileChange = (value: string) => {
+    const sanitized = sanitizeInput.mobile(value, country);
+    setPhone(sanitized);
+
+    if (!sanitized) {
+      setErrors((prev: any) => ({ ...prev, phone: undefined }));
+      return;
+    }
+
+    const config = countryPhoneConfigs[country] || countryPhoneConfigs.india;
+
+    // Check first digit for India
+    if (country === 'india' && sanitized.length > 0) {
+      const firstDigit = parseInt(sanitized[0]);
+      if (firstDigit < 6 || firstDigit > 9) {
+        setErrors((prev: any) => ({ ...prev, phone: 'Mobile number should start from 6, 7, 8, 9' }));
+        return;
+      }
+    }
+
+    // Check length
+    if (sanitized.length < config.maxLength) {
+      setErrors((prev: any) => ({ ...prev, phone: `Please enter ${config.maxLength} digits` }));
+    } else {
+      setErrors((prev: any) => ({ ...prev, phone: undefined }));
+    }
+  };
+
+  const validateForm = () => {
+    const formData = {
+      name,
+      email,
+      phone,
+      password,
+    };
+
+    const fieldRules = {
+      name: validationRules.name,
+      email: validationRules.email,
+      phone: getMobileValidation(country),
+      password: validationRules.password,
+    };
+
+    const fieldMessages = {
+      name: validationMessages.name,
+      email: validationMessages.email,
+      phone: validationMessages.mobile,
+      password: validationMessages.password,
+    };
+
+    const newErrors = globalValidateForm(formData, fieldRules, fieldMessages);
+
+    // Custom check for confirm password
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -72,7 +130,7 @@ export function CreateAccount({ onCreateAccount, onSignIn, onBack }: CreateAccou
               label="Name"
               placeholder="Enter your full name"
               value={name}
-              onChange={setName}
+              onChange={(value: string) => setName(sanitizeInput.name(value))}
               required
               error={errors.name}
             />
@@ -82,20 +140,32 @@ export function CreateAccount({ onCreateAccount, onSignIn, onBack }: CreateAccou
               type="email"
               placeholder="Enter your email"
               value={email}
-              onChange={setEmail}
+              onChange={(value: string) => setEmail(sanitizeInput.email(value))}
               required
               error={errors.email}
             />
 
-            <AramInput
-              label="Phone Number"
-              type="tel"
-              placeholder="10-digit phone number"
-              value={phone}
-              onChange={setPhone}
-              required
-              error={errors.phone}
-            />
+            <div className="flex flex-col gap-[6px]">
+              <label style={{ fontSize: '13px', lineHeight: '18px', fontWeight: 500, color: '#6E6E6E' }}>
+                Phone Number <span className="text-[#F36A4F]">*</span>
+              </label>
+              <div className="flex gap-[8px]">
+                <AramSelect
+                  value={country}
+                  onChange={setCountry}
+                  options={countries}
+                  className="w-[80px]"
+                />
+                <AramInput
+                  type="tel"
+                  placeholder={countryPhoneConfigs[country]?.maxLength === 10 ? 'Enter 10-digits Phone Number' : 'Enter 11-digits Phone Number'}
+                  value={phone}
+                  onChange={handleMobileChange}
+                  error={errors.phone}
+                  className="flex-1"
+                />
+              </div>
+            </div>
 
             <div className="relative">
               <AramInput
@@ -112,7 +182,7 @@ export function CreateAccount({ onCreateAccount, onSignIn, onBack }: CreateAccou
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-[14px] top-[38px]"
               >
-                {showPassword ? <EyeOff size={18} color="#6E6E6E" /> : <Eye size={18} color="#6E6E6E" />}
+                {showPassword ? <Eye size={18} color="#6E6E6E" /> : <EyeOff size={18} color="#6E6E6E" />}
               </button>
               <div style={{ fontSize: '12px', lineHeight: '16px', color: '#6E6E6E', marginTop: '4px' }}>
                 Must contain: 8+ characters, uppercase, number, special character
@@ -134,7 +204,7 @@ export function CreateAccount({ onCreateAccount, onSignIn, onBack }: CreateAccou
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-[14px] top-[38px]"
               >
-                {showConfirmPassword ? <EyeOff size={18} color="#6E6E6E" /> : <Eye size={18} color="#6E6E6E" />}
+                {showConfirmPassword ? <Eye size={18} color="#6E6E6E" /> : <EyeOff size={18} color="#6E6E6E" />}
               </button>
             </div>
 
