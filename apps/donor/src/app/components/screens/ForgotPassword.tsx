@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { AramButton } from '../aram/AramButton';
 import { AramCard } from '../aram/AramCard';
 import { AramInput } from '../aram/AramInput';
@@ -19,7 +20,6 @@ export function ForgotPassword({ onSubmit, onBack }: ForgotPasswordProps) {
     const handleEmailChange = (value: string) => {
         const sanitized = sanitizeInput.email(value);
         setEmail(sanitized);
-        if (error) setError(null);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -32,17 +32,17 @@ export function ForgotPassword({ onSubmit, onBack }: ForgotPasswordProps) {
             return;
         }
 
-        setError(null);
         try {
             const result = await onSubmit(email);
             if (result.success) {
                 setSent(true);
+                toast.success('Reset link sent to your email!');
                 if (result.resetLink) setResetLink(result.resetLink);
             } else {
-                setError(result.error ?? 'Request failed');
+                toast.error(result.error ?? 'Request failed');
             }
         } catch (err) {
-            setError('An error occurred. Please try again.');
+            toast.error('An error occurred. Please try again.');
         } finally {
             // No loading state to reset
         }
@@ -110,7 +110,6 @@ export function ForgotPassword({ onSubmit, onBack }: ForgotPasswordProps) {
                         onChange={handleEmailChange}
                         placeholder="Enter your email"
                         required
-                        error={error || undefined}
                     />
 
                     <div className="flex flex-col gap-3">

@@ -7,6 +7,7 @@ import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';
 import * as schema from '../../database/schema';
 import type { CreateGuestDonorDto } from './dto/create-guest-donor.dto';
 import { EmailService } from '../email/email.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 /** User_Type value for donor/portal users (T_USER). */
 const DONOR_USER_TYPE = 'Standard User';
@@ -31,6 +32,7 @@ export class DonorsService {
   constructor(
     @Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>,
     private emailService: EmailService,
+    private notificationsService: NotificationsService,
   ) {}
 
   /** List users from T_USER where User_Type = Standard User (donors). */
@@ -150,6 +152,17 @@ export class DonorsService {
 
       // Send email
       await this.emailService.sendGuestWelcome(email, tempPass);
+
+      // Create persistent notification for guest
+      const userRows = await this.db.select().from(tUser).where(eq(tUser.eMail, email));
+      if (userRows[0]) {
+        await this.notificationsService.create({
+          userId: userRows[0].id,
+          type: 'info',
+          title: 'Welcome to Aram',
+          message: 'Thank you for your guest donation! Use your email and temporary password to login.',
+        });
+      }
 
       const rows = await this.db.select().top(1).from(tUser).where(eq(tUser.eMail, email));
       const inserted = rows[0];
