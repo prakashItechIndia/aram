@@ -10,6 +10,31 @@ const getApiBaseUrl = (): string => {
   }
 };
 
+const DONOR_AUTH_STORAGE_KEY = 'aram_donor_auth';
+
+function getStoredDonorAuth(): AuthUser {
+  try {
+    if (typeof window === 'undefined') return null;
+    const s = sessionStorage.getItem(DONOR_AUTH_STORAGE_KEY);
+    if (!s) return null;
+    const parsed = JSON.parse(s) as { accessToken?: string; refreshToken?: string };
+    if (parsed?.accessToken) return { accessToken: parsed.accessToken, refreshToken: parsed.refreshToken ?? '' };
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function setStoredDonorAuth(user: AuthUser): void {
+  try {
+    if (typeof window === 'undefined') return;
+    if (user?.accessToken) sessionStorage.setItem(DONOR_AUTH_STORAGE_KEY, JSON.stringify(user));
+    else sessionStorage.removeItem(DONOR_AUTH_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 type AuthUser = { accessToken: string; refreshToken: string } | null;
 
 type ApiContextValue = {
@@ -25,13 +50,14 @@ type ApiContextValue = {
 const ApiContext = createContext<ApiContextValue | null>(null);
 
 export function ApiProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUserState] = useState<AuthUser>(null);
+  const [user, setUserState] = useState<AuthUser>(() => getStoredDonorAuth());
   const userRef = useRef<AuthUser>(null);
   userRef.current = user;
 
   const authTokenVersionRef = useRef(0);
 
   const logout = useCallback(() => {
+    setStoredDonorAuth(null);
     setUserState(null);
   }, []);
 
@@ -69,10 +95,9 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
           return { success: false, error: 'Invalid response from server' };
         }
         authTokenVersionRef.current += 1;
-        setUserState({
-          accessToken,
-          refreshToken: data?.refresh_token ?? '',
-        });
+        const authUser = { accessToken, refreshToken: data?.refresh_token ?? '' };
+        setUserState(authUser);
+        setStoredDonorAuth(authUser);
         return { success: true, data };
       } catch (err: unknown) {
         const message =
@@ -111,6 +136,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
 
   const setUser = useCallback((u: AuthUser) => {
     setUserState(u);
+    setStoredDonorAuth(u);
   }, []);
 
   const value: ApiContextValue = useMemo(

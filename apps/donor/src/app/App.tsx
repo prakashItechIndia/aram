@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createQueryClient } from '@aram/shared';
 import { toast, Toaster } from 'sonner';
@@ -43,8 +43,8 @@ interface UserData {
 }
 
 function AppContent() {
-  const { api, login: apiLogin, register: apiRegister, logout: apiLogout } = useApi();
-  const [currentScreen, setCurrentScreen] = useState<Screen>('entry');
+  const { api, login: apiLogin, register: apiRegister, logout: apiLogout, isAuthenticated } = useApi();
+  const [currentScreen, setCurrentScreen] = useState<Screen>(() => (isAuthenticated ? 'dashboard' : 'entry'));
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('processing');
   const [lastDonation, setLastDonation] = useState<any>(null);
   const [user, setUser] = useState<UserData>({
@@ -53,6 +53,25 @@ function AppContent() {
     phone: '',
     isLoggedIn: false,
   });
+
+  // After reload: restore session from token and fetch profile so dashboard shows user name
+  useEffect(() => {
+    if (!isAuthenticated || user.isLoggedIn) return;
+    api.authApi
+      .authControllerGetProfile()
+      .then((profileRes: unknown) => {
+        const profile = (profileRes as { data?: { name?: string; email?: string } })?.data;
+        setUser({
+          name: profile?.name ?? '',
+          email: profile?.email ?? '',
+          phone: '',
+          isLoggedIn: true,
+        });
+      })
+      .catch(() => {
+        setUser((prev) => ({ ...prev, isLoggedIn: true }));
+      });
+  }, [isAuthenticated, user.isLoggedIn, api.authApi]);
 
   const handleLoginToDonate = () => {
     setCurrentScreen('sign-in');
@@ -156,6 +175,13 @@ function AppContent() {
   const handleUpdatePassword = (data: any) => {
     toast.success('Password updated successfully!');
   };
+
+  // When authenticated (e.g. after reload), show dashboard not entry
+  useEffect(() => {
+    if (isAuthenticated && (currentScreen === 'entry' || currentScreen === 'sign-in' || currentScreen === 'create-account')) {
+      setCurrentScreen('dashboard');
+    }
+  }, [isAuthenticated, currentScreen]);
 
   // Render current screen
   const renderScreen = () => {

@@ -1,18 +1,25 @@
 -- =============================================================================
 -- ARAM Backend – Single migration file (run manually in SQL Server)
--- Tables and columns from: ARAM admin/donor BRDs, apps (admin + donor),
--- Aram_Foundation_Admin_Portal_User_Stories.xlsx, Aram_Foundation_User_Stories - User side.xlsx.
+-- Source: ARAM admin/donor BRDs, Aram_Foundation_Admin_Portal_User_Stories,
+-- Aram_Foundation_User_Stories - User side.xlsx.
 --
--- RULES (do not recreate existing tables):
+-- OLD APPLICATION (reuse – do not duplicate):
+--   EChallan-AramFoundation-WebwithPGI is the legacy app. Most schema is reused.
+--   Existing tables: T_USER, T_EChallan, T_State, T_Country, T_DONOR_CATEGORIES,
+--   T_BASIC_SETTING, T_Payment_*, T_Razorpay_*, T_User_Activites, etc. already
+--   exist in the DB. We do NOT recreate them; IF NOT EXISTS only for new DBs.
+--
+-- RULES:
+--   • Reuse existing T_* and legacy tables. Only ADD new tables for new features.
+--   • Auth uses T_USER (Admin/Donor by User_Type). No separate 'users' table.
 --   • If table DOES NOT exist → CREATE TABLE (only then).
---   • If table ALREADY exists (e.g. T_USER, T_State, T_EChallan, etc.) → skip
---     CREATE; only ADD missing columns via ALTER TABLE (each column guarded
---     by IF NOT EXISTS on sys.columns).
+--   • If table ALREADY exists → skip CREATE; ADD missing columns via ALTER TABLE
+--     (each column guarded by IF NOT EXISTS on sys.columns).
 -- Safe to re-run: idempotent.
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
--- 1. user_roles (RBAC – referenced by users)
+-- 1. user_roles (RBAC lookup – used by role_permissions; auth uses T_USER)
 -- -----------------------------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'user_roles')
 BEGIN
@@ -25,25 +32,7 @@ END
 GO
 
 -- -----------------------------------------------------------------------------
--- 2. users (Admin portal authentication)
--- -----------------------------------------------------------------------------
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'users')
-BEGIN
-  CREATE TABLE [dbo].[users] (
-    [id] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
-    [email] NVARCHAR(255) NOT NULL UNIQUE,
-    [password] NVARCHAR(255) NOT NULL,
-    [name] NVARCHAR(255) NULL,
-    [role_id] INT NULL,
-    [created_at] DATETIME2(3) NULL DEFAULT GETDATE(),
-    [updated_at] DATETIME2(3) NULL,
-    CONSTRAINT [FK_users_role] FOREIGN KEY ([role_id]) REFERENCES [dbo].[user_roles]([id])
-  );
-END
-GO
-
--- -----------------------------------------------------------------------------
--- 3. donors (Donor profiles – admin + donor portal)
+-- 2. donors (Donor profiles – admin + donor portal)
 -- -----------------------------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'donors')
 BEGIN
@@ -72,7 +61,7 @@ END
 GO
 
 -- -----------------------------------------------------------------------------
--- 4. donation_categories (Master data)
+-- 3. donation_categories (Master data)
 -- -----------------------------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'donation_categories')
 BEGIN
@@ -250,8 +239,8 @@ BEGIN
     [created_at] DATETIME2(3) NULL DEFAULT GETDATE(),
     [updated_at] DATETIME2(3) NULL,
     CONSTRAINT [FK_refund_requests_transaction] FOREIGN KEY ([transaction_id]) REFERENCES [dbo].[transactions]([id]),
-    CONSTRAINT [FK_refund_requests_requested_by] FOREIGN KEY ([requested_by_user_id]) REFERENCES [dbo].[users]([id]),
-    CONSTRAINT [FK_refund_requests_approved_by] FOREIGN KEY ([approved_by_user_id]) REFERENCES [dbo].[users]([id])
+    CONSTRAINT [FK_refund_requests_requested_by] FOREIGN KEY ([requested_by_user_id]) REFERENCES [dbo].[T_USER]([Id]),
+    CONSTRAINT [FK_refund_requests_approved_by] FOREIGN KEY ([approved_by_user_id]) REFERENCES [dbo].[T_USER]([Id])
   );
 END
 GO
@@ -272,7 +261,7 @@ BEGIN
     [assigned_to_user_id] INT NULL,
     [created_at] DATETIME2(3) NULL DEFAULT GETDATE(),
     [updated_at] DATETIME2(3) NULL,
-    CONSTRAINT [FK_enquiries_assigned_to] FOREIGN KEY ([assigned_to_user_id]) REFERENCES [dbo].[users]([id])
+    CONSTRAINT [FK_enquiries_assigned_to] FOREIGN KEY ([assigned_to_user_id]) REFERENCES [dbo].[T_USER]([Id])
   );
 END
 GO
@@ -318,7 +307,7 @@ BEGIN
     CONSTRAINT [FK_e_challans_donor] FOREIGN KEY ([donor_id]) REFERENCES [dbo].[donors]([id]),
     CONSTRAINT [FK_e_challans_category] FOREIGN KEY ([category_id]) REFERENCES [dbo].[donation_categories]([id]),
     CONSTRAINT [FK_e_challans_receipt] FOREIGN KEY ([receipt_id]) REFERENCES [dbo].[receipts]([id]),
-    CONSTRAINT [FK_e_challans_created_by] FOREIGN KEY ([created_by_user_id]) REFERENCES [dbo].[users]([id])
+    CONSTRAINT [FK_e_challans_created_by] FOREIGN KEY ([created_by_user_id]) REFERENCES [dbo].[T_USER]([Id])
   );
 END
 GO
@@ -337,7 +326,7 @@ BEGIN
     [details_json] NVARCHAR(MAX) NULL,
     [ip_address] NVARCHAR(45) NULL,
     [created_at] DATETIME2(3) NULL DEFAULT GETDATE(),
-    CONSTRAINT [FK_audit_log_user] FOREIGN KEY ([user_id]) REFERENCES [dbo].[users]([id])
+    CONSTRAINT [FK_audit_log_user] FOREIGN KEY ([user_id]) REFERENCES [dbo].[T_USER]([Id])
   );
 END
 GO
@@ -371,7 +360,7 @@ BEGIN
     [otp_code] NVARCHAR(10) NOT NULL,
     [expires_at] DATETIME2(3) NOT NULL,
     [created_at] DATETIME2(3) NULL DEFAULT GETDATE(),
-    CONSTRAINT [FK_user_otp_user] FOREIGN KEY ([user_id]) REFERENCES [dbo].[users]([id])
+    CONSTRAINT [FK_user_otp_user] FOREIGN KEY ([user_id]) REFERENCES [dbo].[T_USER]([Id])
   );
 END
 GO
@@ -464,16 +453,16 @@ BEGIN
     [format] NVARCHAR(16) NULL,
     [ip_address] NVARCHAR(45) NULL,
     [created_at] DATETIME2(3) NULL DEFAULT GETDATE(),
-    CONSTRAINT [FK_export_log_user] FOREIGN KEY ([user_id]) REFERENCES [dbo].[users]([id])
+    CONSTRAINT [FK_export_log_user] FOREIGN KEY ([user_id]) REFERENCES [dbo].[T_USER]([Id])
   );
 END
 GO
 
 -- =============================================================================
--- LEGACY TABLES (from EChallan-AramFoundation-WebwithPGI and SAI_ARAM)
--- Uppercase table names and PascalCase_Underscore columns for consistency.
--- Existing tables (e.g. in Dev_SaiAram_Echallan) are NOT recreated; CREATE
--- runs only when the table does not exist. No ALTER on legacy tables here.
+-- LEGACY TABLES (from EChallan-AramFoundation-WebwithPGI – REUSE, do not duplicate)
+-- These tables already exist in the old app DB. CREATE only when table does not
+-- exist (e.g. fresh DB). Uppercase names + PascalCase_Underscore columns.
+-- No ALTER on legacy tables here; add new columns only via guarded ALTER below.
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -1059,7 +1048,7 @@ BEGIN
     [is_internal] BIT NOT NULL DEFAULT 0,
     [created_at] DATETIME2(3) NULL DEFAULT GETDATE(),
     CONSTRAINT [FK_enquiry_replies_enquiry] FOREIGN KEY ([enquiry_id]) REFERENCES [dbo].[enquiries]([id]),
-    CONSTRAINT [FK_enquiry_replies_user] FOREIGN KEY ([from_user_id]) REFERENCES [dbo].[users]([id])
+    CONSTRAINT [FK_enquiry_replies_user] FOREIGN KEY ([from_user_id]) REFERENCES [dbo].[T_USER]([Id])
   );
 END
 GO
@@ -1461,7 +1450,7 @@ BEGIN
     [created_at] DATETIME2(3) NULL DEFAULT GETDATE(),
     [updated_at] DATETIME2(3) NULL,
     CONSTRAINT [FK_donor_notes_donor] FOREIGN KEY ([donor_id]) REFERENCES [dbo].[donors]([id]),
-    CONSTRAINT [FK_donor_notes_user] FOREIGN KEY ([created_by_user_id]) REFERENCES [dbo].[users]([id])
+    CONSTRAINT [FK_donor_notes_user] FOREIGN KEY ([created_by_user_id]) REFERENCES [dbo].[T_USER]([Id])
   );
 END
 GO
@@ -1526,7 +1515,3 @@ GO
 -- -----------------------------------------------------------------------------
 -- Future changes: append new blocks below this line.
 -- -----------------------------------------------------------------------------
-</think>
-Fixing the circular dependency between `receipts` and `transactions`: creating `transactions` without the `receipt_id` FK first, then adding FKs.
-<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
-StrReplace

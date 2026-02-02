@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { DRIZZLE } from '../../database/database.module';
-import { tDonorCategories } from '../../database/schema';
+import { tDonorCategories } from '../../database/models/t-donor-categories.model';
 import { eq } from 'drizzle-orm';
 import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';
 import * as schema from '../../database/schema';

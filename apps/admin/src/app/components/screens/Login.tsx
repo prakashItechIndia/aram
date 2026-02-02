@@ -6,9 +6,10 @@ import { Card } from '../ui/card';
 interface LoginProps {
   onLogin: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   onShow2FA: () => void;
+  onForgotPassword?: () => void;
 }
 
-export function Login({ onLogin, onShow2FA }: LoginProps) {
+export function Login({ onLogin, onShow2FA, onForgotPassword }: LoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -73,6 +74,7 @@ export function Login({ onLogin, onShow2FA }: LoginProps) {
           <div className="flex items-center justify-end">
             <button
               type="button"
+              onClick={onForgotPassword}
               className="text-[14px] leading-[20px] text-[#F36A4F] hover:underline"
             >
               Forgot password?

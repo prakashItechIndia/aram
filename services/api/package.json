@@ -10,7 +10,8 @@
     "generate:openapi": "ts-node scripts/generate-openapi-spec.ts",
     "db:generate": "drizzle-kit generate",
     "db:pull": "npx drizzle-kit pull",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:migrate": "ts-node scripts/run-migration.ts"
   },
   "keywords": [],
   "author": "",

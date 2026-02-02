@@ -5,6 +5,8 @@ import { ApiProvider, useApi } from './context/ApiContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { Login, TwoFactorAuth } from './components/screens/Login';
+import { ForgotPassword } from './components/screens/ForgotPassword';
+import { ResetPassword } from './components/screens/ResetPassword';
 import { Dashboard } from './components/screens/Dashboard';
 import { Transactions } from './components/screens/Transactions';
 import { Donors } from './components/screens/Donors';
@@ -27,13 +29,21 @@ import { Toaster } from './components/ui/toast';
 
 const queryClient = createQueryClient();
 
-type AuthState = 'login' | '2fa' | 'authenticated';
+type AuthState = 'login' | 'forgot' | 'reset' | '2fa' | 'authenticated';
+
+function getResetTokenFromUrl(): string | null {
+  if (typeof window === 'undefined') return null;
+  const params = new URLSearchParams(window.location.search);
+  return params.get('token');
+}
 
 function AppContent() {
-  const { login: apiLogin, logout: apiLogout, isAuthenticated } = useApi();
-  const [authState, setAuthState] = useState<AuthState>(() =>
-    isAuthenticated ? 'authenticated' : 'login',
-  );
+  const { login: apiLogin, forgotPassword, resetPassword, logout: apiLogout, isAuthenticated } = useApi();
+  const [authState, setAuthState] = useState<AuthState>(() => {
+    if (isAuthenticated) return 'authenticated';
+    return getResetTokenFromUrl() ? 'reset' : 'login';
+  });
+  const [resetToken, setResetToken] = useState<string | null>(() => getResetTokenFromUrl());
   const [currentPath, setCurrentPath] = useState('/dashboard');
 
   const handleLogin = async (email: string, password: string) => {
@@ -59,7 +69,16 @@ function AppContent() {
   const handleLogout = () => {
     apiLogout();
     setAuthState('login');
+    setResetToken(null);
     setCurrentPath('/dashboard');
+  };
+
+  const handleForgotSubmit = async (email: string) => {
+    return forgotPassword(email);
+  };
+
+  const handleResetSubmit = async (token: string, newPassword: string) => {
+    return resetPassword(token, newPassword);
   };
 
   const handleNavigate = (path: string) => {
@@ -76,9 +95,49 @@ function AppContent() {
         </>
       );
     }
+    if (authState === 'forgot') {
+      return (
+        <>
+          <ForgotPassword onSubmit={handleForgotSubmit} onBack={() => setAuthState('login')} />
+          <Toaster />
+        </>
+      );
+    }
+    if (authState === 'reset' && resetToken) {
+      return (
+        <>
+          <ResetPassword
+            token={resetToken}
+            onSubmit={handleResetSubmit}
+            onBack={() => {
+              setResetToken(null);
+              setAuthState('login');
+              window.history.replaceState({}, '', window.location.pathname);
+            }}
+          />
+          <Toaster />
+        </>
+      );
+    }
+    if (authState === 'reset' && !resetToken) {
+      return (
+        <>
+          <Login
+            onLogin={handleLogin}
+            onShow2FA={handleShow2FA}
+            onForgotPassword={() => setAuthState('forgot')}
+          />
+          <Toaster />
+        </>
+      );
+    }
     return (
       <>
-        <Login onLogin={handleLogin} onShow2FA={handleShow2FA} />
+        <Login
+          onLogin={handleLogin}
+          onShow2FA={handleShow2FA}
+          onForgotPassword={() => setAuthState('forgot')}
+        />
         <Toaster />
       </>
     );

@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { DRIZZLE } from '../../database/database.module';
-import { featureConfig } from '../../database/schema';
+import { featureConfig } from '../../database/models/feature-config.model';
 import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';
 import * as schema from '../../database/schema';
 import { CONFIG_KEYS, type ConfigKey } from './config-keys.constant';

@@ -1,0 +1,102 @@
+﻿@model E_Challan.Models.ClsEChallan
+
+@{
+    ViewBag.Title = "PrintReceipt";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="alert alert-block alert-warning" id="Divmess" style="display: none;">
+    <button type="button" class="close" data-dismiss="alert">
+        <i class="icon-remove"></i>
+    </button>
+    <i class="icon-ok green"></i>
+    <span id="divmessup" style="color: #008000; font-weight: bold"></span>
+</div>
+
+@using (Html.BeginForm())
+{
+    @Html.ValidationSummary(true)
+    
+    <div class="page-content">
+        <!-- /.page-header -->
+        <div class="row">
+            <div class="col-md-12">
+                <!-- PAGE CONTENT BEGINS -->
+                <div class="widget-box">
+                    <div class="widget-header widget-header-blue widget-header-flat">
+                        <h4 class="lighter">Print Recepit
+                    <span class="gridTools">
+                        @*<ul class="ui-pg-button ">
+                            <li class="refresher"><span class="icon "></span></li>
+                            <li></li>
+                            <li><span class=" icon-plus-sign bigger-110 purple my-tooltip-link" id='btnGridAdd' rel='tooltip' title='Add State'></span></li>
+                            <li><span class="icon-trash bigger-110 red my-tooltip-link" id='btnDelete1' rel='tooltip' title='Delete State'></span></li>
+                            <li><span class="icon-refresh bigger-110 green my-tooltip-link" id='btnGridRefresh' rel='tooltip' title='Refresh Data'></span></li>
+                            <li><span class="icon-chevron-down bigger-110 green my-tooltip-link" id='btnToggleBox' rel='tooltip' title='Toggle Box'></span></li>
+                        </ul>*@
+                    </span>
+                        </h4>
+                    </div>
+
+                    <div class="widget-body">
+                        <div class="widget-main editBox">
+                            <div class="row">
+                                <div class="col-md-12">
+
+                                    <div class="form-horizontal" role="form">
+                                        <div class="col-md-12">
+                                            <div class="form-group">
+                                                <div class="col-md-5" align="right">
+                                                    <label>Search Key<span style="color: red;">*</span> :</label>
+                                                </div>
+                                                <div class="col-md-7">
+                                                  <input type="text" id="txtSearchKey" class="form-control input-md" maxlength="50" />
+                                                </div>
+                                            </div>                                        
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="form-group">
+                        @(Html.Kendo().Grid<E_Challan.Models.ClsDonorCategories>()
+                            .Name("DonorGrid")
+                            .Columns(columns =>
+                            {
+                                columns.Bound(p => p.Id).HeaderTemplate("ID").Visible(false);                          
+                                columns.Bound(p => p.AccountNo).Width(50).Title("Account Number");
+                                columns.Bound(p => p.DonorTypes).Width(50).Title("Donor Types");                                
+                            })
+                            .Selectable(selectable => selectable
+                                        .Mode(GridSelectionMode.Multiple))
+                                       .Pageable(pager => { pager.PageSizes(true); })
+                                        .Scrollable()
+                                        .Filterable()
+                            .HtmlAttributes(new { style = "height:300px;" })
+                            .DataSource(dataSource => dataSource
+                                .Ajax()                               
+                                .Read(read => read.Action("GetDonor", "DonorCategories"))
+                             )                            
+                        )
+                    </div>
+                    <!-- /widget-main -->
+                </div>
+                <!-- /widget-body -->
+            </div>
+        </div>
+        <!-- /.col -->
+    </div>
+   
+}
+
+<script type="text/javascript">
+
+    
+
+</script>
+
