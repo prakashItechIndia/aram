@@ -45,6 +45,8 @@ type ApiContextValue = {
   register: (data: { name: string; email: string; password: string }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   setUser: (user: AuthUser) => void;
+  forgotPassword: (email: string) => Promise<{ success: boolean; error?: string; message?: string }>;
+  resetPassword: (token: string, password: string) => Promise<{ success: boolean; error?: string }>;
 };
 
 const ApiContext = createContext<ApiContextValue | null>(null);
@@ -139,6 +141,57 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     setStoredDonorAuth(u);
   }, []);
 
+  const forgotPassword = useCallback(async (email: string) => {
+    try {
+        const baseUrl = getApiBaseUrl();
+        console.log('Sending forgot password request to:', `${baseUrl}/auth/forgot-password`, { email });
+        const res = await fetch(`${baseUrl}/auth/forgot-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email }),
+        });
+        
+        console.log('Forgot password response status:', res.status);
+
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            console.error('Forgot password error response:', data);
+            throw new Error(data.message || 'Request failed');
+        }
+        
+        const data = await res.json();
+        console.log('Forgot password success:', data);
+        return { success: true, message: data.message };
+    } catch (err: unknown) {
+        console.error('Forgot password exception:', err);
+        return { success: false, error: (err as Error).message };
+    }
+  }, []);
+
+  const resetPassword = useCallback(async (token: string, newPassword: string) => {
+    try {
+        const baseUrl = getApiBaseUrl();
+        const res = await fetch(`${baseUrl}/auth/reset-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ token, newPassword }),
+        });
+        
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.message || 'Request failed');
+        }
+        
+        return { success: true };
+    } catch (err: unknown) {
+        return { success: false, error: (err as Error).message };
+    }
+  }, []);
+
   const value: ApiContextValue = useMemo(
     () => ({
       api,
@@ -148,8 +201,10 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       register,
       logout,
       setUser,
+      forgotPassword,
+      resetPassword,
     }),
-    [api, user, login, register, logout, setUser],
+    [api, user, login, register, logout, setUser, forgotPassword, resetPassword],
   );
 
   return <ApiContext.Provider value={value}>{children}</ApiContext.Provider>;

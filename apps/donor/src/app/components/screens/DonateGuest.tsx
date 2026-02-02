@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { AramButton } from '../aram/AramButton';
 import { AramCard } from '../aram/AramCard';
 import { AramInput } from '../aram/AramInput';
@@ -42,7 +43,6 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
   const [country, setCountry] = useState('india');
   const [errors, setErrors] = useState<any>({});
   const [submitting, setSubmitting] = useState(false);
-  const [repeatGuestError, setRepeatGuestError] = useState<string | null>(null);
 
   // Erase mobile number when country changes
   React.useEffect(() => {
@@ -122,7 +122,6 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
   };
 
   const handlePay = async () => {
-    setRepeatGuestError(null);
     if (!validateForm()) return;
     if (api?.donorsApi) {
       setSubmitting(true);
@@ -137,6 +136,9 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
           amount,
           donationType,
         });
+        // Show success toast with name
+        toast.success(`Temporary password has been sent to ${name.trim()}`);
+        
         onPay({
           name,
           email,
@@ -150,10 +152,10 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
       } catch (err: unknown) {
         const res = (err as { response?: { status?: number; data?: { message?: string } } })?.response;
         if (res?.status === 409) {
-          setRepeatGuestError('You have donated before. Please use Login to Donate.');
+          toast.error(res.data?.message || 'User already exists. Please Login.');
           return;
         }
-        setRepeatGuestError((res?.data?.message as string) || 'Something went wrong. Please try again.');
+        toast.error((res?.data?.message as string) || 'Something went wrong. Please try again.');
       } finally {
         setSubmitting(false);
       }
@@ -324,12 +326,7 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
             />
           </div>
 
-          {/* Repeat guest error */}
-          {repeatGuestError && (
-            <div className="p-[16px] bg-red-50 border border-red-200 rounded-[16px] text-red-700 text-sm" role="alert">
-              {repeatGuestError}
-            </div>
-          )}
+
 
           {/* Info Message */}
           <div className="flex flex-col gap-[8px] p-[16px] bg-[#FEF1EE] rounded-[16px] border border-[#FCD9D3]">

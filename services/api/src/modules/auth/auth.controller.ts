@@ -26,6 +26,18 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
 
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Forgot password - Send reset link (donor portal)' })
+  async forgotPasswordDonor(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPasswordDonor(dto);
+  }
+
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset password with token (donor portal)' })
+  async resetPasswordDonor(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPasswordDonor(dto);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   @ApiBearerAuth()

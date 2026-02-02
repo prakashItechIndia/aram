@@ -33,7 +33,8 @@ type Screen =
   | 'payment-failed'
   | 'reports'
   | 'profile'
-  | 'forgot-password';
+  | 'forgot-password'
+  | 'reset-password';
 
 type PaymentStatus = 'processing' | 'success' | 'failed';
 
@@ -44,9 +45,16 @@ interface UserData {
   isLoggedIn: boolean;
 }
 
+import { ResetPassword } from './components/screens/ResetPassword';
+
 function AppContent() {
-  const { api, login: apiLogin, register: apiRegister, logout: apiLogout, isAuthenticated } = useApi();
-  const [currentScreen, setCurrentScreen] = useState<Screen>(() => (isAuthenticated ? 'dashboard' : 'entry'));
+  const { api, login: apiLogin, register: apiRegister, logout: apiLogout, isAuthenticated, forgotPassword, resetPassword } = useApi();
+  const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
+    // Check for reset password token in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('token')) return 'reset-password';
+    return isAuthenticated ? 'dashboard' : 'entry';
+  });
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('processing');
   const [lastDonation, setLastDonation] = useState<any>(null);
   const [user, setUser] = useState<UserData>({
@@ -179,13 +187,16 @@ function AppContent() {
   };
 
   const handleForgotPasswordSubmit = async (email: string) => {
-    // For demo, just simulate a success after a delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // In a real app, you'd call api.authApi.forgotPassword(...)
+    const result = await forgotPassword(email);
     return {
-      success: true,
-      resetLink: `https://aram.org/reset-password?token=${Math.random().toString(36).substring(7)}`
+      success: result.success,
+      error: result.error,
+      // No reset link for production flow in temp password mode, but for UI compatibility we can pass something if needed, 
+      // or the UI handles success message. ForgotPassword.tsx expects { success, error, resetLink? }.
+      // Since we send a temp password, we don't return a link.
+      // But we should check ForgotPassword.tsx to see if it handles success without link correctly.
+      // Looking at line 40 of ForgotPassword.tsx: if (result.success) setSent(true); if (result.resetLink) setResetLink...
+      // So resetLink is optional. It will show "Check your email".
     };
   };
 
@@ -232,6 +243,19 @@ function AppContent() {
             onSubmit={handleForgotPasswordSubmit}
             onBack={() => setCurrentScreen('sign-in')}
           />
+        );
+      case 'reset-password':
+        const urlParams = new URLSearchParams(window.location.search);
+        return (
+            <ResetPassword
+                token={urlParams.get('token') || ''}
+                onBack={() => {
+                    // Clear query param
+                    window.history.replaceState({}, '', window.location.pathname);
+                    setCurrentScreen('sign-in');
+                }}
+                onReset={(pwd) => resetPassword(urlParams.get('token') || '', pwd)}
+            />
         );
 
       case 'donate-guest':
