@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2, X, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import { useApi } from '../context/ApiContext';
+import { toast } from '../components/ui/toast';
 
 type TabType = 'basic' | 'amount' | 'receipt' | 'form' | 'gateway' | 'accounting';
 
@@ -59,11 +60,12 @@ export function DonationCategories() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-
+  
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<DonationCategory | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('basic');
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState<Partial<DonationCategory>>({});
@@ -240,16 +242,25 @@ export function DonationCategories() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this donation category?')) return;
+  const handleDelete = (id: string) => {
+    setDeleteConfirmId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmId) return;
     
     try {
       setError(null);
-      const res = await apiFetch(`/donation-categories/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/donation-categories/${deleteConfirmId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error(await res.text());
       await fetchCategories();
+      toast.success('Donation category deleted successfully');
+      setDeleteConfirmId(null);
     } catch (e: unknown) {
-      setError((e as Error)?.message ?? 'Failed to delete category');
+      const errorMsg = (e as Error)?.message ?? 'Failed to delete category';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      setDeleteConfirmId(null);
     }
   };
 
@@ -1206,6 +1217,72 @@ export function DonationCategories() {
                 className="h-[44px] px-[18px] bg-[#F36A4F] text-white rounded-[999px] text-[16px] leading-[24px] font-medium hover:bg-[#D7563D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? 'Saving...' : editingCategory ? 'Update Category' : 'Add Category'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            zIndex: 1002,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+          onClick={() => setDeleteConfirmId(null)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '32px',
+              maxWidth: '400px',
+              width: '90%',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '12px' }}>
+              Delete Donation Category?
+            </h3>
+            <p style={{ color: '#666', marginBottom: '24px', fontSize: '14px' }}>
+              Are you sure you want to delete this donation category? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: 'white',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#dc2626',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                Delete
               </button>
             </div>
           </div>
