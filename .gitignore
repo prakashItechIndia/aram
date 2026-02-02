@@ -29,6 +29,9 @@ lerna-debug.log*
 .temp
 .tmp
 
+# API uploads (gallery, etc.)
+uploads/
+
 # Firebase service account credentials
 *firebase-adminsdk*.json
 *-firebase-adminsdk-*.json

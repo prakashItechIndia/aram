@@ -10,7 +10,7 @@ import {
  * Gallery albums – grouping of gallery images.
  */
 export const galleryAlbums = mssqlTable('gallery_albums', {
-  id: int('id').primaryKey(),
+  id: int('id').primaryKey().identity(),
   name: nvarchar('name', { length: 255 }).notNull(),
   coverImageUrl: nvarchar('cover_image_url', { length: 512 }),
   imageCount: int('image_count').notNull().default(0),

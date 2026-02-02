@@ -17,6 +17,7 @@ import {
   EChallansApi,
   EnquiriesApi,
   ExportLogApi,
+  GalleryAlbumsApi,
   GalleryApi,
   NotificationsApi,
   PaymentGatewayApi,
@@ -46,6 +47,7 @@ export interface AramApiClient {
   enquiriesApi: EnquiriesApi;
   communicationTemplatesApi: CommunicationTemplatesApi;
   galleryApi: GalleryApi;
+  galleryAlbumsApi: GalleryAlbumsApi;
   paymentGatewayApi: PaymentGatewayApi;
   reconciliationApi: ReconciliationApi;
   refundsApi: RefundsApi;
@@ -76,6 +78,7 @@ export function createAramApi(config: AramApiClientConfig): AramApiClient {
     enquiriesApi: new EnquiriesApi(configuration, basePath, axios),
     communicationTemplatesApi: new CommunicationTemplatesApi(configuration, basePath, axios),
     galleryApi: new GalleryApi(configuration, basePath, axios),
+    galleryAlbumsApi: new GalleryAlbumsApi(configuration, basePath, axios),
     paymentGatewayApi: new PaymentGatewayApi(configuration, basePath, axios),
     reconciliationApi: new ReconciliationApi(configuration, basePath, axios),
     refundsApi: new RefundsApi(configuration, basePath, axios),

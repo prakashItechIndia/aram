@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Users,
   Plus,
@@ -15,6 +15,7 @@ import {
   X,
   Image as ImageIcon,
 } from 'lucide-react';
+import { useApi } from '../context/ApiContext';
 
 interface Sponsor {
   id: string;
@@ -30,52 +31,33 @@ interface Sponsor {
   addedBy: string;
 }
 
-const mockSponsors: Sponsor[] = [
-  {
-    id: '1',
-    name: 'TCS',
-    logo: 'https://logo.clearbit.com/tcs.com',
-    website: 'https://www.tcs.com',
-    contributionType: 'Financial',
-    tier: 'Platinum',
-    displayOrder: 1,
-    active: true,
-    featured: true,
-    addedOn: '2025-12-15',
-    addedBy: 'Admin User',
-  },
-  {
-    id: '2',
-    name: 'Infosys Foundation',
-    logo: 'https://logo.clearbit.com/infosys.com',
-    website: 'https://www.infosys.com',
-    contributionType: 'Financial',
-    tier: 'Platinum',
-    displayOrder: 2,
-    active: true,
-    featured: true,
-    addedOn: '2025-11-20',
-    addedBy: 'Admin User',
-  },
-  {
-    id: '3',
-    name: 'Wipro Cares',
-    logo: 'https://logo.clearbit.com/wipro.com',
-    website: 'https://www.wipro.com',
-    contributionType: 'Strategic partner',
-    tier: 'Gold',
-    displayOrder: 3,
-    active: true,
-    featured: false,
-    addedOn: '2025-10-08',
-    addedBy: 'Content Editor',
-  },
-];
+function mapApiToSponsor(row: Record<string, unknown>): Sponsor {
+  const createdAt = row.createdAt as string | undefined;
+  const dateStr = createdAt ? new Date(createdAt).toISOString().slice(0, 10) : '';
+  return {
+    id: String(row.id ?? ''),
+    name: String(row.name ?? ''),
+    logo: String(row.logoUrl ?? ''),
+    website: String(row.websiteUrl ?? ''),
+    contributionType: (row.contributionType as Sponsor['contributionType']) ?? 'Financial',
+    tier: (row.tier as Sponsor['tier']) ?? 'Silver',
+    displayOrder: Number(row.displayOrder ?? 0),
+    active: Boolean(row.isActive !== false),
+    featured: Boolean(row.featured),
+    addedOn: dateStr,
+    addedBy: String(row.addedBy ?? ''),
+  };
+}
 
 const CONTRIBUTION_TYPES = ['Financial', 'In-kind', 'Service', 'Strategic partner'];
 const TIERS = ['Platinum', 'Gold', 'Silver', 'Bronze', 'Associate'];
 
 export function SponsorsScreen() {
+  const { api, apiFetch } = useApi();
+  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
   const [selectedSponsor, setSelectedSponsor] = useState<Sponsor | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -90,6 +72,26 @@ export function SponsorsScreen() {
   const [tier, setTier] = useState<Sponsor['tier']>('Silver');
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
+
+  const fetchSponsors = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await api.sponsorsApi.sponsorsControllerFindAll();
+      const data = (res as { data?: unknown }).data;
+      const list = Array.isArray(data) ? data : [];
+      setSponsors(list.map((row: Record<string, unknown>) => mapApiToSponsor(row)));
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? 'Failed to load sponsors');
+      setSponsors([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [api.sponsorsApi]);
+
+  useEffect(() => {
+    fetchSponsors();
+  }, [fetchSponsors]);
 
   const handleEdit = (sponsor: Sponsor) => {
     setSelectedSponsor(sponsor);
@@ -113,16 +115,31 @@ export function SponsorsScreen() {
     setShowEditor(true);
   };
 
-  const handleSave = () => {
-    console.log('Saving sponsor:', {
-      name: sponsorName,
-      website: sponsorWebsite,
-      contributionType,
-      tier,
-      active: isActive,
-      featured: isFeatured,
-    });
-    setShowEditor(false);
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const body = JSON.stringify({
+        name: sponsorName,
+        websiteUrl: sponsorWebsite || undefined,
+        contributionType,
+        tier,
+        isActive,
+        featured: isFeatured,
+      });
+      if (selectedSponsor) {
+        const res = await apiFetch(`/website/sponsors/${selectedSponsor.id}`, { method: 'PATCH', body });
+        if (!res.ok) throw new Error(await res.text());
+      } else {
+        const res = await apiFetch('/website/sponsors', { method: 'POST', body });
+        if (!res.ok) throw new Error(await res.text());
+      }
+      setShowEditor(false);
+      await fetchSponsors();
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? 'Failed to save sponsor');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = (sponsor: Sponsor) => {
@@ -130,11 +147,21 @@ export function SponsorsScreen() {
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    console.log('Deleting sponsor:', sponsorToDelete?.id, 'Reason:', deleteReason);
-    setShowDeleteModal(false);
-    setDeleteReason('');
-    setSponsorToDelete(null);
+  const confirmDelete = async () => {
+    if (!sponsorToDelete) return;
+    try {
+      setSaving(true);
+      const res = await apiFetch(`/website/sponsors/${sponsorToDelete.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(await res.text());
+      setShowDeleteModal(false);
+      setDeleteReason('');
+      setSponsorToDelete(null);
+      await fetchSponsors();
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? 'Failed to delete sponsor');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getTierColor = (tier: string) => {
@@ -188,31 +215,41 @@ export function SponsorsScreen() {
         </div>
       </div>
 
+      {error && (
+        <div className="mb-4 p-4 bg-[#FFEBEE] rounded-[12px] text-[14px] text-[#C62828]">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="py-12 text-center text-[14px] text-[#6E6E6E]">Loading sponsors...</div>
+      ) : (
+        <>
       {/* Summary Cards */}
       <div className="grid grid-cols-4 gap-[16px] mb-[24px]">
         <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
           <p className="text-[13px] text-[#6E6E6E] mb-1">Total Sponsors</p>
-          <p className="text-[24px] font-semibold text-[#0D0D0D]">{mockSponsors.length}</p>
+          <p className="text-[24px] font-semibold text-[#0D0D0D]">{sponsors.length}</p>
         </div>
 
         <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
           <p className="text-[13px] text-[#6E6E6E] mb-1">Active</p>
           <p className="text-[24px] font-semibold text-[#2E7D32]">
-            {mockSponsors.filter((s) => s.active).length}
+            {sponsors.filter((s) => s.active).length}
           </p>
         </div>
 
         <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
           <p className="text-[13px] text-[#6E6E6E] mb-1">Featured</p>
           <p className="text-[24px] font-semibold text-[#F57F17]">
-            {mockSponsors.filter((s) => s.featured).length}
+            {sponsors.filter((s) => s.featured).length}
           </p>
         </div>
 
         <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
           <p className="text-[13px] text-[#6E6E6E] mb-1">Platinum Tier</p>
           <p className="text-[24px] font-semibold text-[#424242]">
-            {mockSponsors.filter((s) => s.tier === 'Platinum').length}
+            {sponsors.filter((s) => s.tier === 'Platinum').length}
           </p>
         </div>
       </div>
@@ -289,7 +326,7 @@ export function SponsorsScreen() {
         </div>
 
         <div className="space-y-3">
-          {mockSponsors.map((sponsor) => (
+          {sponsors.map((sponsor) => (
             <div
               key={sponsor.id}
               className="flex items-center gap-4 p-[16px] bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB] hover:bg-white transition-colors"
@@ -564,6 +601,8 @@ export function SponsorsScreen() {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

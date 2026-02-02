@@ -1,23 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Image as ImageIcon,
-  Plus,
   Upload,
   Edit,
-  Trash2,
   Eye,
   EyeOff,
   Folder,
-  Tag,
   Search,
   Filter,
   Grid3x3,
   List,
   Download,
   X,
-  CheckCircle,
   FolderPlus,
 } from 'lucide-react';
+import { useApi, getApiBaseUrl } from '../context/ApiContext';
 
 interface GalleryImage {
   id: string;
@@ -43,81 +40,98 @@ interface Album {
   createdOn: string;
 }
 
-const mockImages: GalleryImage[] = [
-  {
-    id: '1',
-    title: 'Education Program Launch',
-    caption: 'Students receiving new learning materials',
-    altText: 'Children smiling with new books and notebooks',
-    photographer: 'John Doe',
-    tags: ['Education', '2026', 'Chennai'],
-    album: 'Education Programs',
-    visibility: 'Public',
-    uploadedOn: '2026-01-15',
-    uploadedBy: 'Content Editor',
-    thumbnail: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=300',
-    fileSize: '2.4 MB',
-  },
-  {
-    id: '2',
-    title: 'Health Camp - Rural Karnataka',
-    caption: 'Free health checkup camp in rural village',
-    altText: 'Doctor examining patients at health camp',
-    photographer: 'Jane Smith',
-    tags: ['Healthcare', '2026', 'Karnataka'],
-    album: 'Healthcare Initiatives',
-    visibility: 'Public',
-    uploadedOn: '2026-01-18',
-    uploadedBy: 'Admin User',
-    thumbnail: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=300',
-    fileSize: '3.1 MB',
-  },
-  {
-    id: '3',
-    title: 'Community Kitchen Initiative',
-    caption: 'Volunteers preparing meals for underprivileged',
-    altText: 'Volunteers cooking food in community kitchen',
-    photographer: 'Raj Kumar',
-    tags: ['Community', '2025', 'Mumbai'],
-    album: 'Community Programs',
-    visibility: 'Public',
-    uploadedOn: '2025-12-20',
-    uploadedBy: 'Content Editor',
-    thumbnail: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=300',
-    fileSize: '1.8 MB',
-  },
-];
+function mapApiToImage(row: Record<string, unknown>): GalleryImage {
+  const tagsJson = row.tagsJson as string | undefined;
+  let tags: string[] = [];
+  if (tagsJson) {
+    try {
+      const parsed = JSON.parse(tagsJson);
+      tags = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      /* ignore */
+    }
+  }
+  const createdAt = row.createdAt as string | undefined;
+  const dateStr = createdAt ? new Date(createdAt).toISOString().slice(0, 10) : '';
+  const albumId = row.albumId;
+  return {
+    id: String(row.id ?? ''),
+    title: String(row.title ?? ''),
+    caption: String(row.caption ?? ''),
+    altText: String(row.altText ?? ''),
+    photographer: String(row.photographer ?? ''),
+    tags,
+    album: albumId != null ? String(albumId) : '',
+    visibility: (row.visibility as GalleryImage['visibility']) ?? 'Public',
+    uploadedOn: dateStr,
+    uploadedBy: String(row.uploadedBy ?? ''),
+    thumbnail: String(row.thumbnailPath ?? row.imagePath ?? ''),
+    fileSize: String(row.fileSize ?? ''),
+  };
+}
 
-const mockAlbums: Album[] = [
-  {
-    id: '1',
-    name: 'Education Programs',
-    coverImage: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=300',
-    imageCount: 45,
-    visibility: 'Public',
-    createdOn: '2025-11-01',
-  },
-  {
-    id: '2',
-    name: 'Healthcare Initiatives',
-    coverImage: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=300',
-    imageCount: 32,
-    visibility: 'Public',
-    createdOn: '2025-10-15',
-  },
-  {
-    id: '3',
-    name: 'Community Programs',
-    coverImage: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=300',
-    imageCount: 28,
-    visibility: 'Public',
-    createdOn: '2025-09-20',
-  },
-];
+function mapApiToAlbum(row: Record<string, unknown>): Album {
+  const createdAt = row.createdAt as string | undefined;
+  const dateStr = createdAt ? new Date(createdAt).toISOString().slice(0, 10) : '';
+  return {
+    id: String(row.id ?? ''),
+    name: String(row.name ?? ''),
+    coverImage: String(row.coverImageUrl ?? ''),
+    imageCount: Number(row.imageCount ?? 0),
+    visibility: (row.visibility as Album['visibility']) ?? 'Public',
+    createdOn: dateStr,
+  };
+}
 
 const TAGS = ['Education', 'Healthcare', 'Community', 'Events', '2026', '2025', 'Chennai', 'Mumbai', 'Karnataka'];
 
+function galleryAssetUrl(path: string): string {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  const base = getApiBaseUrl();
+  const origin = base.replace(/\/api\/?$/, '');
+  return `${origin}${path.startsWith('/') ? path : `/${path}`}`;
+}
+
 export function GalleryScreen() {
+  const { api, apiFetch, user, logout } = useApi();
+  const [images, setImages] = useState<GalleryImage[]>([]);
+  const [albums, setAlbums] = useState<Album[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const fetchGallery = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const imgRes = await api.galleryApi.galleryControllerFindAll();
+      const imgData = (imgRes as { data?: unknown }).data;
+      const imgList = Array.isArray(imgData) ? imgData : [];
+      setImages(imgList.map((row: Record<string, unknown>) => mapApiToImage(row)));
+
+      const albumsApi = (api as { galleryAlbumsApi?: { galleryAlbumsControllerFindAll: () => Promise<unknown> } }).galleryAlbumsApi;
+      if (albumsApi?.galleryAlbumsControllerFindAll) {
+        const albRes = await albumsApi.galleryAlbumsControllerFindAll();
+        const albData = (albRes as { data?: unknown }).data;
+        const albList = Array.isArray(albData) ? albData : [];
+        setAlbums(albList.map((row: Record<string, unknown>) => mapApiToAlbum(row)));
+      } else {
+        setAlbums([]);
+      }
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? 'Failed to load gallery');
+      setImages([]);
+      setAlbums([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [api]);
+
+  useEffect(() => {
+    fetchGallery();
+  }, [fetchGallery]);
+
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
@@ -128,6 +142,14 @@ export function GalleryScreen() {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewImage, setPreviewImage] = useState<GalleryImage | null>(null);
+
+  // Upload modal state
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Editor state
   const [imageTitle, setImageTitle] = useState('');
@@ -150,34 +172,157 @@ export function GalleryScreen() {
     setShowEditor(true);
   };
 
-  const handleSave = () => {
-    console.log('Saving image:', {
-      title: imageTitle,
-      caption: imageCaption,
-      altText: imageAltText,
-      photographer: imagePhotographer,
-      tags: imageTags,
-      album: imageAlbum,
-      visibility: imageVisibility,
-    });
-    setShowEditor(false);
+  const handleSave = async () => {
+    if (!selectedImage) return;
+    try {
+      setSaving(true);
+      const body = JSON.stringify({
+        title: imageTitle,
+        caption: imageCaption || undefined,
+        altText: imageAltText || undefined,
+        photographer: imagePhotographer || undefined,
+        tagsJson: JSON.stringify(imageTags),
+        visibility: imageVisibility,
+        ...(imageAlbum ? { albumId: Number(imageAlbum) } : {}),
+      });
+      const res = await apiFetch(`/website/gallery/${selectedImage.id}`, { method: 'PATCH', body });
+      if (!res.ok) throw new Error(await res.text());
+      setShowEditor(false);
+      await fetchGallery();
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? 'Failed to save image');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleBulkDelete = () => {
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    console.log('Deleting images:', selectedImages, 'Reason:', deleteReason);
-    setShowDeleteModal(false);
-    setDeleteReason('');
-    setSelectedImages([]);
+  const confirmDelete = async () => {
+    try {
+      setSaving(true);
+      for (const id of selectedImages) {
+        const res = await apiFetch(`/website/gallery/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error(await res.text());
+      }
+      setShowDeleteModal(false);
+      setDeleteReason('');
+      setSelectedImages([]);
+      await fetchGallery();
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? 'Failed to delete images');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const toggleImageSelection = (id: string) => {
     setSelectedImages((prev) =>
       prev.includes(id) ? prev.filter((imgId) => imgId !== id) : [...prev, id]
     );
+  };
+
+  const handlePreview = (image: GalleryImage) => {
+    setPreviewImage(image);
+    setShowPreview(true);
+  };
+
+  const handleDownload = (image: GalleryImage) => {
+    try {
+      const baseUrl = getApiBaseUrl();
+      const downloadUrl = `${baseUrl}/website/gallery/${image.id}/download`;
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = image.title || 'image';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? 'Failed to download image');
+    }
+  };
+
+  const handleUploadFilesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    const imageFiles = files.filter(
+      (f) => f.type === 'image/jpeg' || f.type === 'image/png' || f.type === 'image/webp'
+    );
+    setUploadFiles((prev) => [...prev, ...imageFiles]);
+    e.target.value = '';
+  };
+
+  const removeUploadFile = (index: number) => {
+    setUploadFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUploadProcess = async () => {
+    if (uploadFiles.length === 0) {
+      setUploadError('Select at least one image');
+      return;
+    }
+    const token = user?.accessToken;
+    if (!token) {
+      setUploadError('Not logged in');
+      return;
+    }
+    const baseUrl = getApiBaseUrl();
+    setUploading(true);
+    setUploadError(null);
+    try {
+      for (const file of uploadFiles) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const uploadRes = await fetch(`${baseUrl}/website/gallery/upload`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        if (!uploadRes.ok) {
+          if (uploadRes.status === 401) {
+            logout();
+            setUploadError('Session expired. Please log in again.');
+            setUploading(false);
+            return;
+          }
+          const errText = await uploadRes.text();
+          throw new Error(errText || `Upload failed for ${file.name}`);
+        }
+        const { imagePath, thumbnailPath } = (await uploadRes.json()) as {
+          imagePath: string;
+          thumbnailPath?: string;
+        };
+        const title = file.name.replace(/\.[^.]+$/, '') || file.name;
+        const createRes = await apiFetch('/website/gallery', {
+          method: 'POST',
+          body: JSON.stringify({
+            title,
+            imagePath,
+            thumbnailPath: thumbnailPath ?? imagePath,
+            visibility: 'Public',
+          }),
+        });
+        if (!createRes.ok) {
+          if (createRes.status === 401) {
+            logout();
+            setUploadError('Session expired. Please log in again.');
+            setUploading(false);
+            return;
+          }
+          throw new Error(await createRes.text());
+        }
+      }
+      setUploadFiles([]);
+      setShowUpload(false);
+      await fetchGallery();
+    } catch (e: unknown) {
+      setUploadError((e as Error)?.message ?? 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -222,28 +367,38 @@ export function GalleryScreen() {
         </div>
       </div>
 
+      {error && (
+        <div className="mb-4 p-4 bg-[#FFEBEE] rounded-[12px] text-[14px] text-[#C62828]">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="py-12 text-center text-[14px] text-[#6E6E6E]">Loading gallery...</div>
+      ) : (
+        <>
       {/* Summary Cards */}
       <div className="grid grid-cols-4 gap-[16px] mb-[24px]">
         <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
           <p className="text-[13px] text-[#6E6E6E] mb-1">Total Images</p>
-          <p className="text-[24px] font-semibold text-[#0D0D0D]">{mockImages.length}</p>
+          <p className="text-[24px] font-semibold text-[#0D0D0D]">{images.length}</p>
         </div>
 
         <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
           <p className="text-[13px] text-[#6E6E6E] mb-1">Albums</p>
-          <p className="text-[24px] font-semibold text-[#0D0D0D]">{mockAlbums.length}</p>
+          <p className="text-[24px] font-semibold text-[#0D0D0D]">{albums.length}</p>
         </div>
 
         <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
           <p className="text-[13px] text-[#6E6E6E] mb-1">Public Images</p>
           <p className="text-[24px] font-semibold text-[#2E7D32]">
-            {mockImages.filter((img) => img.visibility === 'Public').length}
+            {images.filter((img) => img.visibility === 'Public').length}
           </p>
         </div>
 
         <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
           <p className="text-[13px] text-[#6E6E6E] mb-1">Storage Used</p>
-          <p className="text-[24px] font-semibold text-[#0D0D0D]">245 MB</p>
+          <p className="text-[24px] font-semibold text-[#0D0D0D]">—</p>
         </div>
       </div>
 
@@ -262,7 +417,7 @@ export function GalleryScreen() {
               <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">Album</label>
               <select className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]">
                 <option>All Albums</option>
-                {mockAlbums.map((album) => (
+                {albums.map((album) => (
                   <option key={album.id}>{album.name}</option>
                 ))}
               </select>
@@ -355,7 +510,7 @@ export function GalleryScreen() {
       <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[24px]">
         {viewMode === 'grid' ? (
           <div className="grid grid-cols-4 gap-[16px]">
-            {mockImages.map((image) => (
+            {images.map((image) => (
               <div
                 key={image.id}
                 className="relative group cursor-pointer rounded-[12px] overflow-hidden border border-[#DBDBDB] hover:border-[#F36A4F] transition-colors"
@@ -368,9 +523,10 @@ export function GalleryScreen() {
                 />
 
                 <img
-                  src={image.thumbnail}
+                  src={galleryAssetUrl(image.thumbnail)}
                   alt={image.altText}
-                  className="w-full h-48 object-cover"
+                  className="w-full h-48 object-cover cursor-pointer"
+                  onClick={() => handlePreview(image)}
                 />
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-[12px]">
@@ -386,7 +542,13 @@ export function GalleryScreen() {
                       <Edit className="w-3 h-3" />
                       Edit
                     </button>
-                    <button className="flex items-center gap-1 text-[11px] text-white hover:text-[#F36A4F]">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownload(image);
+                      }}
+                      className="flex items-center gap-1 text-[11px] text-white hover:text-[#F36A4F]"
+                    >
                       <Download className="w-3 h-3" />
                       Download
                     </button>
@@ -408,7 +570,7 @@ export function GalleryScreen() {
           </div>
         ) : (
           <div className="space-y-2">
-            {mockImages.map((image) => (
+            {images.map((image) => (
               <div
                 key={image.id}
                 className="flex items-center gap-4 p-[12px] rounded-[12px] border border-[#DBDBDB] hover:bg-[#F8F8F8]"
@@ -421,9 +583,10 @@ export function GalleryScreen() {
                 />
 
                 <img
-                  src={image.thumbnail}
+                  src={galleryAssetUrl(image.thumbnail)}
                   alt={image.altText}
-                  className="w-16 h-16 object-cover rounded-[8px]"
+                  className="w-16 h-16 object-cover rounded-[8px] cursor-pointer"
+                  onClick={() => handlePreview(image)}
                 />
 
                 <div className="flex-1">
@@ -453,8 +616,16 @@ export function GalleryScreen() {
                     <EyeOff className="w-4 h-4 text-[#6E6E6E]" />
                   )}
                   <button
+                    onClick={() => handleDownload(image)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
+                    title="Download"
+                  >
+                    <Download className="w-4 h-4 text-[#3D3D3D]" />
+                  </button>
+                  <button
                     onClick={() => handleEdit(image)}
                     className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
+                    title="Edit"
                   >
                     <Edit className="w-4 h-4 text-[#3D3D3D]" />
                   </button>
@@ -464,15 +635,29 @@ export function GalleryScreen() {
           </div>
         )}
       </div>
+        </>
+      )}
 
       {/* Upload Modal */}
       {showUpload && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-[24px]">
           <div className="bg-white rounded-[16px] w-full max-w-[720px]">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              className="hidden"
+              onChange={handleUploadFilesSelect}
+            />
             <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
               <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Upload Images</h3>
               <button
-                onClick={() => setShowUpload(false)}
+                onClick={() => {
+                  setShowUpload(false);
+                  setUploadFiles([]);
+                  setUploadError(null);
+                }}
                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
               >
                 <X className="w-5 h-5 text-[#3D3D3D]" />
@@ -480,7 +665,18 @@ export function GalleryScreen() {
             </div>
 
             <div className="p-[24px]">
-              <div className="border-2 border-dashed border-[#DBDBDB] rounded-[12px] p-[48px] text-center hover:border-[#F36A4F] hover:bg-[#FEF1EE] transition-colors cursor-pointer">
+              {uploadError && (
+                <div className="mb-4 p-3 bg-[#FFEBEE] rounded-[12px] text-[13px] text-[#C62828]">
+                  {uploadError}
+                </div>
+              )}
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => fileInputRef.current?.click()}
+                onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
+                className="border-2 border-dashed border-[#DBDBDB] rounded-[12px] p-[48px] text-center hover:border-[#F36A4F] hover:bg-[#FEF1EE] transition-colors cursor-pointer"
+              >
                 <Upload className="w-12 h-12 text-[#6E6E6E] mx-auto mb-4" />
                 <p className="text-[16px] font-semibold text-[#0D0D0D] mb-2">
                   Drag & drop images here
@@ -488,10 +684,43 @@ export function GalleryScreen() {
                 <p className="text-[13px] text-[#6E6E6E] mb-4">
                   or click to browse (JPG, PNG, WebP - Max 10MB each)
                 </p>
-                <button className="h-[44px] px-[20px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-white text-[14px] font-medium">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                  className="h-[44px] px-[20px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-white text-[14px] font-medium"
+                >
                   Select Files
                 </button>
               </div>
+
+              {uploadFiles.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-[13px] font-medium text-[#3D3D3D] mb-2">
+                    Selected: {uploadFiles.length} file(s)
+                  </p>
+                  <ul className="space-y-2 max-h-32 overflow-auto">
+                    {uploadFiles.map((file: File, i: number) => (
+                      <li
+                        key={`${file.name}-${i}`}
+                        className="flex items-center justify-between py-2 px-3 bg-[#F8F8F8] rounded-[8px] text-[13px] text-[#0D0D0D]"
+                      >
+                        <span className="truncate flex-1">{file.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeUploadFile(i)}
+                          className="ml-2 w-7 h-7 flex items-center justify-center rounded hover:bg-[#FFEBEE] text-[#C62828]"
+                          aria-label="Remove"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               <div className="mt-6 space-y-3">
                 <h4 className="text-[13px] font-semibold text-[#0D0D0D]">Processing Options</h4>
@@ -516,13 +745,21 @@ export function GalleryScreen() {
 
             <div className="p-[24px] border-t border-[#DBDBDB] flex justify-end gap-3">
               <button
-                onClick={() => setShowUpload(false)}
+                onClick={() => {
+                  setShowUpload(false);
+                  setUploadFiles([]);
+                  setUploadError(null);
+                }}
                 className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
               >
                 Cancel
               </button>
-              <button className="h-[44px] px-[20px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-white text-[14px] font-medium">
-                Upload & Process
+              <button
+                onClick={handleUploadProcess}
+                disabled={uploading || uploadFiles.length === 0}
+                className="h-[44px] px-[20px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] disabled:opacity-50 disabled:cursor-not-allowed text-white text-[14px] font-medium"
+              >
+                {uploading ? 'Uploading…' : 'Upload & Process'}
               </button>
             </div>
           </div>
@@ -547,7 +784,7 @@ export function GalleryScreen() {
               <div className="grid grid-cols-2 gap-[24px]">
                 <div>
                   <img
-                    src={selectedImage.thumbnail}
+                    src={galleryAssetUrl(selectedImage.thumbnail)}
                     alt={selectedImage.altText}
                     className="w-full rounded-[12px] border border-[#DBDBDB]"
                   />
@@ -618,8 +855,9 @@ export function GalleryScreen() {
                       onChange={(e) => setImageAlbum(e.target.value)}
                       className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
                     >
-                      {mockAlbums.map((album) => (
-                        <option key={album.id}>{album.name}</option>
+                      <option value="">No album</option>
+                      {albums.map((album) => (
+                        <option key={album.id} value={album.id}>{album.name}</option>
                       ))}
                     </select>
                   </div>
@@ -721,14 +959,14 @@ export function GalleryScreen() {
             </div>
 
             <div className="p-[24px] space-y-3">
-              {mockAlbums.map((album) => (
+              {albums.map((album) => (
                 <div
                   key={album.id}
                   className="p-[16px] bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB] hover:bg-white transition-colors"
                 >
                   <div className="flex items-start gap-4">
                     <img
-                      src={album.coverImage}
+                      src={galleryAssetUrl(album.coverImage)}
                       alt={album.name}
                       className="w-20 h-20 object-cover rounded-[8px]"
                     />
@@ -798,6 +1036,83 @@ export function GalleryScreen() {
               >
                 Confirm Delete
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {showPreview && previewImage && (
+        <div 
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[70] p-[24px]"
+          onClick={() => setShowPreview(false)}
+        >
+          <button
+            onClick={() => setShowPreview(false)}
+            className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          <div className="max-w-[90vw] max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={galleryAssetUrl(previewImage.thumbnail)}
+              alt={previewImage.altText}
+              className="max-w-full max-h-[calc(90vh-120px)] object-contain rounded-[12px]"
+            />
+            
+            <div className="bg-white/10 backdrop-blur-md rounded-[12px] p-[16px] mt-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h3 className="text-[16px] font-semibold text-white mb-1">
+                    {previewImage.title}
+                  </h3>
+                  {previewImage.caption && (
+                    <p className="text-[13px] text-white/80 mb-2">{previewImage.caption}</p>
+                  )}
+                  <div className="flex items-center gap-3 text-[12px] text-white/70">
+                    {previewImage.photographer && <span>Photo by {previewImage.photographer}</span>}
+                    {previewImage.uploadedOn && <span>•</span>}
+                    {previewImage.uploadedOn && <span>{previewImage.uploadedOn}</span>}
+                  </div>
+                  {previewImage.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {previewImage.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-2 py-0.5 bg-white/20 text-[11px] text-white rounded"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownload(previewImage);
+                    }}
+                    className="h-[36px] px-[16px] rounded-full bg-white/20 hover:bg-white/30 text-white text-[13px] font-medium flex items-center gap-2 transition-colors"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowPreview(false);
+                      handleEdit(previewImage);
+                    }}
+                    className="h-[36px] px-[16px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-white text-[13px] font-medium flex items-center gap-2 transition-colors"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Edit
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

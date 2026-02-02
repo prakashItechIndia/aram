@@ -13,7 +13,7 @@ import {
  * Bulk, Status Workflow, Reprint & Reissue, Audit, Search Defaults.
  */
 export const receiptSettings = mssqlTable('receipt_settings', {
-  id: int('id').primaryKey(),
+  id: int('id').primaryKey().identity(),
   configJson: nvarchar('config_json', { length: 'max' }),
   // Numbering & Series
   receiptPrefix: nvarchar('receipt_prefix', { length: 64 }),

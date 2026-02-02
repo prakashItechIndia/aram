@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Plus, Edit, Trash2, X, Check, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, Edit, Trash2, X, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import { useApi } from '../context/ApiContext';
 
 type TabType = 'basic' | 'amount' | 'receipt' | 'form' | 'gateway' | 'accounting';
 
@@ -53,116 +54,11 @@ interface DonationCategory {
 }
 
 export function DonationCategories() {
-  const [categories, setCategories] = useState<DonationCategory[]>([
-    {
-      id: '1',
-      name: 'Education Support',
-      description: 'Support for education programs and scholarships',
-      typeCode: 'ARAM_EDU',
-      status: 'active',
-      visibleOnForm: true,
-      sortOrder: 1,
-      tagLabel: 'Most Needed',
-      highlighted: true,
-      isDefault: true,
-      presetAmounts: [500, 1000, 2500, 5000],
-      minAmount: 100,
-      maxAmount: 100000,
-      allowCustomAmount: true,
-      recurringAllowed: true,
-      recurringDefaultChecked: false,
-      receiptEnabled: true,
-      eligible80G: true,
-      template80G: 'template_80g',
-      templateNon80G: 'template_non_80g',
-      autoEmailReceipt: true,
-      autoSMSReceipt: true,
-      receiptDescription: 'Donation towards Education Support Fund',
-      panRule: 'threshold',
-      panThreshold: 2000,
-      addressRequired: false,
-      mobileRequired: true,
-      showPurposeField: true,
-      allowAnonymous: false,
-      allowedGateways: ['razorpay', 'paytm'],
-      allowedPaymentMethods: ['upi', 'cards', 'netbanking', 'wallet'],
-      internationalAllowed: false,
-      accountingHead: 'Donation Income - Education',
-      costCenter: 'Education Department',
-      taxCategory: '80G Eligible',
-      reportGrouping: 'Education',
-    },
-    {
-      id: '2',
-      name: 'Medical & Healthcare',
-      description: 'Support medical treatment and healthcare facilities',
-      typeCode: 'ARAM_MED',
-      status: 'active',
-      visibleOnForm: true,
-      sortOrder: 2,
-      tagLabel: 'Urgent',
-      highlighted: false,
-      isDefault: false,
-      presetAmounts: [1000, 2500, 5000, 10000],
-      minAmount: 500,
-      allowCustomAmount: true,
-      recurringAllowed: true,
-      recurringDefaultChecked: false,
-      receiptEnabled: true,
-      eligible80G: true,
-      template80G: 'template_80g',
-      templateNon80G: 'template_non_80g',
-      autoEmailReceipt: true,
-      autoSMSReceipt: false,
-      receiptDescription: 'Donation towards Medical & Healthcare Fund',
-      panRule: 'always',
-      addressRequired: true,
-      mobileRequired: true,
-      showPurposeField: true,
-      allowAnonymous: false,
-      allowedGateways: ['razorpay', 'paytm'],
-      allowedPaymentMethods: ['upi', 'cards', 'netbanking', 'wallet'],
-      internationalAllowed: false,
-      accountingHead: 'Donation Income - Medical',
-      costCenter: 'Healthcare Department',
-      taxCategory: '80G Eligible',
-      reportGrouping: 'Health & Medical',
-    },
-    {
-      id: '3',
-      name: 'Infrastructure Development',
-      description: 'Building and facility development projects',
-      typeCode: 'ARAM_BUILD',
-      status: 'active',
-      visibleOnForm: true,
-      sortOrder: 3,
-      highlighted: false,
-      isDefault: false,
-      presetAmounts: [5000, 10000, 25000, 50000],
-      minAmount: 5000,
-      allowCustomAmount: true,
-      recurringAllowed: false,
-      recurringDefaultChecked: false,
-      receiptEnabled: true,
-      eligible80G: false,
-      templateNon80G: 'template_non_80g',
-      autoEmailReceipt: true,
-      autoSMSReceipt: false,
-      receiptDescription: 'Donation towards Infrastructure Development',
-      panRule: 'always',
-      addressRequired: true,
-      mobileRequired: true,
-      showPurposeField: false,
-      allowAnonymous: false,
-      allowedGateways: ['razorpay', 'paytm'],
-      allowedPaymentMethods: ['cards', 'netbanking'],
-      internationalAllowed: false,
-      accountingHead: 'Capital Receipts - Infrastructure',
-      costCenter: 'Infrastructure Department',
-      taxCategory: 'Non 80G',
-      reportGrouping: 'Infrastructure',
-    },
-  ]);
+  const { api, apiFetch } = useApi();
+  const [categories, setCategories] = useState<DonationCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<DonationCategory | null>(null);
@@ -171,6 +67,63 @@ export function DonationCategories() {
 
   // Form state
   const [formData, setFormData] = useState<Partial<DonationCategory>>({});
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await api.donationCategoriesApi.donationCategoriesControllerFindAll('false');
+      const data = (res as { data?: unknown }).data;
+      const list = Array.isArray(data) ? data : [];
+      setCategories(list.map((row: any) => ({
+        id: String(row.id),
+        name: row.name || '',
+        description: row.description || '',
+        typeCode: row.typeCode || '',
+        status: row.status || 'active',
+        visibleOnForm: row.visibleOnForm ?? true,
+        sortOrder: row.sortOrder || 0,
+        tagLabel: row.tagLabel,
+        highlighted: row.highlighted ?? false,
+        isDefault: row.isDefault ?? false,
+        presetAmounts: row.presetAmounts || [],
+        minAmount: row.minAmount,
+        maxAmount: row.maxAmount,
+        allowCustomAmount: row.allowCustomAmount ?? true,
+        recurringAllowed: row.recurringAllowed ?? false,
+        recurringDefaultChecked: row.recurringDefaultChecked ?? false,
+        receiptEnabled: row.receiptEnabled ?? true,
+        eligible80G: row.eligible80G ?? false,
+        template80G: row.template80G,
+        templateNon80G: row.templateNon80G,
+        autoEmailReceipt: row.autoEmailReceipt ?? false,
+        autoSMSReceipt: row.autoSMSReceipt ?? false,
+        receiptDescription: row.receiptDescription,
+        panRule: row.panRule || 'optional',
+        panThreshold: row.panThreshold,
+        addressRequired: row.addressRequired ?? false,
+        mobileRequired: row.mobileRequired ?? true,
+        showPurposeField: row.showPurposeField ?? true,
+        allowAnonymous: row.allowAnonymous ?? false,
+        allowedGateways: row.allowedGateways || [],
+        allowedPaymentMethods: row.allowedPaymentMethods || [],
+        internationalAllowed: row.internationalAllowed ?? false,
+        accountingHead: row.accountingHead,
+        costCenter: row.costCenter,
+        taxCategory: row.taxCategory,
+        reportGrouping: row.reportGrouping,
+      })));
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? 'Failed to load donation categories');
+      setCategories([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [api]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   const tabs = [
     { id: 'basic', label: 'Basic Info' },
@@ -218,30 +171,111 @@ export function DonationCategories() {
     setShowModal(true);
   };
 
-  const handleSave = () => {
-    if (editingCategory) {
-      setCategories(categories.map(cat => 
-        cat.id === editingCategory.id ? { ...formData as DonationCategory, id: editingCategory.id } : cat
-      ));
-    } else {
-      setCategories([...categories, { ...formData as DonationCategory, id: Date.now().toString() }]);
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        typeCode: formData.typeCode,
+        status: formData.status,
+        visibleOnForm: formData.visibleOnForm,
+        sortOrder: formData.sortOrder,
+        tagLabel: formData.tagLabel,
+        highlighted: formData.highlighted,
+        isDefault: formData.isDefault,
+        presetAmounts: formData.presetAmounts,
+        minAmount: formData.minAmount,
+        maxAmount: formData.maxAmount,
+        allowCustomAmount: formData.allowCustomAmount,
+        recurringAllowed: formData.recurringAllowed,
+        recurringDefaultChecked: formData.recurringDefaultChecked,
+        receiptEnabled: formData.receiptEnabled,
+        eligible80G: formData.eligible80G,
+        template80G: formData.template80G,
+        templateNon80G: formData.templateNon80G,
+        autoEmailReceipt: formData.autoEmailReceipt,
+        autoSMSReceipt: formData.autoSMSReceipt,
+        receiptDescription: formData.receiptDescription,
+        panRule: formData.panRule,
+        panThreshold: formData.panThreshold,
+        addressRequired: formData.addressRequired,
+        mobileRequired: formData.mobileRequired,
+        showPurposeField: formData.showPurposeField,
+        allowAnonymous: formData.allowAnonymous,
+        allowedGateways: formData.allowedGateways,
+        allowedPaymentMethods: formData.allowedPaymentMethods,
+        internationalAllowed: formData.internationalAllowed,
+        accountingHead: formData.accountingHead,
+        costCenter: formData.costCenter,
+        taxCategory: formData.taxCategory,
+        reportGrouping: formData.reportGrouping,
+      };
+
+      if (editingCategory) {
+        // Update existing
+        const res = await apiFetch(`/donation-categories/${editingCategory.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(await res.text());
+      } else {
+        // Create new
+        const res = await apiFetch('/donation-categories', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(await res.text());
+      }
+
+      await fetchCategories();
+      setShowModal(false);
+      setFormData({});
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? 'Failed to save category');
+    } finally {
+      setSaving(false);
     }
-    setShowModal(false);
-    setFormData({});
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this donation category?')) {
-      setCategories(categories.filter(cat => cat.id !== id));
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this donation category?')) return;
+    
+    try {
+      setError(null);
+      const res = await apiFetch(`/donation-categories/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(await res.text());
+      await fetchCategories();
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? 'Failed to delete category');
     }
   };
 
-  const updateFormData = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const updateFormData = (field: string, value: unknown) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
     <div className="flex flex-col gap-[24px]">
+      {/* Error Message */}
+      {error && (
+        <div className="p-[16px] bg-[#FFEBEE] border border-[#FFCDD2] rounded-[12px] flex items-start gap-[12px]">
+          <AlertCircle className="w-5 h-5 text-[#C62828] flex-shrink-0 mt-[2px]" />
+          <div className="flex-1">
+            <p className="text-[14px] font-medium text-[#C62828]">Error</p>
+            <p className="text-[13px] text-[#C62828] mt-[4px]">{error}</p>
+          </div>
+          <button
+            onClick={() => setError(null)}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#FFCDD2] transition-colors"
+          >
+            <X className="w-4 h-4 text-[#C62828]" />
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -261,9 +295,22 @@ export function DonationCategories() {
         </button>
       </div>
 
+      {/* Loading State */}
+      {loading ? (
+        <div className="py-12 text-center">
+          <p className="text-[16px] text-[#6E6E6E]">Loading donation categories...</p>
+        </div>
+      ) : (
+        <>
       {/* Categories List */}
       <div className="space-y-[16px]">
-        {categories.map((category) => (
+        {categories.length === 0 ? (
+          <div className="py-12 text-center bg-white rounded-[16px] border border-[#DBDBDB]">
+            <p className="text-[16px] text-[#6E6E6E]">No donation categories found.</p>
+            <p className="text-[14px] text-[#6E6E6E] mt-2">Click "Add Category" to create your first category.</p>
+          </div>
+        ) : (
+          categories.map((category) => (
           <div
             key={category.id}
             className="bg-white border border-[#DBDBDB] rounded-[16px] overflow-hidden"
@@ -480,8 +527,11 @@ export function DonationCategories() {
               </div>
             )}
           </div>
-        ))}
+          ))
+        )}
       </div>
+        </>
+      )}
 
       {/* Add/Edit Modal */}
       {showModal && (
@@ -999,7 +1049,7 @@ export function DonationCategories() {
                               'allowedGateways',
                               e.target.checked
                                 ? [...current, 'razorpay']
-                                : current.filter((g) => g !== 'razorpay')
+                                : current.filter((g: string) => g !== 'razorpay')
                             );
                           }}
                           className="w-[20px] h-[20px] rounded-[4px] border-2 border-[#DBDBDB] checked:bg-[#F36A4F] checked:border-[#F36A4F]"
@@ -1017,7 +1067,7 @@ export function DonationCategories() {
                               'allowedGateways',
                               e.target.checked
                                 ? [...current, 'paytm']
-                                : current.filter((g) => g !== 'paytm')
+                                : current.filter((g: string) => g !== 'paytm')
                             );
                           }}
                           className="w-[20px] h-[20px] rounded-[4px] border-2 border-[#DBDBDB] checked:bg-[#F36A4F] checked:border-[#F36A4F]"
@@ -1043,7 +1093,7 @@ export function DonationCategories() {
                                 'allowedPaymentMethods',
                                 e.target.checked
                                   ? [...current, method]
-                                  : current.filter((m) => m !== method)
+                                  : current.filter((m: string) => m !== method)
                               );
                             }}
                             className="w-[20px] h-[20px] rounded-[4px] border-2 border-[#DBDBDB] checked:bg-[#F36A4F] checked:border-[#F36A4F]"
@@ -1152,10 +1202,10 @@ export function DonationCategories() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={!formData.name || !formData.typeCode || !formData.description}
+                disabled={saving || !formData.name || !formData.typeCode || !formData.description}
                 className="h-[44px] px-[18px] bg-[#F36A4F] text-white rounded-[999px] text-[16px] leading-[24px] font-medium hover:bg-[#D7563D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {editingCategory ? 'Update Category' : 'Add Category'}
+                {saving ? 'Saving...' : editingCategory ? 'Update Category' : 'Add Category'}
               </button>
             </div>
           </div>
