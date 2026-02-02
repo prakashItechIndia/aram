@@ -43,7 +43,7 @@ export class DonationFormSettingsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update donation form settings (creates new version)' })
   updateSettings(@Body() dto: UpdateDonationFormSettingsDto, @Request() req: any) {
-    const userId = req.user?.sub;
+    const userId = req.user?.userId;
     return this.service.updateSettings(dto, userId);
   }
 
@@ -55,7 +55,7 @@ export class DonationFormSettingsController {
     @Param('versionId', ParseIntPipe) versionId: number,
     @Request() req: any,
   ) {
-    const userId = req.user?.sub;
+    const userId = req.user?.userId;
     return this.service.rollbackToVersion(versionId, userId);
   }
 }

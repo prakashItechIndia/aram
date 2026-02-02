@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { AramButton } from '@/app/components/aram/AramButton';
-import { AramCard } from '@/app/components/aram/AramCard';
-import { AramInput } from '@/app/components/aram/AramInput';
-import { AramTextarea } from '@/app/components/aram/AramTextarea';
-import { AramSelect } from '@/app/components/aram/AramSelect';
+import { toast } from 'sonner';
+import { AramButton } from '../aram/AramButton';
+import { AramCard } from '../aram/AramCard';
+import { AramInput } from '../aram/AramInput';
+import { AramTextarea } from '../aram/AramTextarea';
+import { AramSelect } from '../aram/AramSelect';
 import { ArrowLeft } from 'lucide-react';
-
+import { validateForm as globalValidateForm, validationRules, validationMessages, sanitizeInput, countryPhoneConfigs, getMobileValidation } from '../../utils/validations';
 interface DonateGuestProps {
   onPay: (data: any) => void;
   onBack: () => void;
@@ -42,37 +43,98 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
   const [country, setCountry] = useState('india');
   const [errors, setErrors] = useState<any>({});
   const [submitting, setSubmitting] = useState(false);
-  const [repeatGuestError, setRepeatGuestError] = useState<string | null>(null);
+
+  // Erase mobile number when country changes
+  React.useEffect(() => {
+    setMobile('');
+    setErrors((prev: any) => ({ ...prev, mobile: undefined }));
+  }, [country]);
+
+  const handleMobileChange = (value: string) => {
+    const sanitized = sanitizeInput.mobile(value, country);
+    setMobile(sanitized);
+
+    if (!sanitized) {
+      setErrors((prev: any) => ({ ...prev, mobile: undefined }));
+      return;
+    }
+
+    const config = countryPhoneConfigs[country] || countryPhoneConfigs.india;
+
+    // Check first digit for India
+    if (country === 'india' && sanitized.length > 0) {
+      const firstDigit = parseInt(sanitized[0]);
+      if (firstDigit < 6 || firstDigit > 9) {
+        setErrors((prev: any) => ({ ...prev, mobile: 'Mobile number should start from 6, 7, 8, 9' }));
+        return;
+      }
+    }
+
+    // Check length
+    if (sanitized.length < config.maxLength) {
+      setErrors((prev: any) => ({ ...prev, mobile: `Please enter ${config.maxLength} digits` }));
+    } else {
+      setErrors((prev: any) => ({ ...prev, mobile: undefined }));
+    }
+  };
 
   const amount = selectedPreset || Number(customAmount) || 0;
   const MIN_AMOUNT = 100;
   const MAX_AMOUNT = 50000;
 
-  const validateForm = () => {
-    const newErrors: any = {};
+  const validateForm = (): boolean => {
+    const formData = {
+      name,
+      email,
+      mobile,
+      address,
+      panNumber,
+      amount: amount.toString(),
+      donationType,
+      country,
+    };
 
-    if (!name.trim()) newErrors.name = 'Name is required';
-    if (!email.trim()) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Invalid email format';
-    if (!mobile.trim()) newErrors.mobile = 'Mobile number is required';
-    else if (!/^\d{10}$/.test(mobile)) newErrors.mobile = 'Mobile must be 10 digits';
-    if (!address.trim()) newErrors.address = 'Address is required';
-    if (amount < MIN_AMOUNT) newErrors.amount = `Minimum donation amount is ₹${MIN_AMOUNT}`;
-    if (amount > MAX_AMOUNT) newErrors.amount = `Maximum donation amount is ₹${MAX_AMOUNT}`;
-    if (!panNumber.trim()) newErrors.panNumber = 'PAN number is required';
-    else if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panNumber.toUpperCase())) {
-      newErrors.panNumber = 'Invalid PAN format (e.g., AAAAA0000A)';
-    }
-    if (!donationType) newErrors.donationType = 'Please select a donation type';
-    if (!country) newErrors.country = 'Country is required';
+    const fieldRules = {
+      name: validationRules.name,
+      email: validationRules.email,
+      mobile: getMobileValidation(country),
+      address: validationRules.address,
+      panNumber: validationRules.panNumber,
+      amount: validationRules.amount,
+      donationType: { required: true },
+      country: { required: true },
+    };
 
+    const fieldMessages = {
+      name: validationMessages.name,
+      email: validationMessages.email,
+      mobile: validationMessages.mobile,
+      address: validationMessages.address,
+      panNumber: validationMessages.panNumber,
+      amount: validationMessages.amount,
+      donationType: { required: 'Please select a donation type' },
+      country: { required: 'Country is required' },
+    };
+
+    const newErrors = globalValidateForm(formData, fieldRules, fieldMessages);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handlePay = async () => {
-    setRepeatGuestError(null);
     if (!validateForm()) return;
+
+    console.log('Overall donation details:', {
+      name,
+      email,
+      mobile,
+      address,
+      amount,
+      panNumber: panNumber.toUpperCase(),
+      donationType,
+      country,
+    });
+
     if (api?.donorsApi) {
       setSubmitting(true);
       try {
@@ -86,6 +148,9 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
           amount,
           donationType,
         });
+        // Show success toast with name
+        toast.success(`Temporary password has been sent to ${name.trim()}`);
+        
         onPay({
           name,
           email,
@@ -99,10 +164,10 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
       } catch (err: unknown) {
         const res = (err as { response?: { status?: number; data?: { message?: string } } })?.response;
         if (res?.status === 409) {
-          setRepeatGuestError('You have donated before. Please use Login to Donate.');
+          toast.error(res.data?.message || 'User already exists. Please Login.');
           return;
         }
-        setRepeatGuestError((res?.data?.message as string) || 'Something went wrong. Please try again.');
+        toast.error((res?.data?.message as string) || 'Something went wrong. Please try again.');
       } finally {
         setSubmitting(false);
       }
@@ -157,12 +222,12 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
           {/* Personal Information */}
           <div className="flex flex-col gap-[16px]">
             <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#0D0D0D' }}>Personal Information</h3>
-            
+
             <AramInput
               label="Name"
               placeholder="Enter your full name"
               value={name}
-              onChange={setName}
+              onChange={(value: string) => setName(sanitizeInput.name(value))}
               required
               error={errors.name}
             />
@@ -173,7 +238,7 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
                 type="email"
                 placeholder="Enter your email"
                 value={email}
-                onChange={setEmail}
+                onChange={(value) => setEmail(sanitizeInput.email(value))}
                 required
                 error={errors.email}
               />
@@ -181,11 +246,12 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
               <AramInput
                 label="Mobile Number"
                 type="tel"
-                placeholder="10-digit mobile number"
+                placeholder={countryPhoneConfigs[country]?.maxLength === 10 ? '10-digit mobile number' : '11-digit mobile number'}
                 value={mobile}
-                onChange={setMobile}
+                onChange={handleMobileChange}
                 required
                 error={errors.mobile}
+                prefix={countryPhoneConfigs[country]?.prefix}
               />
             </div>
 
@@ -217,11 +283,10 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
                       setSelectedPreset(preset);
                       setCustomAmount('');
                     }}
-                    className={`h-[44px] px-[24px] rounded-[999px] border transition-colors ${
-                      selectedPreset === preset
-                        ? 'border-[#F36A4F] bg-[#FEF1EE] text-[#F36A4F]'
-                        : 'border-[#DBDBDB] bg-white text-[#3D3D3D] hover:border-[#F36A4F]'
-                    }`}
+                    className={`h-[44px] px-[24px] rounded-[999px] border transition-colors ${selectedPreset === preset
+                      ? 'border-[#F36A4F] bg-[#FEF1EE] text-[#F36A4F]'
+                      : 'border-[#DBDBDB] bg-white text-[#3D3D3D] hover:border-[#F36A4F]'
+                      }`}
                     style={{ fontSize: '14px', fontWeight: 600 }}
                   >
                     ₹{preset}
@@ -246,7 +311,7 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
                 label="PAN Number"
                 placeholder="AAAAA0000A"
                 value={panNumber}
-                onChange={(val) => setPanNumber(val.toUpperCase())}
+                onChange={(value: string) => setPanNumber(sanitizeInput.panNumber(value))}
                 required
                 error={errors.panNumber}
                 helperText="Format: AAAAA0000A"
@@ -273,12 +338,7 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
             />
           </div>
 
-          {/* Repeat guest error */}
-          {repeatGuestError && (
-            <div className="p-[16px] bg-red-50 border border-red-200 rounded-[16px] text-red-700 text-sm" role="alert">
-              {repeatGuestError}
-            </div>
-          )}
+
 
           {/* Info Message */}
           <div className="flex flex-col gap-[8px] p-[16px] bg-[#FEF1EE] rounded-[16px] border border-[#FCD9D3]">
@@ -292,10 +352,10 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
 
           {/* Action Buttons */}
           <div className="flex gap-[12px]">
-            <AramButton onClick={handlePay} variant="primary" className="flex-1" disabled={amount < MIN_AMOUNT || submitting}>
+            <AramButton onClick={handlePay} variant="primary" className="flex-1 cursor-pointer" disabled={amount < MIN_AMOUNT || submitting}>
               {submitting ? 'Please wait...' : `Pay ₹${amount.toLocaleString()}`}
             </AramButton>
-            <AramButton onClick={handleReset} variant="secondary">
+            <AramButton onClick={handleReset} variant="secondary" className="cursor-pointer">
               Reset
             </AramButton>
           </div>

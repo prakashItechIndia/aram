@@ -5,9 +5,15 @@
     "declaration": true,
     "declarationMap": true,
     "outDir": "lib",
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "types": [
       "react",
       "node"
