@@ -14,7 +14,7 @@ import {
  * User Stories: DAS-008 (profile/notifications), NOT-003 (birthday & memorial).
  */
 export const donors = mssqlTable('donors', {
-  id: int('id').primaryKey(),
+  id: int('id').primaryKey().identity(),
   name: nvarchar('name', { length: 255 }).notNull(),
   email: nvarchar('email', { length: 255 }).notNull(),
   mobile: nvarchar('mobile', { length: 20 }),

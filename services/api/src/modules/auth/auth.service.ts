@@ -47,6 +47,19 @@ export class AuthService {
     const { password, ...result } = user;
     return { id: result.id, email: result.eMail, name: result.name, userType: result.userType };
   }
+  async getProfile(userId: number) {
+    if (!this.db) return null;
+    const rows = await this.db.select().from(tUser).where(eq(tUser.id, userId));
+    const user = rows[0];
+    if (!user) return null;
+    const { password, ...result } = user;
+    return {
+      ...result,
+      userId: result.id,
+      email: result.eMail, // Normalize for frontend
+      mobileNumber: result.mobileNumber,
+    };
+  }
 
   async login(loginDto: LoginDto) {
     const user = await this.validateUser(loginDto.email, loginDto.password);

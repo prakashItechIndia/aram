@@ -43,13 +43,26 @@ interface UserData {
   name: string;
   email: string;
   phone: string;
+  address?: string;
   isLoggedIn: boolean;
 }
 
 import { ResetPassword } from './components/screens/ResetPassword';
 
 function AppContent() {
-  const { api, login: apiLogin, register: apiRegister, logout: apiLogout, isAuthenticated, forgotPassword, resetPassword, fetchUnreadNotificationsCount, processDonation } = useApi();
+  const { 
+    api, 
+    user: authUser, 
+    isAuthenticated, 
+    login: apiLogin, 
+    register: apiRegister, 
+    logout: apiLogout, 
+    forgotPassword, 
+    resetPassword, 
+    fetchUnreadNotificationsCount, 
+    refreshNotifications,
+    processDonation 
+  } = useApi();
   const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
     // Check for reset password token in URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -58,40 +71,56 @@ function AppContent() {
   });
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('processing');
   const [lastDonation, setLastDonation] = useState<any>(null);
-  const [user, setUser] = useState<UserData>({
-    name: '',
-    email: '',
-    phone: '',
-    isLoggedIn: false,
-  });
-  const [notificationCount, setNotificationCount] = useState(0);
+  const [user, setUser] = useState<UserData>(() => ({
+    id: authUser?.id,
+    name: authUser?.name ?? '',
+    email: authUser?.email ?? '',
+    phone: authUser?.phone ?? '',
+    address: authUser?.address ?? '',
+    isLoggedIn: isAuthenticated,
+  }));
 
-  // After reload: restore session from token and fetch profile so dashboard shows user name
+  // Sync local user state whenever authUser from context changes (e.g. after profile fetch in login)
   useEffect(() => {
-    if (!isAuthenticated || user.isLoggedIn) return;
+    if (authUser) {
+      setUser({
+        id: authUser.id,
+        name: authUser.name ?? '',
+        email: authUser.email ?? '',
+        phone: authUser.phone ?? '',
+        address: authUser.address ?? '',
+        isLoggedIn: true,
+      });
+    }
+  }, [authUser]);
+
+  // After reload: ensure profile is fetched if details (like name) are missing
+  useEffect(() => {
+    if (!isAuthenticated || (user.isLoggedIn && user.name)) return;
     api.authApi
       .authControllerGetProfile()
       .then((profileRes: unknown) => {
-        const profile = (profileRes as { data?: { id?: number; name?: string; email?: string; mobileNumber?: string } })?.data;
-        setUser({
+        const profile = (profileRes as { data?: { id?: number; name?: string; email?: string; mobileNumber?: string; location?: string } })?.data;
+        setUser((prev: UserData) => ({
+          ...prev,
           id: profile?.id,
-          name: profile?.name ?? '',
-          email: profile?.email ?? '',
-          phone: profile?.mobileNumber ?? '',
+          name: profile?.name ?? prev.name,
+          email: profile?.email ?? prev.email,
+          phone: profile?.mobileNumber ?? prev.phone,
+          address: profile?.location ?? prev.address,
           isLoggedIn: true,
-        });
+        }));
         
-        // Fetch persistent notification count
+        // Refresh notification count via context
         if (profile?.id) {
-          fetchUnreadNotificationsCount(profile.id).then((count: number) => {
-            setNotificationCount(count);
-          });
+          refreshNotifications();
         }
       })
-      .catch(() => {
+      .catch((err: Error) => {
+        console.error('Profile fetch failed:', err);
         setUser((prev) => ({ ...prev, isLoggedIn: true }));
       });
-  }, [isAuthenticated, user.isLoggedIn, api.authApi, fetchUnreadNotificationsCount]);
+  }, [isAuthenticated, user.isLoggedIn, user.name, api.authApi, fetchUnreadNotificationsCount]);
 
   const handleLoginToDonate = () => {
     setCurrentScreen('sign-in');
@@ -171,19 +200,22 @@ function AppContent() {
         setPaymentStatus('success');
         toast.success('Payment successful!');
         
-        // Trigger real persistence and notification
-        processDonation({
-          amount: donationData.amount,
-          address: donationData.address,
-          donationType: donationData.donationType,
-          name: donationData.name,
-          pan: donationData.panNumber,
-          country: donationData.country,
-        }).then((res: { success: boolean }) => {
-           if (res.success && user.id) {
-             fetchUnreadNotificationsCount(user.id).then(setNotificationCount);
-           }
-        });
+        // Trigger real persistence and notification (only for logged-in users)
+        // Guest donations are already handled in the guest-donate API call
+        if (user.isLoggedIn) {
+          processDonation({
+            amount: donationData.amount,
+            address: donationData.address,
+            donationType: donationData.donationType,
+            name: donationData.name,
+            pan: donationData.panNumber,
+            country: donationData.country,
+          }).then((res: { success: boolean }) => {
+             if (res.success) {
+               refreshNotifications();
+             }
+          });
+        }
       } else {
         setPaymentStatus('failed');
         toast.error('Payment failed. Please try again.');
@@ -208,7 +240,7 @@ function AppContent() {
 
   const handleUpdatePassword = (data: any) => {
     toast.success('Password updated successfully!');
-    setNotificationCount((prev: number) => prev + 1);
+    refreshNotifications();
   };
 
   const handleForgotPasswordSubmit = async (email: string) => {
@@ -281,8 +313,8 @@ function AppContent() {
                 }}
                 onReset={async (pwd) => {
                     const res = await resetPassword(urlParams.get('token') || '', pwd);
-                    if (res.success && user?.id) {
-                        fetchUnreadNotificationsCount(user.id).then(setNotificationCount);
+                    if (res.success) {
+                        refreshNotifications();
                     }
                     return res;
                 }}
@@ -314,9 +346,7 @@ function AppContent() {
             <PortalHeader
               currentPage="dashboard"
               onNavigate={handleNavigate}
-              userName={user.name}
               onLogout={handleLogout}
-              notificationCount={notificationCount}
             />
             <main className="max-w-[1392px] mx-auto p-[24px]">
               <Dashboard onDonateNow={handleDonateNow} userName={user.name} />
@@ -330,9 +360,7 @@ function AppContent() {
             <PortalHeader
               currentPage="donate"
               onNavigate={handleNavigate}
-              userName={user.name}
               onLogout={handleLogout}
-              notificationCount={notificationCount}
             />
             <main className="max-w-[1392px] mx-auto p-[24px]">
               <DonateLoggedIn
@@ -352,9 +380,7 @@ function AppContent() {
             <PortalHeader
               currentPage="reports"
               onNavigate={handleNavigate}
-              userName={user.name}
               onLogout={handleLogout}
-              notificationCount={notificationCount}
             />
             <main className="max-w-[1392px] mx-auto p-[24px]">
               <Reports />
@@ -368,9 +394,7 @@ function AppContent() {
             <PortalHeader
               currentPage="profile"
               onNavigate={handleNavigate}
-              userName={user.name}
               onLogout={handleLogout}
-              notificationCount={notificationCount}
             />
             <main className="max-w-[1392px] mx-auto p-[24px]">
               <Profile

@@ -123,6 +123,18 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
 
   const handlePay = async () => {
     if (!validateForm()) return;
+
+    console.log('Overall donation details:', {
+      name,
+      email,
+      mobile,
+      address,
+      amount,
+      panNumber: panNumber.toUpperCase(),
+      donationType,
+      country,
+    });
+
     if (api?.donorsApi) {
       setSubmitting(true);
       try {
