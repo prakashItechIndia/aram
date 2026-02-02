@@ -336,7 +336,7 @@ function AppContent() {
   };
 
   return (
-    <div className="w-[1440px] min-h-[900px] mx-auto bg-white">
+    <div className="w-full min-h-screen bg-white">
       {renderScreen()}
       <Toaster position="top-right" richColors />
     </div>

@@ -80,7 +80,7 @@ export function ForgotPassword({ onSubmit, onBack }: ForgotPasswordProps) {
     }
 
     return (
-        <div className="min-h-screen bg-[#F3F3F3] flex items-center justify-center p-4">
+        <div className="min-h-screen w-full bg-[#F3F3F3] flex items-center justify-center ">
             <AramCard className="w-full max-w-[480px]">
                 <button
                     onClick={onBack}
