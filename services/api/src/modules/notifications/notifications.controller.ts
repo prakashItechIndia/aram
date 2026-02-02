@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 
@@ -10,6 +10,11 @@ export class NotificationsController {
   @Get()
   findAll() {
     return this.service.findAll();
+  }
+
+  @Post()
+  create(@Body() data: { userId?: number; type: string; title: string; message: string }) {
+    return this.service.create(data);
   }
 
   @Get(':id')

@@ -48,6 +48,7 @@ type ApiContextValue = {
   forgotPassword: (email: string) => Promise<{ success: boolean; error?: string; message?: string }>;
   resetPassword: (token: string, password: string) => Promise<{ success: boolean; error?: string }>;
   fetchUnreadNotificationsCount: (userId: number) => Promise<number>;
+  createNotification: (data: { userId?: number; type: string; title: string; message: string }) => Promise<{ success: boolean; error?: string }>;
 };
 
 const ApiContext = createContext<ApiContextValue | null>(null);
@@ -205,6 +206,23 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const createNotification = useCallback(async (data: { userId?: number; type: string; title: string; message: string }) => {
+    try {
+        const baseUrl = getApiBaseUrl();
+        const res = await fetch(`${baseUrl}/notifications`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+        if (!res.ok) throw new Error('Failed to create notification');
+        return { success: true };
+    } catch (err: unknown) {
+        return { success: false, error: (err as Error).message };
+    }
+  }, []);
+
   const value: ApiContextValue = useMemo(
     () => ({
       api,
@@ -217,8 +235,9 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       forgotPassword,
       resetPassword,
       fetchUnreadNotificationsCount,
+      createNotification,
     }),
-    [api, user, login, register, logout, setUser, forgotPassword, resetPassword, fetchUnreadNotificationsCount],
+    [api, user, login, register, logout, setUser, forgotPassword, resetPassword, fetchUnreadNotificationsCount, createNotification],
   );
 
   return <ApiContext.Provider value={value}>{children}</ApiContext.Provider>;

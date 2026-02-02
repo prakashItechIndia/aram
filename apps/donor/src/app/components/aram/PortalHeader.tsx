@@ -12,12 +12,6 @@ interface PortalHeaderProps {
 export function PortalHeader({ currentPage, onNavigate, userName, onLogout, notificationCount = 0 }: PortalHeaderProps) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  // Assuming setNotificationCount is intended to be a state setter for a local notification count,
-  // and the instruction implies adding this state.
-  // If notificationCount is meant to be controlled by props, this state would be redundant or incorrect.
-  // For now, I'm adding it as a local state to fulfill the instruction's mention of setNotificationCount.
-  const [localNotificationCount, setLocalNotificationCount] = useState(notificationCount);
-
 
   return (
     <header 
@@ -71,17 +65,14 @@ export function PortalHeader({ currentPage, onNavigate, userName, onLogout, noti
         {/* Notifications */}
         <button 
           className="w-[40px] h-[40px] rounded-full flex items-center justify-center hover:bg-[#F3F3F3] transition-colors relative"
-          // Added an onClick handler to demonstrate the setNotificationCount usage
-          onClick={() => setLocalNotificationCount((prev: number) => prev + 1)}
         >
           <Bell size={18} color="#6E6E6E" />
-          {/* Using localNotificationCount for the display, assuming it's now managed internally */}
-          {localNotificationCount > 0 && (
+          {notificationCount > 0 && (
             <span 
               className="absolute top-[4px] right-[4px] min-w-[18px] h-[18px] px-[4px] bg-[#F36A4F] rounded-full flex items-center justify-center text-white"
               style={{ fontSize: '10px', fontWeight: 700, border: '2px solid white' }}
             >
-              {localNotificationCount}
+              {notificationCount}
             </span>
           )}
         </button>
