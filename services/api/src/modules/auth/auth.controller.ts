@@ -12,7 +12,7 @@ import { AdminGuard } from './guards/admin.guard';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   @Post('login')
   @ApiOperation({ summary: 'Login user (donor portal)' })
@@ -30,8 +30,9 @@ export class AuthController {
   @Get('profile')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user profile' })
-  getProfile(@Request() req) {
-    return req.user;
+  async getProfile(@Request() req) {
+    const user = await this.authService.findUserById(req.user.userId);
+    return user;
   }
 
   // ——— Admin portal only (T_USER with User_Type Admin / Super Admin) ———

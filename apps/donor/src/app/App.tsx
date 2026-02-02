@@ -4,6 +4,7 @@ import { createQueryClient } from '@aram/shared';
 import { toast, Toaster } from 'sonner';
 
 // Screens
+import { generateReceiptPDF } from '@/app/utils/pdfGenerator';
 import { EntryPage } from '@/app/components/screens/EntryPage';
 import { CreateAccount } from '@/app/components/screens/CreateAccount';
 import { SignIn } from '@/app/components/screens/SignIn';
@@ -20,7 +21,7 @@ import { ApiProvider, useApi } from '@/app/context/ApiContext';
 
 const queryClient = createQueryClient();
 
-type Screen = 
+type Screen =
   | 'entry'
   | 'create-account'
   | 'sign-in'
@@ -36,9 +37,12 @@ type Screen =
 type PaymentStatus = 'processing' | 'success' | 'failed';
 
 interface UserData {
+  id?: number;
   name: string;
   email: string;
   phone: string;
+  pan?: string;
+  address?: string;
   isLoggedIn: boolean;
 }
 
@@ -53,6 +57,7 @@ function AppContent() {
     phone: '',
     isLoggedIn: false,
   });
+  const [intendedRedirect, setIntendedRedirect] = useState<Screen | null>(null);
 
   // After reload: restore session from token and fetch profile so dashboard shows user name
   useEffect(() => {
@@ -60,11 +65,14 @@ function AppContent() {
     api.authApi
       .authControllerGetProfile()
       .then((profileRes: unknown) => {
-        const profile = (profileRes as { data?: { name?: string; email?: string } })?.data;
+        const profile = (profileRes as { data?: { id?: number; name?: string; email?: string; mobileNumber?: string; pan?: string; address?: string } })?.data;
         setUser({
+          id: profile?.id,
           name: profile?.name ?? '',
           email: profile?.email ?? '',
-          phone: '',
+          phone: profile?.mobileNumber ?? '',
+          pan: profile?.pan,
+          address: profile?.address,
           isLoggedIn: true,
         });
       })
@@ -74,7 +82,12 @@ function AppContent() {
   }, [isAuthenticated, user.isLoggedIn, api.authApi]);
 
   const handleLoginToDonate = () => {
-    setCurrentScreen('sign-in');
+    if (isAuthenticated) {
+      setCurrentScreen('donate');
+    } else {
+      setIntendedRedirect('donate');
+      setCurrentScreen('sign-in');
+    }
   };
 
   const handleGuestDonate = () => {
@@ -106,18 +119,22 @@ function AppContent() {
     if (result.success) {
       try {
         const profileRes = await api.authApi.authControllerGetProfile();
-        const profile = (profileRes as { data?: { name?: string; email?: string } })?.data;
+        const profile = (profileRes as { data?: { id?: number; name?: string; email?: string; mobileNumber?: string; pan?: string; address?: string } })?.data;
         setUser({
+          id: profile?.id,
           name: profile?.name ?? email.split('@')[0],
           email: profile?.email ?? email,
-          phone: '',
+          phone: profile?.mobileNumber ?? '',
+          pan: profile?.pan,
+          address: profile?.address,
           isLoggedIn: true,
         });
       } catch {
         setUser({ name: email.split('@')[0], email, phone: '', isLoggedIn: true });
       }
       toast.success('Signed in successfully!');
-      setCurrentScreen('dashboard');
+      setCurrentScreen(intendedRedirect || 'dashboard');
+      setIntendedRedirect(null);
     } else {
       toast.error(result.error ?? 'Sign in failed');
     }
@@ -179,9 +196,10 @@ function AppContent() {
   // When authenticated (e.g. after reload), show dashboard not entry
   useEffect(() => {
     if (isAuthenticated && (currentScreen === 'entry' || currentScreen === 'sign-in' || currentScreen === 'create-account')) {
-      setCurrentScreen('dashboard');
+      setCurrentScreen(intendedRedirect || 'dashboard');
+      setIntendedRedirect(null);
     }
-  }, [isAuthenticated, currentScreen]);
+  }, [isAuthenticated, currentScreen, intendedRedirect]);
 
   // Render current screen
   const renderScreen = () => {
@@ -224,7 +242,26 @@ function AppContent() {
               type: lastDonation.donationType,
               receiptNo: lastDonation.receiptNo,
             } : undefined}
-            onDownloadReceipt={() => toast.info('Downloading receipt...')}
+            onDownloadReceipt={() => {
+              if (lastDonation) {
+                generateReceiptPDF(
+                  {
+                    receiptNo: lastDonation.receiptNo,
+                    date: new Date().toISOString().split('T')[0],
+                    eligible80G: true, // Assuming true for now, logically checks donation type
+                    type: lastDonation.donationType || lastDonation.type,
+                    amount: lastDonation.amount,
+                  },
+                  {
+                    name: lastDonation.name || user.name,
+                    email: lastDonation.email || user.email,
+                    phone: lastDonation.phone || lastDonation.mobile || user.phone,
+                    pan: lastDonation.panNumber || lastDonation.pan || user.pan,
+                    address: lastDonation.address || user.address,
+                  }
+                );
+              }
+            }}
             onGoToDashboard={() => setCurrentScreen(user.isLoggedIn ? 'dashboard' : 'entry')}
             onTryAgain={() => setCurrentScreen(user.isLoggedIn ? 'donate' : 'donate-guest')}
           />
@@ -241,7 +278,7 @@ function AppContent() {
               onLogout={handleLogout}
             />
             <main className="max-w-[1392px] mx-auto p-[24px]">
-              <Dashboard onDonateNow={handleDonateNow} userName={user.name} />
+              <Dashboard onDonateNow={handleDonateNow} userName={user.name} user={user} />
             </main>
           </div>
         );
@@ -277,7 +314,7 @@ function AppContent() {
               onLogout={handleLogout}
             />
             <main className="max-w-[1392px] mx-auto p-[24px]">
-              <Reports />
+              <Reports user={user} />
             </main>
           </div>
         );
