@@ -6,6 +6,7 @@ import { donors } from '../../database/models/donors.model';
 import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';
 import * as schema from '../../database/schema';
 import type { CreateGuestDonorDto } from './dto/create-guest-donor.dto';
+import { EmailService } from '../email/email.service';
 
 /** User_Type value for donor/portal users (T_USER). */
 const DONOR_USER_TYPE = 'Standard User';
@@ -27,7 +28,10 @@ function mapTUserToDonor(row: typeof tUser.$inferSelect) {
 
 @Injectable()
 export class DonorsService {
-  constructor(@Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>) {}
+  constructor(
+    @Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>,
+    private emailService: EmailService,
+  ) {}
 
   /** List users from T_USER where User_Type = Standard User (donors). */
   async findAll() {
@@ -75,9 +79,24 @@ export class DonorsService {
     const existingByPan = await this.findByPan(normalizedPan);
     if (existingByPan) {
       throw new ConflictException(
-        'You have donated before. Please use Login to Donate.',
+        'You have donated before with this PAN. Please use Login to Donate.',
       );
     }
+    
+    // Check Mobile
+    const mobile = dto.mobile.trim();
+    const existingByMobile = await this.db
+      .select()
+      .top(1)
+      .from(tUser)
+      .where(eq(tUser.mobileNumber, mobile));
+    
+    if (existingByMobile[0]) {
+       throw new ConflictException(
+        'An account with this mobile number already exists. Please use Login to Donate.',
+      );
+    }
+
     const email = dto.email.trim().toLowerCase();
     const existingByEmail = await this.db
       .select()
@@ -108,11 +127,19 @@ export class DonorsService {
       if (!created) throw new Error('Failed to read created donor');
       return { donorId: created.id };
     } catch {
+      // Create new user in T_USER
+      // Generate temp pass
+      const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
+      let tempPass = '';
+      for (let i = 0; i < 10; ++i) tempPass += charset.charAt(Math.floor(Math.random() * charset.length));
+      
+      const hashedPassword = Buffer.from(tempPass).toString('base64');
+
       await this.db.insert(tUser).values({
         name: dto.name.trim(),
         userType: DONOR_USER_TYPE,
         userName: email.replace(/@.*/, '') || dto.name.trim().replace(/\s+/g, ''),
-        password: '',
+        password: hashedPassword,
         eMail: email,
         mobileNumber: dto.mobile.trim(),
         location: dto.address?.trim() ?? null,
@@ -120,6 +147,10 @@ export class DonorsService {
         createdBy: 1,
         createdDate: now,
       });
+
+      // Send email
+      await this.emailService.sendGuestWelcome(email, tempPass);
+
       const rows = await this.db.select().top(1).from(tUser).where(eq(tUser.eMail, email));
       const inserted = rows[0];
       return { donorId: inserted?.id ?? 0 };
