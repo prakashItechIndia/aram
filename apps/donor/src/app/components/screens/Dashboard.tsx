@@ -2,10 +2,19 @@ import React from 'react';
 import { AramButton } from '@/app/components/aram/AramButton';
 import { AramCard } from '@/app/components/aram/AramCard';
 import { Heart, Download, Calendar } from 'lucide-react';
+import { toast } from 'sonner';
+import { generateReceiptPDF } from '@/app/utils/pdfGenerator';
 
 interface DashboardProps {
   onDonateNow: () => void;
   userName: string;
+  user: {
+    name: string;
+    email: string;
+    phone: string;
+    pan?: string;
+    address?: string;
+  };
 }
 
 const mockDonations = [
@@ -19,11 +28,20 @@ const mockEvents = [
   { id: 2, title: 'Education Scholarship Drive', date: '2025-03-01', description: 'Help students achieve their dreams' },
 ];
 
-export function Dashboard({ onDonateNow, userName }: DashboardProps) {
+export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
   const totalDonated = mockDonations.reduce((sum, d) => sum + d.amount, 0);
   const donationCount = mockDonations.length;
   const lastDonation = mockDonations[0];
   const eligible80G = mockDonations.filter(d => d.eligible80G).reduce((sum, d) => sum + d.amount, 0);
+
+  const handleDownloadReceipt = (donation: any) => {
+    try {
+      generateReceiptPDF(donation, user);
+    } catch (error) {
+      console.error('PDF Generation Error:', error);
+      toast.error('Failed to generate PDF');
+    }
+  };
 
   return (
     <div className="flex flex-col gap-[24px]">
@@ -115,10 +133,10 @@ export function Dashboard({ onDonateNow, userName }: DashboardProps) {
                   <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.type}</td>
                   <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>₹{donation.amount.toLocaleString()}</td>
                   <td style={{ padding: '12px 16px' }}>
-                    <span style={{ 
-                      backgroundColor: '#FEF1EE', 
-                      color: '#F36A4F', 
-                      padding: '4px 12px', 
+                    <span style={{
+                      backgroundColor: '#FEF1EE',
+                      color: '#F36A4F',
+                      padding: '4px 12px',
                       borderRadius: '999px',
                       fontSize: '13px',
                       fontWeight: 500
@@ -127,7 +145,11 @@ export function Dashboard({ onDonateNow, userName }: DashboardProps) {
                     </span>
                   </td>
                   <td style={{ padding: '12px 16px' }}>
-                    <button className="flex items-center gap-[8px]" style={{ color: '#F36A4F' }}>
+                    <button
+                      onClick={() => handleDownloadReceipt(donation)}
+                      className="flex items-center gap-[8px] hover:opacity-80 transition-opacity"
+                      style={{ color: '#F36A4F' }}
+                    >
                       <Download size={16} />
                       <span style={{ fontSize: '14px' }}>Receipt</span>
                     </button>

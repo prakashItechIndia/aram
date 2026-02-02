@@ -4,6 +4,7 @@ import { createQueryClient } from '@aram/shared';
 import { toast, Toaster } from 'sonner';
 
 // Screens
+import { generateReceiptPDF } from '@/app/utils/pdfGenerator';
 import { EntryPage } from '@/app/components/screens/EntryPage';
 import { CreateAccount } from '@/app/components/screens/CreateAccount';
 import { SignIn } from '@/app/components/screens/SignIn';
@@ -50,18 +51,18 @@ interface UserData {
 import { ResetPassword } from './components/screens/ResetPassword';
 
 function AppContent() {
-  const { 
-    api, 
-    user: authUser, 
-    isAuthenticated, 
-    login: apiLogin, 
-    register: apiRegister, 
-    logout: apiLogout, 
-    forgotPassword, 
-    resetPassword, 
-    fetchUnreadNotificationsCount, 
+  const {
+    api,
+    user: authUser,
+    isAuthenticated,
+    login: apiLogin,
+    register: apiRegister,
+    logout: apiLogout,
+    forgotPassword,
+    resetPassword,
+    fetchUnreadNotificationsCount,
     refreshNotifications,
-    processDonation 
+    processDonation
   } = useApi();
   const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
     // Check for reset password token in URL
@@ -71,6 +72,7 @@ function AppContent() {
   });
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('processing');
   const [lastDonation, setLastDonation] = useState<any>(null);
+  const [intendedRedirect, setIntendedRedirect] = useState<Screen | null>(null);
   const [user, setUser] = useState<UserData>(() => ({
     id: authUser?.id,
     name: authUser?.name ?? '',
@@ -110,7 +112,7 @@ function AppContent() {
           address: profile?.location ?? prev.address,
           isLoggedIn: true,
         }));
-        
+
         // Refresh notification count via context
         if (profile?.id) {
           refreshNotifications();
@@ -123,7 +125,12 @@ function AppContent() {
   }, [isAuthenticated, user.isLoggedIn, user.name, api.authApi, fetchUnreadNotificationsCount]);
 
   const handleLoginToDonate = () => {
-    setCurrentScreen('sign-in');
+    if (isAuthenticated) {
+      setCurrentScreen('donate');
+    } else {
+      setIntendedRedirect('donate');
+      setCurrentScreen('sign-in');
+    }
   };
 
   const handleGuestDonate = () => {
@@ -155,18 +162,22 @@ function AppContent() {
     if (result.success) {
       try {
         const profileRes = await api.authApi.authControllerGetProfile();
-        const profile = (profileRes as { data?: { name?: string; email?: string } })?.data;
+        const profile = (profileRes as { data?: { id?: number; name?: string; email?: string; mobileNumber?: string; pan?: string; address?: string } })?.data;
         setUser({
+          id: profile?.id,
           name: profile?.name ?? email.split('@')[0],
           email: profile?.email ?? email,
-          phone: '',
+          phone: profile?.mobileNumber ?? '',
+          pan: profile?.pan,
+          address: profile?.address,
           isLoggedIn: true,
         });
       } catch {
         setUser({ name: email.split('@')[0], email, phone: '', isLoggedIn: true });
       }
       toast.success('Signed in successfully!');
-      setCurrentScreen('dashboard');
+      setCurrentScreen(intendedRedirect || 'dashboard');
+      setIntendedRedirect(null);
     } else {
       toast.error(result.error ?? 'Sign in failed');
     }
@@ -199,20 +210,23 @@ function AppContent() {
       if (success) {
         setPaymentStatus('success');
         toast.success('Payment successful!');
-        
-        // Trigger real persistence and notification
-        processDonation({
-          amount: donationData.amount,
-          address: donationData.address,
-          donationType: donationData.donationType,
-          name: donationData.name,
-          pan: donationData.panNumber,
-          country: donationData.country,
-        }).then((res: { success: boolean }) => {
-           if (res.success) {
-             refreshNotifications();
-           }
-        });
+
+        // Trigger real persistence and notification (only for logged-in users)
+        // Guest donations are already handled in the guest-donate API call
+        if (user.isLoggedIn) {
+          processDonation({
+            amount: donationData.amount,
+            address: donationData.address,
+            donationType: donationData.donationType,
+            name: donationData.name,
+            pan: donationData.panNumber,
+            country: donationData.country,
+          }).then((res: { success: boolean }) => {
+            if (res.success) {
+              refreshNotifications();
+            }
+          });
+        }
       } else {
         setPaymentStatus('failed');
         toast.error('Payment failed. Please try again.');
@@ -257,9 +271,10 @@ function AppContent() {
   // When authenticated (e.g. after reload), show dashboard not entry
   useEffect(() => {
     if (isAuthenticated && (currentScreen === 'entry' || currentScreen === 'sign-in' || currentScreen === 'create-account')) {
-      setCurrentScreen('dashboard');
+      setCurrentScreen(intendedRedirect || 'dashboard');
+      setIntendedRedirect(null);
     }
-  }, [isAuthenticated, currentScreen]);
+  }, [isAuthenticated, currentScreen, intendedRedirect]);
 
   // Render current screen
   const renderScreen = () => {
@@ -301,21 +316,21 @@ function AppContent() {
       case 'reset-password':
         const urlParams = new URLSearchParams(window.location.search);
         return (
-            <ResetPassword
-                token={urlParams.get('token') || ''}
-                onBack={() => {
-                    // Clear query param
-                    window.history.replaceState({}, '', window.location.pathname);
-                    setCurrentScreen('sign-in');
-                }}
-                onReset={async (pwd) => {
-                    const res = await resetPassword(urlParams.get('token') || '', pwd);
-                    if (res.success) {
-                        refreshNotifications();
-                    }
-                    return res;
-                }}
-            />
+          <ResetPassword
+            token={urlParams.get('token') || ''}
+            onBack={() => {
+              // Clear query param
+              window.history.replaceState({}, '', window.location.pathname);
+              setCurrentScreen('sign-in');
+            }}
+            onReset={async (pwd) => {
+              const res = await resetPassword(urlParams.get('token') || '', pwd);
+              if (res.success) {
+                refreshNotifications();
+              }
+              return res;
+            }}
+          />
         );
 
       case 'donate-guest':
@@ -330,7 +345,26 @@ function AppContent() {
               type: lastDonation.donationType,
               receiptNo: lastDonation.receiptNo,
             } : undefined}
-            onDownloadReceipt={() => toast.info('Downloading receipt...')}
+            onDownloadReceipt={() => {
+              if (lastDonation) {
+                generateReceiptPDF(
+                  {
+                    receiptNo: lastDonation.receiptNo,
+                    date: new Date().toISOString().split('T')[0],
+                    eligible80G: true, // Assuming true for now, logically checks donation type
+                    type: lastDonation.donationType || lastDonation.type,
+                    amount: lastDonation.amount,
+                  },
+                  {
+                    name: lastDonation.name || user.name,
+                    email: lastDonation.email || user.email,
+                    phone: lastDonation.phone || lastDonation.mobile || user.phone,
+                    pan: lastDonation.panNumber || lastDonation.pan || user.pan,
+                    address: lastDonation.address || user.address,
+                  }
+                );
+              }
+            }}
             onGoToDashboard={() => setCurrentScreen(user.isLoggedIn ? 'dashboard' : 'entry')}
             onTryAgain={() => setCurrentScreen(user.isLoggedIn ? 'donate' : 'donate-guest')}
           />
@@ -346,7 +380,7 @@ function AppContent() {
               onLogout={handleLogout}
             />
             <main className="max-w-[1392px] mx-auto p-[24px]">
-              <Dashboard onDonateNow={handleDonateNow} userName={user.name} />
+              <Dashboard onDonateNow={handleDonateNow} userName={user.name} user={user} />
             </main>
           </div>
         );
@@ -380,7 +414,7 @@ function AppContent() {
               onLogout={handleLogout}
             />
             <main className="max-w-[1392px] mx-auto p-[24px]">
-              <Reports />
+              <Reports user={user} />
             </main>
           </div>
         );

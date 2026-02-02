@@ -5,7 +5,7 @@
  * Cross-platform Node.js version (ES Module)
  */
 
-import { execSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -155,21 +155,39 @@ async function generateApiClient() {
     const configFile = path.join(__dirname, 'openapi.config.json');
 
     // Use npx to run openapi-generator-cli from node_modules
-    const openapiGeneratorCmd =
-      process.platform === 'win32'
-        ? 'npx --yes @openapitools/openapi-generator-cli'
-        : 'npx --yes @openapitools/openapi-generator-cli';
+    const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+    const args = [
+      '--yes',
+      '@openapitools/openapi-generator-cli',
+      'generate',
+      '-i',
+      openApiSource,
+      '--skip-validate-spec',
+      '--generator-name',
+      'typescript-axios',
+      '--output',
+      tempDir,
+      '--config',
+      configFile,
+    ];
 
-    const ignoreFile = path.join(__dirname, '.openapi-generator-ignore');
-    let ignoreArg = '';
     if (fs.existsSync(ignoreFile)) {
-      ignoreArg = ` --ignore-file-override "${ignoreFile}"`;
+      args.push('--ignore-file-override', ignoreFile);
     }
 
-    execSync(
-      `${openapiGeneratorCmd} generate -i "${openApiSource}" --skip-validate-spec --generator-name typescript-axios --output "${tempDir}" --config "${configFile}"${ignoreArg}`,
-      { stdio: 'inherit', cwd: __dirname, shell: true },
-    );
+    const result = spawnSync(npxCmd, args, {
+      stdio: 'inherit',
+      cwd: __dirname,
+      shell: false,
+    });
+
+    if (result.error) {
+      throw result.error;
+    }
+
+    if (result.status !== 0) {
+      throw new Error(`Process exited with status ${result.status}`);
+    }
 
     // Check if generation was successful
     const apiFile = path.join(tempDir, 'api.ts');
