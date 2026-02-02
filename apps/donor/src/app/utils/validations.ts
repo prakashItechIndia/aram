@@ -205,7 +205,7 @@ export const countryPhoneConfigs: Record<string, { prefix: string; pattern: RegE
   india: {
     prefix: '+91',
     pattern: /^[6-9]\d{9}$/,
-    message: 'India mobile must be 10 digits starting with 6-9',
+    message: 'Mobile must be exactly 10 digits',
     maxLength: 10,
   },
   usa: {

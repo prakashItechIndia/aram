@@ -8,10 +8,11 @@ import { validateForm as globalValidateForm, validationRules, validationMessages
 interface SignInProps {
   onSignIn: (email: string, password: string) => void | Promise<void>;
   onCreateAccount: () => void;
+  onForgotPassword: () => void;
   onBack: () => void;
 }
 
-export function SignIn({ onSignIn, onCreateAccount, onBack }: SignInProps) {
+export function SignIn({ onSignIn, onCreateAccount, onForgotPassword, onBack }: SignInProps) {
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -98,7 +99,12 @@ export function SignIn({ onSignIn, onCreateAccount, onBack }: SignInProps) {
             </div>
 
             <div className="text-right">
-              <button style={{ fontSize: '14px', lineHeight: '20px', color: '#F36A4F' }}>
+              <button
+                type="button"
+                onClick={onForgotPassword}
+                style={{ fontSize: '14px', lineHeight: '20px', color: '#F36A4F' }}
+                className="hover:underline"
+              >
                 Forgot password?
               </button>
             </div>

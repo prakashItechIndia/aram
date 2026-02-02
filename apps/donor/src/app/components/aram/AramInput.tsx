@@ -60,12 +60,12 @@ export function AramInput({
         />
       </div>
       {error && (
-        <span style={{ fontSize: '13px', lineHeight: '18px', color: '#F36A4F' }}>
+        <span style={{ fontSize: '12px', lineHeight: '16px', color: '#F36A4F' }}>
           {error}
         </span>
       )}
       {helperText && !error && (
-        <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E' }}>
+        <span style={{ fontSize: '12px', lineHeight: '16px', color: '#6E6E6E' }}>
           {helperText}
         </span>
       )}

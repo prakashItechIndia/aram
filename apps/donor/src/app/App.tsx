@@ -13,6 +13,7 @@ import { DonateGuest } from '@/app/components/screens/DonateGuest';
 import { PaymentProcessing } from '@/app/components/screens/PaymentProcessing';
 import { Reports } from '@/app/components/screens/Reports';
 import { Profile } from '@/app/components/screens/Profile';
+import { ForgotPassword } from '@/app/components/screens/ForgotPassword';
 
 // Components & context
 import { PortalHeader } from '@/app/components/aram/PortalHeader';
@@ -20,7 +21,7 @@ import { ApiProvider, useApi } from '@/app/context/ApiContext';
 
 const queryClient = createQueryClient();
 
-type Screen = 
+type Screen =
   | 'entry'
   | 'create-account'
   | 'sign-in'
@@ -31,7 +32,8 @@ type Screen =
   | 'payment-success'
   | 'payment-failed'
   | 'reports'
-  | 'profile';
+  | 'profile'
+  | 'forgot-password';
 
 type PaymentStatus = 'processing' | 'success' | 'failed';
 
@@ -176,6 +178,17 @@ function AppContent() {
     toast.success('Password updated successfully!');
   };
 
+  const handleForgotPasswordSubmit = async (email: string) => {
+    // For demo, just simulate a success after a delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // In a real app, you'd call api.authApi.forgotPassword(...)
+    return {
+      success: true,
+      resetLink: `https://aram.org/reset-password?token=${Math.random().toString(36).substring(7)}`
+    };
+  };
+
   // When authenticated (e.g. after reload), show dashboard not entry
   useEffect(() => {
     if (isAuthenticated && (currentScreen === 'entry' || currentScreen === 'sign-in' || currentScreen === 'create-account')) {
@@ -208,7 +221,16 @@ function AppContent() {
           <SignIn
             onSignIn={handleSignIn}
             onCreateAccount={() => setCurrentScreen('create-account')}
+            onForgotPassword={() => setCurrentScreen('forgot-password')}
             onBack={() => setCurrentScreen('entry')}
+          />
+        );
+
+      case 'forgot-password':
+        return (
+          <ForgotPassword
+            onSubmit={handleForgotPasswordSubmit}
+            onBack={() => setCurrentScreen('sign-in')}
           />
         );
 
