@@ -153,7 +153,6 @@ async function generateApiClient() {
     console.log('⚙️  Generating TypeScript client from OpenAPI spec...');
 
     const configFile = path.join(__dirname, 'openapi.config.json');
-    const ignoreFile = path.join(__dirname, '.openapi-generator-ignore');
 
     // Use npx to run openapi-generator-cli from node_modules
     const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';

@@ -73,51 +73,22 @@ export class DonorsService {
 
     const donorInfo = mapTUserToDonor(row);
 
-    // Try to fetch PAN, Address and Donation History
+    // Try to fetch PAN and Address from donors table if they exist
     try {
       const donorRows = await this.db.select().top(1).from(donors).where(eq(donors.email, e));
       const donorDetail = donorRows[0];
-      
-      let donationsList: any[] = [];
       if (donorDetail) {
-        // Fetch all donations for this donor
-        const donationRows = await this.db
-          .select({
-            id: schema.eChallans.id,
-            challanNumber: schema.eChallans.challanNumber,
-            amount: schema.eChallans.amount,
-            donationDate: schema.eChallans.donationDate,
-            paymentMode: schema.eChallans.paymentMode,
-            categoryName: schema.donationCategories.displayName,
-            is80gEligible: schema.donationCategories.is80gEligible,
-          })
-          .from(schema.eChallans)
-          .leftJoin(
-            schema.donationCategories,
-            eq(schema.eChallans.categoryId, schema.donationCategories.id),
-          )
-          .where(eq(schema.eChallans.donorId, donorDetail.id))
-          .orderBy(sql`${schema.eChallans.donationDate} DESC`);
-        
-        donationsList = donationRows;
+        return {
+          ...donorInfo,
+          pan: donorDetail.pan,
+          location: donorDetail.address || donorInfo.location, // Prefer donors table address
+        };
       }
-
-      return {
-        ...donorInfo,
-        pan: donorDetail?.pan || null,
-        location: donorDetail?.address || donorInfo.location,
-        donations: donationsList,
-        totalDonated: donorDetail?.totalDonated || '0',
-        donationCount: donorDetail?.donationCount || 0,
-      };
     } catch (err) {
       console.error('Error fetching donor details:', err);
     }
 
-    return {
-      ...donorInfo,
-      donations: [],
-    };
+    return donorInfo;
   }
 
   /**

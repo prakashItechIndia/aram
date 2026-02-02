@@ -20,9 +20,6 @@ type AuthUser = {
   phone?: string;
   address?: string;
   id?: number;
-  donations?: any[];
-  totalDonated?: string;
-  donationCount?: number;
 } | null;
 
 export type Notification = {
@@ -65,7 +62,6 @@ type ApiContextValue = {
   register: (data: { name: string; email: string; password: string }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   setUser: (user: AuthUser) => void;
-  fetchProfile: () => Promise<void>;
   forgotPassword: (email: string) => Promise<{ success: boolean; error?: string; message?: string }>;
   resetPassword: (token: string, password: string) => Promise<{ success: boolean; error?: string }>;
   fetchUnreadNotificationsCount: (userId: number) => Promise<number>;
@@ -154,9 +150,6 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
             email: profile?.email ?? email,
             phone: profile?.mobileNumber || profile?.mobile_number, // Handle different casing if any
             address: profile?.location,
-            donations: profile?.donations || [],
-            totalDonated: profile?.totalDonated || '0',
-            donationCount: profile?.donationCount || 0,
         };
         setUserState(authUser);
         userRef.current = authUser; // Update again with final data
@@ -196,30 +189,6 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     },
     [api.authApi],
   );
-
-  const fetchProfile = useCallback(async () => {
-    if (!user?.accessToken) return;
-    try {
-        const profileRes = await api.authApi.authControllerGetProfile();
-        const profile = (profileRes as { data?: any })?.data || {};
-        const authUser: AuthUser = { 
-            ...user,
-            id: profile?.id,
-            name: profile?.name,
-            email: profile?.email,
-            phone: profile?.mobileNumber || profile?.mobile_number,
-            address: profile?.location,
-            donations: profile?.donations || [],
-            totalDonated: profile?.totalDonated || '0',
-            donationCount: profile?.donationCount || 0,
-        };
-        setUserState(authUser);
-        userRef.current = authUser;
-        setStoredDonorAuth(authUser);
-    } catch (e) {
-        console.error('Failed to fetch profile:', e);
-    }
-  }, [api.authApi, user]);
 
   const setUser = useCallback((u: AuthUser) => {
     setUserState(u);
@@ -321,11 +290,10 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     if (user?.id) {
         await Promise.all([
             fetchUnreadNotificationsCount(user.id),
-            fetchNotifications(user.id),
-            fetchProfile()
+            fetchNotifications(user.id)
         ]);
     }
-  }, [user, fetchUnreadNotificationsCount, fetchNotifications, fetchProfile]);
+  }, [user, fetchUnreadNotificationsCount, fetchNotifications]);
 
   const markNotificationAsRead = useCallback(async (notificationId: number) => {
     try {
@@ -402,7 +370,6 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       setUser,
       forgotPassword,
       resetPassword,
-      fetchProfile,
       fetchUnreadNotificationsCount,
       fetchNotifications,
       refreshNotifications,
@@ -421,7 +388,6 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       setUser, 
       forgotPassword, 
       resetPassword, 
-      fetchProfile,
       fetchUnreadNotificationsCount, 
       fetchNotifications,
       refreshNotifications, 
