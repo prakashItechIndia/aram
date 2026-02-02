@@ -39,6 +39,7 @@ type Screen =
 type PaymentStatus = 'processing' | 'success' | 'failed';
 
 interface UserData {
+  id?: number;
   name: string;
   email: string;
   phone: string;
@@ -48,7 +49,7 @@ interface UserData {
 import { ResetPassword } from './components/screens/ResetPassword';
 
 function AppContent() {
-  const { api, login: apiLogin, register: apiRegister, logout: apiLogout, isAuthenticated, forgotPassword, resetPassword, fetchUnreadNotificationsCount } = useApi();
+  const { api, login: apiLogin, register: apiRegister, logout: apiLogout, isAuthenticated, forgotPassword, resetPassword, fetchUnreadNotificationsCount, createNotification } = useApi();
   const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
     // Check for reset password token in URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -71,11 +72,12 @@ function AppContent() {
     api.authApi
       .authControllerGetProfile()
       .then((profileRes: unknown) => {
-        const profile = (profileRes as { data?: { id?: number; name?: string; email?: string } })?.data;
+        const profile = (profileRes as { data?: { id?: number; name?: string; email?: string; mobileNumber?: string } })?.data;
         setUser({
+          id: profile?.id,
           name: profile?.name ?? '',
           email: profile?.email ?? '',
-          phone: '',
+          phone: profile?.mobileNumber ?? '',
           isLoggedIn: true,
         });
 
@@ -168,6 +170,19 @@ function AppContent() {
       if (success) {
         setPaymentStatus('success');
         toast.success('Payment successful!');
+        
+        // Trigger persistent notification
+        if (user.id) {
+          createNotification({
+            userId: user.id,
+            type: 'success',
+            title: 'Donated',
+            message: `Thank you for your donation of ₹${donationData.amount.toLocaleString()}! Receipt ${lastDonation?.receiptNo || ''} has been generated.`,
+          }).then(() => {
+             // Refresh count immediately
+             fetchUnreadNotificationsCount(user.id!).then(setNotificationCount);
+          });
+        }
       } else {
         setPaymentStatus('failed');
         toast.error('Payment failed. Please try again.');

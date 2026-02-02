@@ -67,18 +67,23 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
     api.donorsApi
       .donorsControllerGetMyProfile()
       .then((res) => {
-        const donor = (res as { data?: DonorProfile | null })?.data;
+        const donor = (res as { data?: any })?.data;
         if (donor) {
-          if (donor.address) setAddress(donor.address);
+          if (donor.location) setAddress(donor.location);
           if (donor.pan) setPanNumber(donor.pan);
           if (donor.country) setCountry(donor.country.toLowerCase());
           if (donor.name) setDisplayName(donor.name);
           if (donor.email) setDisplayEmail(donor.email);
-          if (donor.mobile) setDisplayPhone(donor.mobile);
+          if (donor.mobileNumber) setDisplayPhone(donor.mobileNumber);
         }
       })
-      .catch(() => {})
-      .finally(() => setProfileLoaded(true));
+      .catch((err) => {
+        console.error('Failed to load profile:', err);
+      })
+      .finally(() => {
+        // Delay slightly for smoother transition if it's too fast
+        setTimeout(() => setProfileLoaded(true), 500);
+      });
   }, [api?.donorsApi]);
 
   const amount = selectedPreset || Number(customAmount) || 0;
@@ -120,21 +125,18 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
   const handleReset = () => {
     setSelectedPreset(null);
     setCustomAmount('');
-    setAddress('');
-    setPanNumber('');
     setDonationType('');
-    setCountry('india');
     setErrors({});
-    setDisplayName(userName);
-    setDisplayEmail(userEmail);
-    setDisplayPhone(userPhone);
   };
 
   if (!profileLoaded) {
     return (
       <div className="flex flex-col gap-[24px]">
         <AramCard>
-          <div className="flex items-center justify-center py-12 text-[#6E6E6E]">Loading your details...</div>
+          <div className="flex flex-col items-center justify-center py-20 text-[#6E6E6E] gap-4">
+            <div className="w-10 h-10 border-4 border-[#F36A4F] border-t-transparent rounded-full animate-spin"></div>
+            <p className="font-medium animate-pulse">Loading your profile details...</p>
+          </div>
         </AramCard>
       </div>
     );
@@ -145,27 +147,46 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
       <AramCard>
         <div className="flex flex-col gap-[24px]">
           <div>
-            <h2>Make a Donation</h2>
+            <h2 className="text-[24px] font-bold text-[#0D0D0D]">Make a Donation</h2>
             <p style={{ fontSize: '16px', lineHeight: '24px', color: '#3D3D3D', marginTop: '8px' }}>
               Your support helps us continue our mission
             </p>
           </div>
 
-          {/* Prefilled User Info (Read-only) – from donor profile / login */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-[16px] p-[16px] bg-[#F3F3F3] rounded-[16px]">
-            <div>
-              <label style={{ fontSize: '13px', color: '#6E6E6E' }}>Name</label>
-              <p style={{ fontSize: '14px', color: '#0D0D0D', fontWeight: 600, marginTop: '4px' }}>{displayName}</p>
-            </div>
-            <div>
-              <label style={{ fontSize: '13px', color: '#6E6E6E' }}>Email</label>
-              <p style={{ fontSize: '14px', color: '#0D0D0D', fontWeight: 600, marginTop: '4px' }}>{displayEmail}</p>
-            </div>
-            <div>
-              <label style={{ fontSize: '13px', color: '#6E6E6E' }}>Phone</label>
-              <p style={{ fontSize: '14px', color: '#0D0D0D', fontWeight: 600, marginTop: '4px' }}>{displayPhone}</p>
-            </div>
+          {/* User Info Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-[24px]">
+            <AramInput
+              label="Full Name"
+              value={displayName}
+              onChange={setDisplayName}
+              required
+              error={errors.displayName}
+            />
+            <AramInput
+              label="Email Address"
+              value={displayEmail}
+              disabled
+              helperText="Verified registered email"
+            />
+            <AramInput
+              label="Mobile Number"
+              value={displayPhone}
+              disabled
+              helperText="Verified registered mobile"
+            />
+            <AramInput
+              label="PAN Number"
+              placeholder="AAAAA0000A"
+              value={panNumber}
+              onChange={(val) => setPanNumber(val.toUpperCase())}
+              required
+              disabled={!!panNumber}
+              error={errors.panNumber}
+              helperText={panNumber ? "PAN from your profile" : "Format: AAAAA0000A"}
+            />
           </div>
+
+          <hr className="border-[#DBDBDB]" />
 
           {/* Amount Selection */}
           <div className="flex flex-col gap-[12px]">
@@ -180,14 +201,14 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
                     setSelectedPreset(preset);
                     setCustomAmount('');
                   }}
-                  className={`h-[44px] px-[24px] rounded-[999px] border transition-colors ${
+                  className={`h-[44px] px-[24px] rounded-[16px] border transition-all ${
                     selectedPreset === preset
-                      ? 'border-[#F36A4F] bg-[#FEF1EE] text-[#F36A4F]'
+                      ? 'border-[#F36A4F] bg-[#FEF1EE] text-[#F36A4F] scale-105 shadow-sm'
                       : 'border-[#DBDBDB] bg-white text-[#3D3D3D] hover:border-[#F36A4F]'
                   }`}
                   style={{ fontSize: '14px', fontWeight: 600 }}
                 >
-                  ₹{preset}
+                  ₹{preset.toLocaleString()}
                 </button>
               ))}
             </div>
@@ -204,27 +225,16 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
             />
           </div>
 
-          {/* Address */}
-          <AramTextarea
-            label="Address"
-            placeholder="Enter your complete address"
-            value={address}
-            onChange={setAddress}
-            required
-            error={errors.address}
-            rows={3}
-          />
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
-            {/* PAN Number */}
-            <AramInput
-              label="PAN Number"
-              placeholder="AAAAA0000A"
-              value={panNumber}
-              onChange={(val) => setPanNumber(val.toUpperCase())}
+            {/* Donation Type */}
+            <AramSelect
+              label="Donation Type"
+              placeholder="Select donation type"
+              value={donationType}
+              onChange={setDonationType}
+              options={donationTypes}
               required
-              error={errors.panNumber}
-              helperText="Format: AAAAA0000A"
+              error={errors.donationType}
             />
 
             {/* Country */}
@@ -238,34 +248,36 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
             />
           </div>
 
-          {/* Donation Type */}
-          <AramSelect
-            label="Donation Type"
-            placeholder="Select donation type"
-            value={donationType}
-            onChange={setDonationType}
-            options={donationTypes}
+          {/* Address */}
+          <AramTextarea
+            label="Address"
+            placeholder="Enter your complete address for receipt generation"
+            value={address}
+            onChange={setAddress}
             required
-            error={errors.donationType}
+            error={errors.address}
+            rows={3}
           />
 
           {/* Info Messages */}
           <div className="flex flex-col gap-[8px] p-[16px] bg-[#FEF1EE] rounded-[16px] border border-[#FCD9D3]">
-            <p style={{ fontSize: '13px', lineHeight: '18px', color: '#3D3D3D' }}>
-              ✓ Receipt will be generated after successful payment
+            <p style={{ fontSize: '13px', lineHeight: '18px', color: '#3D3D3D', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="w-4 h-4 rounded-full bg-[#F36A4F] text-white flex items-center justify-center text-[10px]">✓</span> 
+              Receipt will be generated after successful payment
             </p>
-            <p style={{ fontSize: '13px', lineHeight: '18px', color: '#3D3D3D' }}>
-              ✓ 80G documents available in Reports section
+            <p style={{ fontSize: '13px', lineHeight: '18px', color: '#3D3D3D', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="w-4 h-4 rounded-full bg-[#F36A4F] text-white flex items-center justify-center text-[10px]">✓</span>
+              80G documents available in Reports section
             </p>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-[12px]">
-            <AramButton onClick={handlePay} variant="primary" className="flex-1" disabled={amount < MIN_AMOUNT}>
+          <div className="flex gap-[16px]">
+            <AramButton onClick={handlePay} variant="primary" className="flex-1 h-[56px] text-[16px]" disabled={amount < MIN_AMOUNT}>
               Pay ₹{amount.toLocaleString()}
             </AramButton>
-            <AramButton onClick={handleReset} variant="secondary">
-              Reset
+            <AramButton onClick={handleReset} variant="secondary" className="px-[32px]">
+              Clear
             </AramButton>
           </div>
         </div>

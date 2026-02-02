@@ -69,7 +69,26 @@ export class DonorsService {
     if (!e) return null;
     const rows = await this.db.select().top(1).from(tUser).where(eq(tUser.eMail, e));
     const row = rows[0];
-    return row ? mapTUserToDonor(row) : null;
+    if (!row) return null;
+
+    const donorInfo = mapTUserToDonor(row);
+
+    // Try to fetch PAN and Address from donors table if they exist
+    try {
+      const donorRows = await this.db.select().top(1).from(donors).where(eq(donors.email, e));
+      const donorDetail = donorRows[0];
+      if (donorDetail) {
+        return {
+          ...donorInfo,
+          pan: donorDetail.pan,
+          location: donorDetail.address || donorInfo.location, // Prefer donors table address
+        };
+      }
+    } catch (err) {
+      console.error('Error fetching donor details:', err);
+    }
+
+    return donorInfo;
   }
 
   /**
