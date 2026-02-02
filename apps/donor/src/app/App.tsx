@@ -200,22 +200,19 @@ function AppContent() {
         setPaymentStatus('success');
         toast.success('Payment successful!');
         
-        // Trigger real persistence and notification (only for logged-in users)
-        // Guest donations are already handled in the guest-donate API call
-        if (user.isLoggedIn) {
-          processDonation({
-            amount: donationData.amount,
-            address: donationData.address,
-            donationType: donationData.donationType,
-            name: donationData.name,
-            pan: donationData.panNumber,
-            country: donationData.country,
-          }).then((res: { success: boolean }) => {
-             if (res.success) {
-               refreshNotifications();
-             }
-          });
-        }
+        // Trigger real persistence and notification
+        processDonation({
+          amount: donationData.amount,
+          address: donationData.address,
+          donationType: donationData.donationType,
+          name: donationData.name,
+          pan: donationData.panNumber,
+          country: donationData.country,
+        }).then((res: { success: boolean }) => {
+           if (res.success) {
+             refreshNotifications();
+           }
+        });
       } else {
         setPaymentStatus('failed');
         toast.error('Payment failed. Please try again.');
