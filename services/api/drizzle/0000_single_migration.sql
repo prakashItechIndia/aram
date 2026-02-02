@@ -1526,7 +1526,3 @@ GO
 -- -----------------------------------------------------------------------------
 -- Future changes: append new blocks below this line.
 -- -----------------------------------------------------------------------------
-</think>
-Fixing the circular dependency between `receipts` and `transactions`: creating `transactions` without the `receipt_id` FK first, then adding FKs.
-<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
-StrReplace

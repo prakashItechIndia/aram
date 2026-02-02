@@ -10,6 +10,31 @@ const getApiBaseUrl = (): string => {
   }
 };
 
+const ADMIN_AUTH_STORAGE_KEY = 'aram_admin_auth';
+
+function getStoredAdminAuth(): AuthUser {
+  try {
+    if (typeof window === 'undefined') return null;
+    const s = sessionStorage.getItem(ADMIN_AUTH_STORAGE_KEY);
+    if (!s) return null;
+    const parsed = JSON.parse(s) as { accessToken?: string; refreshToken?: string };
+    if (parsed?.accessToken) return { accessToken: parsed.accessToken, refreshToken: parsed.refreshToken ?? '' };
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function setStoredAdminAuth(user: AuthUser): void {
+  try {
+    if (typeof window === 'undefined') return;
+    if (user?.accessToken) sessionStorage.setItem(ADMIN_AUTH_STORAGE_KEY, JSON.stringify(user));
+    else sessionStorage.removeItem(ADMIN_AUTH_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 type AuthUser = { accessToken: string; refreshToken: string } | null;
 
 type ApiContextValue = {
@@ -17,6 +42,8 @@ type ApiContextValue = {
   user: AuthUser;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  forgotPassword: (email: string) => Promise<{ success: boolean; error?: string; resetLink?: string }>;
+  resetPassword: (token: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   setUser: (user: AuthUser) => void;
 };
@@ -24,13 +51,14 @@ type ApiContextValue = {
 const ApiContext = createContext<ApiContextValue | null>(null);
 
 export function ApiProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUserState] = useState<AuthUser>(null);
+  const [user, setUserState] = useState<AuthUser>(() => getStoredAdminAuth());
   const userRef = useRef<AuthUser>(null);
   userRef.current = user;
 
   const authTokenVersionRef = useRef(0);
 
   const logout = useCallback(() => {
+    setStoredAdminAuth(null);
     setUserState(null);
   }, []);
 
@@ -60,30 +88,87 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(
     async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
       try {
-        const res = await api.authApi.authControllerLogin({ email, password });
-        const data = (res as { data?: { access_token?: string; refresh_token?: string } })?.data;
+        const basePath = getApiBaseUrl();
+        const res = await fetch(`${basePath}/auth/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = (await res.json()) as {
+          access_token?: string;
+          message?: string | string[];
+          statusCode?: number;
+        };
         const accessToken = data?.access_token;
         if (!accessToken) {
-          return { success: false, error: 'Invalid response from server' };
+          const message =
+            Array.isArray(data?.message) ? data.message.join(', ') : data?.message ?? 'Invalid email or password';
+          return { success: false, error: message };
         }
         authTokenVersionRef.current += 1;
-        setUserState({
-          accessToken,
-          refreshToken: data?.refresh_token ?? '',
-        });
+        const authUser = { accessToken, refreshToken: '' };
+        setUserState(authUser);
+        setStoredAdminAuth(authUser);
         return { success: true };
       } catch (err: unknown) {
-        const message =
-          (err as { response?: { data?: { message?: string }; status?: number } })?.response?.data
-            ?.message ?? (err as Error)?.message ?? 'Login failed';
+        const message = (err as Error)?.message ?? 'Login failed';
         return { success: false, error: String(message) };
       }
     },
-    [api.authApi],
+    [],
+  );
+
+  const forgotPassword = useCallback(
+    async (email: string): Promise<{ success: boolean; error?: string; resetLink?: string }> => {
+      try {
+        const basePath = getApiBaseUrl();
+        const res = await fetch(`${basePath}/auth/admin/forgot-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const data = (await res.json()) as { message?: string; resetLink?: string };
+        if (!res.ok) {
+          const msg = Array.isArray(data?.message) ? data.message.join(', ') : data?.message ?? 'Request failed';
+          return { success: false, error: msg };
+        }
+        return {
+          success: true,
+          resetLink: data?.resetLink,
+          error: undefined,
+        };
+      } catch (err: unknown) {
+        return { success: false, error: (err as Error)?.message ?? 'Request failed' };
+      }
+    },
+    [],
+  );
+
+  const resetPassword = useCallback(
+    async (token: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+      try {
+        const basePath = getApiBaseUrl();
+        const res = await fetch(`${basePath}/auth/admin/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, newPassword }),
+        });
+        const data = (await res.json()) as { message?: string | string[] };
+        if (!res.ok) {
+          const msg = Array.isArray(data?.message) ? data.message.join(', ') : data?.message ?? 'Reset failed';
+          return { success: false, error: msg };
+        }
+        return { success: true };
+      } catch (err: unknown) {
+        return { success: false, error: (err as Error)?.message ?? 'Request failed' };
+      }
+    },
+    [],
   );
 
   const setUser = useCallback((u: AuthUser) => {
     setUserState(u);
+    setStoredAdminAuth(u);
   }, []);
 
   const value: ApiContextValue = useMemo(
@@ -92,10 +177,12 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       user,
       isAuthenticated: !!user?.accessToken,
       login,
+      forgotPassword,
+      resetPassword,
       logout,
       setUser,
     }),
-    [api, user, login, logout, setUser],
+    [api, user, login, forgotPassword, resetPassword, logout, setUser],
   );
 
   return <ApiContext.Provider value={value}>{children}</ApiContext.Provider>;
