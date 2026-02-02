@@ -20,7 +20,7 @@ type AuthUser = {
   phone?: string;
   address?: string;
   id?: number;
-} | null;
+} | null; 
 
 export type Notification = {
   id: number;
