@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, and, like, SQL } from 'drizzle-orm';
 import { DRIZZLE } from '../../database/database.module';
 import { sponsors } from '../../database/models/sponsors.model';
 import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';
@@ -7,12 +7,50 @@ import * as schema from '../../database/schema';
 import type { CreateSponsorDto } from './dto/create-sponsor.dto';
 import type { UpdateSponsorDto } from './dto/update-sponsor.dto';
 
+export interface SponsorFilters {
+  tier?: string;
+  contributionType?: string;
+  status?: string;
+  search?: string;
+  featuredOnly?: boolean;
+}
+
 @Injectable()
 export class SponsorsService {
   constructor(@Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>) {}
 
-  async findAll() {
-    return this.db.select().from(sponsors);
+  async findAll(filters?: SponsorFilters) {
+    const conditions: SQL[] = [];
+
+    if (filters?.tier) {
+      conditions.push(eq(sponsors.tier, filters.tier));
+    }
+
+    if (filters?.contributionType) {
+      conditions.push(eq(sponsors.contributionType, filters.contributionType));
+    }
+
+    if (filters?.status === 'Active') {
+      conditions.push(eq(sponsors.isActive, true));
+    } else if (filters?.status === 'Inactive') {
+      conditions.push(eq(sponsors.isActive, false));
+    }
+
+    if (filters?.search) {
+      conditions.push(like(sponsors.name, `%${filters.search}%`));
+    }
+
+    if (filters?.featuredOnly) {
+      conditions.push(eq(sponsors.featured, true));
+    }
+
+    const query = this.db.select().from(sponsors);
+    
+    if (conditions.length > 0) {
+      return query.where(and(...conditions));
+    }
+    
+    return query;
   }
 
   async findById(id: number) {

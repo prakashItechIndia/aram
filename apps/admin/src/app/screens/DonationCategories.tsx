@@ -89,8 +89,8 @@ export function DonationCategories() {
         highlighted: row.highlighted ?? false,
         isDefault: row.isDefault ?? false,
         presetAmounts: row.presetAmounts || [],
-        minAmount: row.minAmount,
-        maxAmount: row.maxAmount,
+        minAmount: row.minAmount ? Number(row.minAmount) : undefined,
+        maxAmount: row.maxAmount ? Number(row.maxAmount) : undefined,
         allowCustomAmount: row.allowCustomAmount ?? true,
         recurringAllowed: row.recurringAllowed ?? false,
         recurringDefaultChecked: row.recurringDefaultChecked ?? false,
@@ -189,8 +189,8 @@ export function DonationCategories() {
         highlighted: formData.highlighted,
         isDefault: formData.isDefault,
         presetAmounts: formData.presetAmounts,
-        minAmount: formData.minAmount,
-        maxAmount: formData.maxAmount,
+        minAmount: formData.minAmount ? Number(formData.minAmount) : undefined,
+        maxAmount: formData.maxAmount ? Number(formData.maxAmount) : undefined,
         allowCustomAmount: formData.allowCustomAmount,
         recurringAllowed: formData.recurringAllowed,
         recurringDefaultChecked: formData.recurringDefaultChecked,
@@ -747,7 +747,7 @@ export function DonationCategories() {
                         <input
                           type="number"
                           value={formData.minAmount || ''}
-                          onChange={(e) => updateFormData('minAmount', parseInt(e.target.value) || undefined)}
+                          onChange={(e) => updateFormData('minAmount', e.target.value ? Number(e.target.value) : undefined)}
                           className="w-full h-[44px] pl-[32px] pr-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
                         />
                       </div>
@@ -764,7 +764,7 @@ export function DonationCategories() {
                         <input
                           type="number"
                           value={formData.maxAmount || ''}
-                          onChange={(e) => updateFormData('maxAmount', parseInt(e.target.value) || undefined)}
+                          onChange={(e) => updateFormData('maxAmount', e.target.value ? Number(e.target.value) : undefined)}
                           className="w-full h-[44px] pl-[32px] pr-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
                         />
                       </div>

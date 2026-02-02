@@ -9,13 +9,14 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { memoryStorage } from 'multer';
 import { extname } from 'path';
@@ -39,8 +40,22 @@ export class GalleryController {
   ) {}
 
   @Get()
-  findAll() {
-    return this.service.findAll();
+  @ApiQuery({ name: 'albumId', required: false, type: String })
+  @ApiQuery({ name: 'tag', required: false, type: String })
+  @ApiQuery({ name: 'visibility', required: false, type: String })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  findAll(
+    @Query('albumId') albumId?: string,
+    @Query('tag') tag?: string,
+    @Query('visibility') visibility?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.service.findAll({
+      albumId,
+      tag,
+      visibility,
+      search,
+    });
   }
 
   @Get(':id')
@@ -68,7 +83,7 @@ export class GalleryController {
     if (!file?.buffer) throw new BadRequestException('No file uploaded');
     const ext = extname(file.originalname) || '.jpg';
     const key = `${S3_KEY_PREFIX}/${Date.now()}-${Math.random().toString(36).slice(2, 9)}${ext}`;
-    const url = await this.s3.upload(key, file.buffer, file.mimetype, { acl: 'public-read' });
+    const url = await this.s3.upload(key, file.buffer, file.mimetype);
     return { imagePath: url, thumbnailPath: url };
   }
 

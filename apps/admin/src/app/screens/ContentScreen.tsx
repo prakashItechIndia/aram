@@ -20,6 +20,7 @@ import {
   Search,
 } from 'lucide-react';
 import { useApi } from '../context/ApiContext';
+import { toast } from '../components/ui/toast';
 
 interface Page {
   id: string;
@@ -76,7 +77,9 @@ export function ContentScreen() {
       const list = Array.isArray(data) ? data : [];
       setPages(list.map((row: Record<string, unknown>) => mapApiToPage(row)));
     } catch (e: unknown) {
-      setError((e as Error)?.message ?? 'Failed to load content');
+      const errorMsg = (e as Error)?.message ?? 'Failed to load content';
+      setError(errorMsg);
+      toast.error(errorMsg);
       setPages([]);
     } finally {
       setLoading(false);
@@ -95,6 +98,11 @@ export function ContentScreen() {
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [showReasonModal, setShowReasonModal] = useState(false);
   const [publishReason, setPublishReason] = useState('');
+  
+  // Version history state
+  const [versions, setVersions] = useState<any[]>([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+  const [restoringVersion, setRestoringVersion] = useState(false);
 
   // Page form state
   const [pageName, setPageName] = useState('');
@@ -107,20 +115,78 @@ export function ContentScreen() {
   const [canonicalUrl, setCanonicalUrl] = useState('');
 
   // Hero section state
-  const [heroHeadline, setHeroHeadline] = useState('Transforming Lives Through Education');
-  const [heroSubheadline, setHeroSubheadline] = useState(
-    'Join us in our mission to provide quality education and healthcare to underprivileged communities across India'
-  );
-  const [heroCTAText, setHeroCTAText] = useState('Donate Now');
-  const [heroCTALink, setHeroCTALink] = useState('/donate');
-  const [showDonationStats, setShowDonationStats] = useState(true);
+  const [heroHeadline, setHeroHeadline] = useState('');
+  const [heroSubheadline, setHeroSubheadline] = useState('');
+  const [heroCTAText, setHeroCTAText] = useState('');
+  const [heroCTALink, setHeroCTALink] = useState('');
+  const [showDonationStats, setShowDonationStats] = useState(false);
+  const [heroBackgroundUrl, setHeroBackgroundUrl] = useState('');
+  const [ogImageUrl, setOgImageUrl] = useState('');
+  
+  // Upload state
+  const [uploadingHeroBackground, setUploadingHeroBackground] = useState(false);
+  const [uploadingOgImage, setUploadingOgImage] = useState(false);
 
-  const handleEditPage = (page: Page) => {
+  const handleEditPage = async (page: Page) => {
     setSelectedPage(page);
     setPageName(page.name);
     setPageSlug(page.slug);
-    setSectionKey(page.name.toLowerCase().replace(/\s+/g, '_'));
-    // Load SEO data if available
+    
+    try {
+      // Fetch full page data to load content
+      const res = await api.websiteContentApi.websiteContentControllerFindOne(parseInt(page.id));
+      const data = (res as { data?: any }).data;
+      
+      if (data) {
+        setSectionKey(data.sectionKey || page.name.toLowerCase().replace(/\s+/g, '_'));
+        
+        // Parse contentJson and load into state
+        if (data.contentJson) {
+          try {
+            const content = JSON.parse(data.contentJson);
+            
+            // Load SEO data
+            if (content.meta) {
+              setMetaTitle(content.meta.title || '');
+              setMetaDescription(content.meta.description || '');
+              setCanonicalUrl(content.meta.canonicalUrl || '');
+            }
+            
+            // Load hero section data
+            if (content.sections?.hero) {
+              setHeroHeadline(content.sections.hero.headline || '');
+              setHeroSubheadline(content.sections.hero.subheadline || '');
+              setHeroCTAText(content.sections.hero.ctaText || '');
+              setHeroCTALink(content.sections.hero.ctaLink || '');
+              setShowDonationStats(content.sections.hero.showStats ?? false);
+              setHeroBackgroundUrl(content.sections.hero.backgroundUrl || '');
+            } else {
+              // Reset to empty if no hero section exists
+              setHeroHeadline('');
+              setHeroSubheadline('');
+              setHeroCTAText('');
+              setHeroCTALink('');
+              setShowDonationStats(false);
+              setHeroBackgroundUrl('');
+            }
+            
+            // Load OG Image
+            if (content.meta) {
+              setOgImageUrl(content.meta.ogImage || '');
+            } else {
+              setOgImageUrl('');
+            }
+          } catch (parseError) {
+            console.error('Failed to parse contentJson:', parseError);
+            toast.error('Failed to load page content');
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch page details:', e);
+      toast.error('Failed to load page details');
+    }
+    
     setShowEditor(true);
   };
 
@@ -132,6 +198,13 @@ export function ContentScreen() {
     setMetaTitle('');
     setMetaDescription('');
     setCanonicalUrl('');
+    setHeroHeadline('');
+    setHeroSubheadline('');
+    setHeroCTAText('');
+    setHeroCTALink('');
+    setShowDonationStats(false);
+    setHeroBackgroundUrl('');
+    setOgImageUrl('');
     setShowEditor(true);
   };
 
@@ -146,6 +219,7 @@ export function ContentScreen() {
           title: metaTitle,
           description: metaDescription,
           canonicalUrl: canonicalUrl,
+          ogImage: ogImageUrl,
         },
         sections: {
           hero: {
@@ -154,14 +228,15 @@ export function ContentScreen() {
             ctaText: heroCTAText,
             ctaLink: heroCTALink,
             showStats: showDonationStats,
+            backgroundUrl: heroBackgroundUrl,
           },
         },
       };
 
       const payload = {
-        name: pageName,
-        slug: pageSlug || pageName.toLowerCase().replace(/\s+/g, '-'),
-        sectionKey: sectionKey || pageName.toLowerCase().replace(/\s+/g, '_'),
+        name: pageName.trim(),
+        slug: pageSlug.trim() || pageName.trim().toLowerCase().replace(/\s+/g, '-'),
+        sectionKey: sectionKey.trim() || pageName.trim().toLowerCase().replace(/\s+/g, '_'),
         contentJson: JSON.stringify(contentData),
         status: 'Draft',
         modifiedBy: user?.email || 'Admin',
@@ -175,6 +250,7 @@ export function ContentScreen() {
           body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error(await res.text());
+        toast.success('Draft saved successfully');
       } else {
         // Create new
         const res = await apiFetch('/website/content', {
@@ -182,12 +258,15 @@ export function ContentScreen() {
           body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error(await res.text());
+        toast.success('Draft created successfully');
       }
 
       await fetchContent();
       setShowEditor(false);
     } catch (e: unknown) {
-      setError((e as Error)?.message ?? 'Failed to save draft');
+      const errorMsg = (e as Error)?.message ?? 'Failed to save draft';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -195,7 +274,7 @@ export function ContentScreen() {
 
   const handlePublish = () => {
     if (!pageName.trim()) {
-      setError('Page name is required');
+      toast.error('Page name is required');
       return;
     }
     setShowReasonModal(true);
@@ -212,6 +291,7 @@ export function ContentScreen() {
           title: metaTitle,
           description: metaDescription,
           canonicalUrl: canonicalUrl,
+          ogImage: ogImageUrl,
         },
         sections: {
           hero: {
@@ -220,15 +300,16 @@ export function ContentScreen() {
             ctaText: heroCTAText,
             ctaLink: heroCTALink,
             showStats: showDonationStats,
+            backgroundUrl: heroBackgroundUrl,
           },
         },
         publishReason: publishReason,
       };
 
       const payload = {
-        name: pageName,
-        slug: pageSlug || pageName.toLowerCase().replace(/\s+/g, '-'),
-        sectionKey: sectionKey || pageName.toLowerCase().replace(/\s+/g, '_'),
+        name: pageName.trim(),
+        slug: pageSlug.trim() || pageName.trim().toLowerCase().replace(/\s+/g, '-'),
+        sectionKey: sectionKey.trim() || pageName.trim().toLowerCase().replace(/\s+/g, '_'),
         contentJson: JSON.stringify(contentData),
         status: 'Published',
         modifiedBy: user?.email || 'Admin',
@@ -241,12 +322,14 @@ export function ContentScreen() {
           body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error(await res.text());
+        toast.success('Page published successfully');
       } else {
         const res = await apiFetch('/website/content', {
           method: 'POST',
           body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error(await res.text());
+        toast.success('Page created and published successfully');
       }
 
       await fetchContent();
@@ -254,7 +337,9 @@ export function ContentScreen() {
       setPublishReason('');
       setShowEditor(false);
     } catch (e: unknown) {
-      setError((e as Error)?.message ?? 'Failed to publish');
+      const errorMsg = (e as Error)?.message ?? 'Failed to publish';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -264,6 +349,202 @@ export function ContentScreen() {
     return status === 'Published'
       ? 'bg-[#E8F5E9] text-[#2E7D32]'
       : 'bg-[#FFF3E0] text-[#E65100]';
+  };
+
+  // Version history handlers
+  const fetchVersionHistory = useCallback(async (pageId: string) => {
+    try {
+      setLoadingVersions(true);
+      // Fetch all versions of this page sorted by version DESC
+      const res = await apiFetch(`/website/content?sectionKey=${pages.find(p => p.id === pageId)?.slug || ''}`);
+      if (!res.ok) throw new Error('Failed to load versions');
+      
+      const data = await res.json();
+      const allVersions = Array.isArray(data) ? data : [];
+      
+      // Sort by version descending
+      const sortedVersions = allVersions.sort((a: any, b: any) => (b.version || 0) - (a.version || 0));
+      setVersions(sortedVersions);
+    } catch (e) {
+      console.error('Failed to fetch version history:', e);
+      toast.error('Failed to load version history');
+      setVersions([]);
+    } finally {
+      setLoadingVersions(false);
+    }
+  }, [apiFetch, pages]);
+
+  const handleRestoreVersion = async (versionData: any) => {
+    if (!selectedPage) return;
+    
+    try {
+      setRestoringVersion(true);
+      
+      // Parse the version's content
+      let contentData = {};
+      try {
+        contentData = JSON.parse(versionData.contentJson || '{}');
+      } catch (e) {
+        console.error('Failed to parse version content:', e);
+      }
+      
+      // Create new version with restored content
+      const payload = {
+        name: versionData.name || selectedPage.name,
+        slug: versionData.slug || selectedPage.slug,
+        sectionKey: versionData.sectionKey,
+        contentJson: versionData.contentJson,
+        status: 'Draft', // Restore as draft
+        modifiedBy: user?.email || 'Admin',
+        version: selectedPage.version + 1, // Increment version
+      };
+
+      const res = await apiFetch(`/website/content/${selectedPage.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+      
+      toast.success(`Restored to version ${versionData.version}`);
+      
+      // Reload page data
+      await fetchContent();
+      await handleEditPage(selectedPage);
+      setShowVersionHistory(false);
+    } catch (e) {
+      console.error('Restore error:', e);
+      toast.error((e as Error)?.message || 'Failed to restore version');
+    } finally {
+      setRestoringVersion(false);
+    }
+  };
+
+  const handleViewLive = (page: Page) => {
+    // Open the live page in a new tab
+    const baseUrl = import.meta.env.VITE_PUBLIC_SITE_URL || 'http://localhost:3001';
+    const url = `${baseUrl}/${page.slug}`;
+    window.open(url, '_blank');
+  };
+
+  // File upload handlers
+  const handleHeroBackgroundUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Please upload a valid image (JPG, PNG, GIF, WebP) or video (MP4, WebM) file');
+      return;
+    }
+
+    // Validate file size (50MB max for videos, 10MB for images)
+    const maxSize = file.type.startsWith('video/') ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error(`File size must be less than ${file.type.startsWith('video/') ? '50MB' : '10MB'}`);
+      return;
+    }
+
+    try {
+      setUploadingHeroBackground(true);
+      
+      // Get token from sessionStorage
+      const authData = sessionStorage.getItem('aram_admin_auth');
+      const token = authData ? JSON.parse(authData).accessToken : null;
+      
+      if (!token) {
+        toast.error('Authentication required. Please log in again.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      
+      const response = await fetch(`${baseUrl}/api/website/gallery/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Upload failed');
+      }
+
+      const data = await response.json();
+      setHeroBackgroundUrl(data.imageUrl || data.url);
+      toast.success('Background uploaded successfully');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error((error as Error)?.message || 'Failed to upload file');
+    } finally {
+      setUploadingHeroBackground(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleOgImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Please upload a valid image file (JPG, PNG, GIF, WebP)');
+      return;
+    }
+
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size must be less than 10MB');
+      return;
+    }
+
+    try {
+      setUploadingOgImage(true);
+      
+      // Get token from sessionStorage
+      const authData = sessionStorage.getItem('aram_admin_auth');
+      const token = authData ? JSON.parse(authData).accessToken : null;
+      
+      if (!token) {
+        toast.error('Authentication required. Please log in again.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      
+      const response = await fetch(`${baseUrl}/api/website/gallery/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Upload failed');
+      }
+
+      const data = await response.json();
+      setOgImageUrl(data.imageUrl || data.url);
+      toast.success('OG Image uploaded successfully');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error((error as Error)?.message || 'Failed to upload image');
+    } finally {
+      setUploadingOgImage(false);
+      e.target.value = '';
+    }
   };
 
   return (
@@ -290,11 +571,6 @@ export function ContentScreen() {
         </div>
       </div>
 
-      {error && (
-        <div className="mb-4 p-4 bg-[#FFEBEE] rounded-[12px] text-[14px] text-[#C62828]">
-          {error}
-        </div>
-      )}
 
       {loading ? (
         <div className="py-12 text-center text-[14px] text-[#6E6E6E]">Loading content...</div>
@@ -410,6 +686,7 @@ export function ContentScreen() {
                       <button
                         onClick={() => {
                           setSelectedPage(page);
+                          fetchVersionHistory(page.id);
                           setShowVersionHistory(true);
                         }}
                         className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
@@ -418,6 +695,7 @@ export function ContentScreen() {
                         <Clock className="w-4 h-4 text-[#3D3D3D]" />
                       </button>
                       <button
+                        onClick={() => handleViewLive(page)}
                         className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
                         title="View Live"
                       >
@@ -564,10 +842,24 @@ export function ContentScreen() {
                         <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
                           OG Image
                         </label>
-                        <button className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] hover:bg-white text-[14px] text-[#3D3D3D] flex items-center gap-2">
+                        <input
+                          type="file"
+                          id="ogImageUpload"
+                          accept="image/*"
+                          onChange={handleOgImageUpload}
+                          className="hidden"
+                        />
+                        <button 
+                          onClick={() => document.getElementById('ogImageUpload')?.click()}
+                          disabled={uploadingOgImage}
+                          className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] hover:bg-white text-[14px] text-[#3D3D3D] flex items-center gap-2 disabled:opacity-50"
+                        >
                           <Upload className="w-4 h-4" />
-                          Upload Image
+                          {uploadingOgImage ? 'Uploading...' : 'Upload Image'}
                         </button>
+                        {ogImageUrl && (
+                          <p className="text-[11px] text-[#2E7D32] mt-1">✓ Image uploaded</p>
+                        )}
                       </div>
 
                       <div>
@@ -587,10 +879,9 @@ export function ContentScreen() {
                 )}
               </div>
 
-              {/* Page Sections */}
-              {selectedPage?.name === 'Home' && (
-                <div className="space-y-4">
-                  <h4 className="text-[14px] font-semibold text-[#0D0D0D]">Page Sections</h4>
+              {/* Page Sections - Always show for editing */}
+              <div className="space-y-4">
+                <h4 className="text-[14px] font-semibold text-[#0D0D0D]">Page Sections</h4>
 
                   {homeSections.map((section) => (
                     <div
@@ -665,12 +956,28 @@ export function ContentScreen() {
                             <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
                               Background Image/Video
                             </label>
-                            <button className="w-full h-[100px] border-2 border-dashed border-[#DBDBDB] rounded-[12px] hover:border-[#F36A4F] hover:bg-[#FEF1EE] transition-colors flex flex-col items-center justify-center gap-2">
+                            <input
+                              type="file"
+                              id="heroBackgroundUpload"
+                              accept="image/*,video/*"
+                              onChange={handleHeroBackgroundUpload}
+                              className="hidden"
+                            />
+                            <button 
+                              onClick={() => document.getElementById('heroBackgroundUpload')?.click()}
+                              disabled={uploadingHeroBackground}
+                              className="w-full h-[100px] border-2 border-dashed border-[#DBDBDB] rounded-[12px] hover:border-[#F36A4F] hover:bg-[#FEF1EE] transition-colors flex flex-col items-center justify-center gap-2 disabled:opacity-50"
+                            >
                               <Upload className="w-6 h-6 text-[#6E6E6E]" />
                               <span className="text-[13px] text-[#6E6E6E]">
-                                Upload Image or Video
+                                {uploadingHeroBackground ? 'Uploading...' : 'Upload Image or Video'}
                               </span>
                             </button>
+                            {heroBackgroundUrl && (
+                              <p className="text-[11px] text-[#2E7D32] mt-1">
+                                ✓ {heroBackgroundUrl.match(/\.(mp4|webm)$/i) ? 'Video' : 'Image'} uploaded
+                              </p>
+                            )}
                           </div>
 
                           <div className="grid grid-cols-2 gap-[16px]">
@@ -734,15 +1041,7 @@ export function ContentScreen() {
                                   </label>
                                   <input
                                     type="text"
-                                    defaultValue={
-                                      num === 1
-                                        ? 'Total Donations'
-                                        : num === 2
-                                        ? 'Active Donors'
-                                        : num === 3
-                                        ? 'Lives Impacted'
-                                        : 'Projects'
-                                    }
+                                    placeholder="e.g., Total Donations"
                                     className="w-full h-[36px] px-[10px] rounded-[8px] border border-[#DBDBDB] text-[13px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
                                   />
                                 </div>
@@ -761,15 +1060,7 @@ export function ContentScreen() {
                                   </label>
                                   <input
                                     type="text"
-                                    defaultValue={
-                                      num === 1
-                                        ? '₹2.5 Cr'
-                                        : num === 2
-                                        ? '1,247'
-                                        : num === 3
-                                        ? '15,000+'
-                                        : '28'
-                                    }
+                                    placeholder="e.g., ₹2.5 Cr"
                                     className="w-full h-[36px] px-[10px] rounded-[8px] border border-[#DBDBDB] text-[13px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
                                   />
                                 </div>
@@ -780,8 +1071,7 @@ export function ContentScreen() {
                       )}
                     </div>
                   ))}
-                </div>
-              )}
+              </div>
             </div>
 
             {/* Actions */}
@@ -849,12 +1139,143 @@ export function ContentScreen() {
             </div>
 
             <div className="p-[24px] min-h-[400px] bg-[#FAFAFA]">
-              <div className="max-w-[800px] mx-auto">
-                <h1 className="text-[32px] font-bold text-[#0D0D0D] mb-4">{heroHeadline}</h1>
-                <p className="text-[18px] text-[#3D3D3D] mb-6">{heroSubheadline}</p>
-                <button className="h-[48px] px-[24px] rounded-full bg-[#F36A4F] text-white text-[16px] font-medium">
-                  {heroCTAText}
-                </button>
+              <div className="max-w-[800px] mx-auto space-y-6">
+                {/* Page Information */}
+                <div className="p-4 bg-white rounded-lg border border-[#DBDBDB]">
+                  <p className="text-[12px] font-semibold text-[#0D0D0D] mb-3">Page Information</p>
+                  <div className="grid grid-cols-2 gap-3 text-[12px]">
+                    <div>
+                      <p className="text-[#6E6E6E]">Page Name:</p>
+                      <p className="font-medium text-[#0D0D0D]">{pageName || '(Not set)'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[#6E6E6E]">URL Slug:</p>
+                      <p className="font-medium text-[#0D0D0D] font-mono">/{pageSlug || '(Not set)'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[#6E6E6E]">Section Key:</p>
+                      <p className="font-medium text-[#0D0D0D] font-mono">{sectionKey || '(Not set)'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[#6E6E6E]">Status:</p>
+                      <p className="font-medium text-[#0D0D0D]">{selectedPage?.status || 'Draft'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SEO Meta Preview */}
+                {(metaTitle || metaDescription || canonicalUrl || ogImageUrl) && (
+                  <div className="p-4 bg-white rounded-lg border border-[#DBDBDB]">
+                    <p className="text-[12px] font-semibold text-[#0D0D0D] mb-3">SEO Preview</p>
+                    {metaTitle && (
+                      <h2 className="text-[18px] text-[#1A0DAB] mb-1">{metaTitle}</h2>
+                    )}
+                    {metaDescription && (
+                      <p className="text-[13px] text-[#545454] mb-3">{metaDescription}</p>
+                    )}
+                    {canonicalUrl && (
+                      <p className="text-[11px] text-[#006621] mb-2">
+                        Canonical: <span className="font-mono">{canonicalUrl}</span>
+                      </p>
+                    )}
+                    {ogImageUrl && (
+                      <div className="mt-3">
+                        <p className="text-[11px] text-[#6E6E6E] mb-2">OG Image:</p>
+                        <img src={ogImageUrl} alt="OG" className="w-full h-[150px] object-cover rounded-lg" />
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Hero Section Preview */}
+                {(heroBackgroundUrl || heroHeadline || heroSubheadline || heroCTAText) && (
+                  <div className="p-4 bg-white rounded-lg border border-[#DBDBDB]">
+                    <p className="text-[12px] font-semibold text-[#0D0D0D] mb-3">Hero Section</p>
+                    
+                    {heroBackgroundUrl && (
+                      <div className="mb-4">
+                        <p className="text-[11px] text-[#6E6E6E] mb-2">Background:</p>
+                        {heroBackgroundUrl.match(/\.(mp4|webm)$/i) ? (
+                          <video src={heroBackgroundUrl} className="w-full h-[300px] object-cover rounded-lg" controls />
+                        ) : (
+                          <img src={heroBackgroundUrl} alt="Hero" className="w-full h-[300px] object-cover rounded-lg" />
+                        )}
+                      </div>
+                    )}
+                    
+                    {heroHeadline && (
+                      <div className="mb-3">
+                        <p className="text-[11px] text-[#6E6E6E] mb-1">Headline:</p>
+                        <h1 className="text-[28px] font-bold text-[#0D0D0D]">{heroHeadline}</h1>
+                      </div>
+                    )}
+                    
+                    {heroSubheadline && (
+                      <div className="mb-3">
+                        <p className="text-[11px] text-[#6E6E6E] mb-1">Subheadline:</p>
+                        <p className="text-[16px] text-[#3D3D3D]">{heroSubheadline}</p>
+                      </div>
+                    )}
+                    
+                    {heroCTAText && (
+                      <div className="mb-3">
+                        <p className="text-[11px] text-[#6E6E6E] mb-2">Call to Action:</p>
+                        <button className="h-[44px] px-[20px] rounded-full bg-[#F36A4F] text-white text-[15px] font-medium">
+                          {heroCTAText}
+                        </button>
+                        {heroCTALink && (
+                          <p className="text-[11px] text-[#6E6E6E] mt-2">
+                            Links to: <span className="font-mono text-[#1A0DAB]">{heroCTALink}</span>
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className="mt-4 pt-3 border-t border-[#DBDBDB]">
+                      <p className="text-[11px] text-[#6E6E6E]">
+                        Donation Stats Overlay: <span className="font-medium text-[#0D0D0D]">{showDonationStats ? 'Enabled ✓' : 'Disabled'}</span>
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Donation Stats Preview */}
+                {showDonationStats && (
+                  <div className="p-4 bg-white rounded-lg border border-[#DBDBDB]">
+                    <p className="text-[12px] font-semibold text-[#0D0D0D] mb-3">Donation Stats (Quick Stats)</p>
+                    <div className="grid grid-cols-4 gap-4">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="text-center p-3 bg-[#F8F8F8] rounded-lg">
+                          <p className="text-[24px] font-bold text-[#F36A4F]">--</p>
+                          <p className="text-[11px] text-[#6E6E6E] mt-1">Stat Card {i}</p>
+                          <p className="text-[10px] text-[#6E6E6E]">(Auto from DB)</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Enabled Sections */}
+                <div className="p-4 bg-white rounded-lg border border-[#DBDBDB]">
+                  <p className="text-[12px] font-semibold text-[#0D0D0D] mb-3">Enabled Page Sections</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {homeSections.map((section) => (
+                      <div key={section.id} className="flex items-center gap-2 text-[12px]">
+                        <div className={`w-3 h-3 rounded ${section.enabled ? 'bg-[#4CAF50]' : 'bg-[#DBDBDB]'}`}></div>
+                        <span className={section.enabled ? 'text-[#0D0D0D]' : 'text-[#6E6E6E]'}>{section.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Empty State */}
+                {!pageName && !heroHeadline && !heroSubheadline && !heroCTAText && !metaTitle && (
+                  <div className="text-center py-12 bg-white rounded-lg border border-[#DBDBDB]">
+                    <Eye className="w-12 h-12 text-[#DBDBDB] mx-auto mb-3" />
+                    <p className="text-[14px] text-[#6E6E6E]">No content to preview yet</p>
+                    <p className="text-[12px] text-[#6E6E6E] mt-1">Start filling in the form to see your content here</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -876,33 +1297,77 @@ export function ContentScreen() {
             </div>
 
             <div className="p-[24px] space-y-3">
-              {[15, 14, 13, 12, 11].map((version) => (
-                <div
-                  key={version}
-                  className="p-[16px] bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB]"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="text-[14px] font-semibold text-[#0D0D0D]">
-                        Version {version}
-                      </p>
-                      <p className="text-[12px] text-[#6E6E6E]">
-                        {version === 15 ? 'Current version' : 'Published'}
-                      </p>
-                    </div>
-                    {version !== 15 && (
-                      <button className="text-[12px] text-[#F36A4F] hover:text-[#E55A3F] font-medium flex items-center gap-1">
-                        <RotateCcw className="w-3 h-3" />
-                        Restore
-                      </button>
-                    )}
-                  </div>
-                  <p className="text-[12px] text-[#6E6E6E]">
-                    Modified by Admin User on{' '}
-                    {new Date(Date.now() - (15 - version) * 86400000).toLocaleDateString('en-IN')}
-                  </p>
+              {loadingVersions ? (
+                <div className="text-center py-8">
+                  <div className="inline-block w-8 h-8 border-4 border-[#F36A4F] border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-[13px] text-[#6E6E6E] mt-3">Loading versions...</p>
                 </div>
-              ))}
+              ) : versions.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-[13px] text-[#6E6E6E]">No version history available</p>
+                </div>
+              ) : (
+                versions.map((version, index) => {
+                  const isCurrentVersion = index === 0;
+                  const versionDate = version.updatedAt || version.createdAt;
+                  
+                  return (
+                    <div
+                      key={version.id}
+                      className="p-[16px] bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB]"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <p className="text-[14px] font-semibold text-[#0D0D0D]">
+                            Version {version.version}
+                          </p>
+                          <p className="text-[12px] text-[#6E6E6E]">
+                            {isCurrentVersion ? 'Current version' : version.status || 'Draft'}
+                          </p>
+                        </div>
+                        {!isCurrentVersion && (
+                          <button 
+                            onClick={() => handleRestoreVersion(version)}
+                            disabled={restoringVersion}
+                            className="text-[12px] text-[#F36A4F] hover:text-[#E55A3F] font-medium flex items-center gap-1 disabled:opacity-50"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                            {restoringVersion ? 'Restoring...' : 'Restore'}
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-[12px] text-[#6E6E6E]">
+                        Modified by {version.modifiedBy || 'Unknown'}
+                        {versionDate && ` on ${new Date(versionDate).toLocaleString('en-IN', {
+                          dateStyle: 'medium',
+                          timeStyle: 'short'
+                        })}`}
+                      </p>
+                      {version.contentJson && (() => {
+                        try {
+                          const content = JSON.parse(version.contentJson);
+                          return (
+                            <div className="mt-2 pt-2 border-t border-[#DBDBDB]">
+                              {content.sections?.hero?.headline && (
+                                <p className="text-[11px] text-[#6E6E6E]">
+                                  Hero: {content.sections.hero.headline.substring(0, 50)}...
+                                </p>
+                              )}
+                              {content.publishReason && (
+                                <p className="text-[11px] text-[#6E6E6E] italic mt-1">
+                                  Reason: {content.publishReason}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        } catch (e) {
+                          return null;
+                        }
+                      })()}
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
