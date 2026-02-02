@@ -11,9 +11,12 @@ import {
  * Donation form settings (versioned).
  * BRD §7: Enable/Disable form, maintenance message, test mode, multi-country, PAN rules,
  * Require address, Require mobile, OTP verification, Preset amounts, Min/Max, Recurring.
+ * 
+ * Supports version history and rollback functionality.
+ * Each row represents a version of the settings. Only one version is active at a time.
  */
 export const donationFormSettings = mssqlTable('donation_form_settings', {
-  id: int('id').primaryKey(),
+  id: int('id').primaryKey().identity(),
   version: nvarchar('version', { length: 32 }).notNull(),
   configJson: nvarchar('config_json', { length: 'max' }).notNull(),
   isActive: bit('is_active').default(false),

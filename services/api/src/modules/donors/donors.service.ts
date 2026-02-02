@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, Inject } from '@nestjs/common';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { DRIZZLE } from '../../database/database.module';
 import { tUser } from '../../database/models/t-user.model';
 import { donors } from '../../database/models/donors.model';
@@ -92,6 +92,111 @@ export class DonorsService {
   }
 
   /**
+   * Process a logged-in donation:
+   * 1. Update T_USER personal details.
+   * 2. Insert into T_EChallan.
+   * 3. Create persistent notification.
+   */
+  async processDonation(userId: number, dto: any) {
+    const now = new Date();
+    
+    // 1. Get User Email
+    const userRows = await this.db.select().from(tUser).where(eq(tUser.id, userId));
+    const user = userRows[0];
+    if (!user?.eMail) throw new Error('User not found');
+
+    // 2. Update T_USER personal details
+    await this.db
+      .update(tUser)
+      .set({
+        name: dto.name,
+        location: dto.address,
+      })
+      .where(eq(tUser.id, userId));
+
+    return this.recordDonationInternal(userId, user.eMail, dto);
+  }
+
+  /** Centralized logic for recording donation and notification. */
+  private async recordDonationInternal(userId: number, email: string, dto: any) {
+    const now = new Date();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // 1. Ensure a record exists in 'donors' table and get its ID
+    let donorId: number;
+    const donorRows = await this.db
+      .select()
+      .from(donors)
+      .where(eq(donors.email, normalizedEmail));
+    
+    if (donorRows[0]) {
+      donorId = donorRows[0].id;
+      // Update existing donor profile with latest details
+      await this.db
+        .update(donors)
+        .set({
+          name: dto.name,
+          address: dto.address,
+          country: dto.country,
+          pan: dto.pan || donorRows[0].pan, // Keep existing PAN if not provided
+          updatedAt: now,
+        } as any)
+        .where(eq(donors.id, donorId));
+    } else {
+      // Create new donor profile
+      await this.db.insert(donors).values({
+        name: dto.name,
+        email: normalizedEmail,
+        mobile: dto.mobile || '',
+        address: dto.address,
+        pan: dto.pan || '',
+        country: dto.country || 'India',
+        isGuest: false, // They have a T_USER account now
+        totalDonated: '0',
+        donationCount: 0,
+        createdAt: now,
+        updatedAt: now,
+      } as any);
+      
+      const newDonorRows = await this.db
+        .select()
+        .from(donors)
+        .where(eq(donors.email, normalizedEmail));
+      if (!newDonorRows[0]) throw new Error('Failed to create donor profile');
+      donorId = newDonorRows[0].id;
+    }
+    
+    // 2. Find Category Id
+    const catRows = await this.db
+      .select()
+      .from(schema.donationCategories)
+      .where(eq(schema.donationCategories.displayName, dto.donationType));
+    const categoryId = catRows[0]?.id || 1;
+
+    // 3. Insert into e_challans using donorId (from donors table)
+    const challanNumber = `CH${now.getTime()}`;
+    await this.db.insert(schema.eChallans).values({
+      challanNumber,
+      donorId: donorId,
+      amount: dto.amount.toString(),
+      categoryId,
+      paymentMode: 'Online',
+      donationDate: now,
+      createdByUserId: userId,
+    });
+
+    // 4. Create Notification
+    await this.notificationsService.create({
+      userId,
+      type: 'success',
+      title: 'Donated',
+      message: `Thank you for your donation of ₹${dto.amount}! Transaction recorded as ${challanNumber}.`,
+    });
+
+    return { success: true, challanNumber };
+  }
+
+  /**
    * Create a guest donor (first-time "Donate without Signup").
    * Uses donors table when present (PAN); otherwise creates T_USER with User_Type = Standard User.
    */
@@ -129,79 +234,50 @@ export class DonorsService {
         'An account with this email already exists. Please use Login to Donate.',
       );
     }
+
     const now = new Date();
-    try {
-      await this.db.insert(donors).values({
-        name: dto.name.trim(),
-        email,
-        mobile: dto.mobile.trim(),
-        address: dto.address.trim(),
-        pan: normalizedPan,
-        country: (dto.country || 'India').trim(),
-        isGuest: true,
-        totalDonated: '0',
-        donationCount: 0,
-        createdAt: now,
-        updatedAt: now,
-      } as any);
-      const created = await this.findByPan(normalizedPan);
-      if (!created) throw new Error('Failed to read created donor');
-      return { donorId: created.id };
-    } catch {
-      // Create new user in T_USER
-      // Generate temp pass with restrictions: uppercase, number, special char
-      const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      const numbers = '0123456789';
-      const specials = '!@#$%';
-      const lowers = 'abcdefghijklmnopqrstuvwxyz';
-      const all = upper + lowers + numbers + specials;
+    // Create new user in T_USER
+    // Generate temp pass
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
+    let tempPass = '';
+    for (let i = 0; i < 10; ++i) tempPass += charset.charAt(Math.floor(Math.random() * charset.length));
+    
+    const hashedPassword = Buffer.from(tempPass).toString('base64');
 
-      let tempPass = '';
-      // Ensure at least one of each required type
-      tempPass += upper.charAt(Math.floor(Math.random() * upper.length));
-      tempPass += numbers.charAt(Math.floor(Math.random() * numbers.length));
-      tempPass += specials.charAt(Math.floor(Math.random() * specials.length));
+    await this.db.insert(tUser).values({
+      name: dto.name.trim(),
+      userType: DONOR_USER_TYPE,
+      userName: email.replace(/@.*/, '') || dto.name.trim().replace(/\s+/g, ''),
+      password: hashedPassword,
+      eMail: email,
+      mobileNumber: dto.mobile.trim(),
+      location: dto.address?.trim() ?? null,
+      isActive: true,
+      createdBy: 1,
+      createdDate: now,
+    });
 
-      // Fill remaining 7 characters
-      for (let i = 0; i < 7; ++i) {
-        tempPass += all.charAt(Math.floor(Math.random() * all.length));
-      }
+    const userRows = await this.db.select().from(tUser).where(eq(tUser.eMail, email));
+    const inserted = userRows[0];
+    if (!inserted) throw new Error('Failed to create account');
 
-      // Shuffle to avoid predictable pattern
-      tempPass = tempPass.split('').sort(() => 0.5 - Math.random()).join('');
+    // Send email
+    await this.emailService.sendGuestWelcome(email, tempPass);
 
-      const hashedPassword = Buffer.from(tempPass).toString('base64');
+    // Create persistent welcome notification
+    await this.notificationsService.create({
+      userId: inserted.id,
+      type: 'info',
+      title: 'Welcome to Aram',
+      message: 'Thank you for your guest donation! Use your email and temporary password to login.',
+    });
 
-      await this.db.insert(tUser).values({
-        name: dto.name.trim(),
-        userType: DONOR_USER_TYPE,
-        userName: email.replace(/@.*/, '') || dto.name.trim().replace(/\s+/g, ''),
-        password: hashedPassword,
-        eMail: email,
-        mobileNumber: dto.mobile.trim(),
-        location: dto.address?.trim() ?? null,
-        isActive: true,
-        createdBy: 1,
-        createdDate: now,
-      });
+    // RECORD THE DONATION (this also creates the donors profile)
+    await this.recordDonationInternal(inserted.id, email, {
+      ...dto,
+      pan: normalizedPan, // Use normalized PAN
+    });
 
-      // Send email
-      await this.emailService.sendGuestWelcome(email, tempPass);
-
-      // Create persistent notification for guest
-      const userRows = await this.db.select().from(tUser).where(eq(tUser.eMail, email));
-      if (userRows[0]) {
-        await this.notificationsService.create({
-          userId: userRows[0].id,
-          type: 'info',
-          title: 'Welcome to Aram',
-          message: 'Thank you for your guest donation! Use your email and temporary password to login.',
-        });
-      }
-
-      const rows = await this.db.select().top(1).from(tUser).where(eq(tUser.eMail, email));
-      const inserted = rows[0];
-      return { donorId: inserted?.id ?? 0 };
-    }
+    return { donorId: inserted.id };
   }
 }

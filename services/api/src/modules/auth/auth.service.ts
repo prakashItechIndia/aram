@@ -32,13 +32,19 @@ export class AuthService {
   /** Validate against existing T_USER table (E_Mail, Password; supports bcrypt or legacy plain/base64). */
   async validateUser(email: string, pass: string): Promise<any> {
     if (!this.db) return null;
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const trimmedPass = (pass || '').trim();
+    if (!normalizedEmail) return null;
+
     const rows = await this.db
       .select()
       .top(1)
       .from(tUser)
-      .where(and(eq(tUser.eMail, email), eq(tUser.isActive, true)));
+      .where(and(eq(tUser.eMail, normalizedEmail), eq(tUser.isActive, true)));
     const user = rows[0];
     if (!user) return null;
+
+    // Check match against bcrypt, plain text, or base64 (legacy)
     const match =
       (user.password?.startsWith('$2') && (await bcrypt.compare(pass, user.password))) ||
       pass === user.password ||
@@ -46,6 +52,28 @@ export class AuthService {
     if (!match) return null;
     const { password, ...result } = user;
     return { id: result.id, email: result.eMail, name: result.name, userType: result.userType };
+  }
+  async getProfile(userId: number) {
+    if (!this.db) return null;
+    const rows = await this.db.select().from(tUser).where(eq(tUser.id, userId));
+    const user = rows[0];
+    if (!user) return null;
+    const { password, ...result } = user;
+    return {
+      ...result,
+      userId: result.id,
+      email: result.eMail, // Normalize for frontend
+      mobileNumber: result.mobileNumber,
+    };
+  }
+
+  async findUserById(id: number) {
+    if (!this.db) return null;
+    const rows = await this.db.select().top(1).from(tUser).where(eq(tUser.id, id));
+    const user = rows[0];
+    if (!user) return null;
+    const { password, ...result } = user;
+    return result;
   }
 
   async login(loginDto: LoginDto) {

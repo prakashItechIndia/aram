@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Get, Request } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Request, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -12,7 +12,7 @@ import { AdminGuard } from './guards/admin.guard';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   @Post('login')
   @ApiOperation({ summary: 'Login user (donor portal)' })
@@ -42,8 +42,12 @@ export class AuthController {
   @Get('profile')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user profile' })
-  getProfile(@Request() req) {
-    return req.user;
+  async getProfile(@Request() req) {
+    const profile = await this.authService.getProfile(req.user.userId);
+    if (!profile) {
+      throw new UnauthorizedException('User profile not found');
+    }
+    return profile;
   }
 
   // ——— Admin portal only (T_USER with User_Type Admin / Super Admin) ———
