@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DonorsService } from './donors.service';
 import { CreateGuestDonorDto } from './dto/create-guest-donor.dto';
+import { ProcessDonationDto } from './dto/process-donation.dto';
 
 @ApiTags('donors')
 @Controller('donors')
@@ -17,9 +18,16 @@ export class DonorsController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  async getMyProfile(@Request() req: { user: { email?: string } }) {
+  async getMyProfile(@Request() req: any) {
     const donor = await this.donorsService.findByEmail(req.user?.email ?? '');
     return donor ?? null;
+  }
+
+  @Post('process-donation')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async processDonation(@Request() req: any, @Body() dto: ProcessDonationDto) {
+    return this.donorsService.processDonation(req.user.sub, dto);
   }
 
   /**

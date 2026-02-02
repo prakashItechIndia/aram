@@ -1,16 +1,23 @@
-import React, { useState } from 'react';
-import { Bell, User, Search, LogOut, Settings, FileText } from 'lucide-react';
+import { useState } from 'react';
+import { Bell, User, Search, LogOut, Settings, FileText, CheckCircle, Info } from 'lucide-react';
+import { useApi, type Notification } from '@/app/context/ApiContext';
+import { formatDistanceToNow } from 'date-fns';
 
 interface PortalHeaderProps {
   currentPage: string;
   onNavigate: (page: string) => void;
-  userName: string;
   onLogout: () => void;
 }
 
-export function PortalHeader({ currentPage, onNavigate, userName, onLogout }: PortalHeaderProps) {
+export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeaderProps) {
+  const { user, notificationCount, notifications, markNotificationAsRead } = useApi();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Use values from ApiContext user object
+  const userName = user?.name || user?.email?.split('@')[0] || 'User';
+  const userEmail = user?.email || '';
 
   return (
     <header 
@@ -61,11 +68,113 @@ export function PortalHeader({ currentPage, onNavigate, userName, onLogout }: Po
           <Search className="absolute left-[14px] top-1/2 -translate-y-1/2" size={18} color="#6E6E6E" />
         </div>
 
-        {/* Notifications */}
-        <button className="w-[40px] h-[40px] rounded-full flex items-center justify-center hover:bg-[#F3F3F3] transition-colors relative">
-          <Bell size={18} color="#6E6E6E" />
-          <span className="absolute top-[8px] right-[8px] w-[8px] h-[8px] bg-[#F36A4F] rounded-full" />
-        </button>
+        <div className="relative">
+          <button 
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="w-[40px] h-[40px] rounded-full flex items-center justify-center hover:bg-[#F3F3F3] transition-colors relative"
+          >
+            <Bell size={18} color={showNotifications ? "#F36A4F" : "#6E6E6E"} />
+            {notificationCount > 0 && (
+              <span 
+                className="absolute top-[4px] right-[4px] min-w-[18px] h-[18px] px-[4px] bg-[#F36A4F] rounded-full flex items-center justify-center text-white"
+                style={{ fontSize: '10px', fontWeight: 700, border: '2px solid white' }}
+              >
+                {notificationCount}
+              </span>
+            )}
+          </button>
+
+          {showNotifications && (
+            <>
+              <div 
+                className="fixed inset-0 z-10" 
+                onClick={() => setShowNotifications(false)}
+              />
+              <div className="absolute right-0 top-[48px] w-[360px] bg-white rounded-[20px] border border-[#DBDBDB] shadow-2xl z-20 overflow-hidden animate-in fade-in zoom-in duration-200 origin-top-right">
+                <div className="p-[20px] border-b border-[#F3F3F3] flex items-center justify-between bg-[#FAFAFA]">
+                  <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0D0D0D' }}>Notifications</h3>
+                  {notificationCount > 0 && (
+                    <span className="text-[#F36A4F]" style={{ fontSize: '12px', fontWeight: 600 }}>
+                      {notificationCount} New
+                    </span>
+                  )}
+                </div>
+                
+                <div className="max-h-[420px] overflow-y-auto">
+                  {notifications.length > 0 ? (
+                    <div className="flex flex-col">
+                      {notifications.map((notif: Notification) => (
+                        <div 
+                          key={notif.id}
+                          className={`p-[16px] border-b border-[#F3F3F3] last:border-0 hover:bg-[#F9F9F9] transition-colors relative group ${!notif.readAt ? 'bg-[#FFF9F8]' : ''}`}
+                        >
+                          <div className="flex gap-[12px]">
+                            <div className={`w-[32px] h-[32px] rounded-full flex-shrink-0 flex items-center justify-center ${
+                              notif.type === 'success' ? 'bg-[#E7F7EF] text-[#0FAF62]' :
+                              notif.type === 'error' ? 'bg-[#FEECEC] text-[#D72C0D]' :
+                              'bg-[#EEF2FF] text-[#4F46E5]'
+                            }`}>
+                              {notif.type === 'success' ? <CheckCircle size={16} /> : <Info size={16} />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-start mb-[4px]">
+                                <h4 className="truncate" style={{ fontSize: '14px', fontWeight: 700, color: '#0D0D0D' }}>
+                                  {notif.title}
+                                </h4>
+                                <span style={{ fontSize: '11px', color: '#9E9E9E' }}>
+                                  {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}
+                                </span>
+                              </div>
+                              <p className="line-clamp-2" style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E' }}>
+                                {notif.message}
+                              </p>
+                              {!notif.readAt && (
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    markNotificationAsRead(notif.id);
+                                  }}
+                                  className="mt-[8px] flex items-center gap-[4px] text-[#F36A4F] opacity-0 group-hover:opacity-100 transition-opacity"
+                                  style={{ fontSize: '12px', fontWeight: 600 }}
+                                >
+                                  Mark as read
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          {!notif.readAt && (
+                            <div className="absolute left-[8px] top-1/2 -translate-y-1/2 w-[4px] h-[4px] rounded-full bg-[#F36A4F]" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-[48px] px-[20px] flex flex-col items-center justify-center text-center">
+                      <div className="w-[48px] h-[48px] rounded-full bg-[#F3F3F3] flex items-center justify-center mb-[12px]">
+                        <Bell size={24} color="#9E9E9E" />
+                      </div>
+                      <p style={{ fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>All caught up!</p>
+                      <p className="mt-[4px]" style={{ fontSize: '13px', color: '#9E9E9E' }}>
+                        No new notifications for you right now. 
+                      </p>
+                    </div>
+                  )}
+                </div>
+                
+                {notifications.length > 0 && (
+                  <div className="p-[12px] bg-[#FAFAFA] border-t border-[#F3F3F3] text-center">
+                    <button 
+                      className="text-[#6E6E6E] hover:text-[#3D3D3D]"
+                      style={{ fontSize: '12px', fontWeight: 600 }}
+                    >
+                      View All Notifications
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Profile Menu */}
         <div className="relative">
@@ -90,7 +199,7 @@ export function PortalHeader({ currentPage, onNavigate, userName, onLogout }: Po
               <div className="absolute right-0 top-[48px] w-[220px] bg-white rounded-[16px] border border-[#DBDBDB] shadow-lg z-20 overflow-hidden">
                 <div className="p-[16px] border-b border-[#DBDBDB]">
                   <p style={{ fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>{userName}</p>
-                  <p style={{ fontSize: '13px', color: '#6E6E6E', marginTop: '2px' }}>Donor</p>
+                  <p style={{ fontSize: '13px', color: '#6E6E6E', marginTop: '2px' }}>{userEmail || 'Donor'}</p>
                 </div>
                 <div className="py-[8px]">
                   <button

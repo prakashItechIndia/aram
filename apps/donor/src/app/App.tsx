@@ -14,6 +14,7 @@ import { DonateGuest } from '@/app/components/screens/DonateGuest';
 import { PaymentProcessing } from '@/app/components/screens/PaymentProcessing';
 import { Reports } from '@/app/components/screens/Reports';
 import { Profile } from '@/app/components/screens/Profile';
+import { ForgotPassword } from '@/app/components/screens/ForgotPassword';
 
 // Components & context
 import { PortalHeader } from '@/app/components/aram/PortalHeader';
@@ -32,7 +33,9 @@ type Screen =
   | 'payment-success'
   | 'payment-failed'
   | 'reports'
-  | 'profile';
+  | 'profile'
+  | 'forgot-password'
+  | 'reset-password';
 
 type PaymentStatus = 'processing' | 'success' | 'failed';
 
@@ -41,45 +44,84 @@ interface UserData {
   name: string;
   email: string;
   phone: string;
-  pan?: string;
   address?: string;
   isLoggedIn: boolean;
 }
 
+import { ResetPassword } from './components/screens/ResetPassword';
+
 function AppContent() {
-  const { api, login: apiLogin, register: apiRegister, logout: apiLogout, isAuthenticated } = useApi();
-  const [currentScreen, setCurrentScreen] = useState<Screen>(() => (isAuthenticated ? 'dashboard' : 'entry'));
+  const { 
+    api, 
+    user: authUser, 
+    isAuthenticated, 
+    login: apiLogin, 
+    register: apiRegister, 
+    logout: apiLogout, 
+    forgotPassword, 
+    resetPassword, 
+    fetchUnreadNotificationsCount, 
+    refreshNotifications,
+    processDonation 
+  } = useApi();
+  const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
+    // Check for reset password token in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('token')) return 'reset-password';
+    return isAuthenticated ? 'dashboard' : 'entry';
+  });
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('processing');
   const [lastDonation, setLastDonation] = useState<any>(null);
-  const [user, setUser] = useState<UserData>({
-    name: '',
-    email: '',
-    phone: '',
-    isLoggedIn: false,
-  });
-  const [intendedRedirect, setIntendedRedirect] = useState<Screen | null>(null);
+  const [user, setUser] = useState<UserData>(() => ({
+    id: authUser?.id,
+    name: authUser?.name ?? '',
+    email: authUser?.email ?? '',
+    phone: authUser?.phone ?? '',
+    address: authUser?.address ?? '',
+    isLoggedIn: isAuthenticated,
+  }));
 
-  // After reload: restore session from token and fetch profile so dashboard shows user name
+  // Sync local user state whenever authUser from context changes (e.g. after profile fetch in login)
   useEffect(() => {
-    if (!isAuthenticated || user.isLoggedIn) return;
+    if (authUser) {
+      setUser({
+        id: authUser.id,
+        name: authUser.name ?? '',
+        email: authUser.email ?? '',
+        phone: authUser.phone ?? '',
+        address: authUser.address ?? '',
+        isLoggedIn: true,
+      });
+    }
+  }, [authUser]);
+
+  // After reload: ensure profile is fetched if details (like name) are missing
+  useEffect(() => {
+    if (!isAuthenticated || (user.isLoggedIn && user.name)) return;
     api.authApi
       .authControllerGetProfile()
       .then((profileRes: unknown) => {
-        const profile = (profileRes as { data?: { id?: number; name?: string; email?: string; mobileNumber?: string; pan?: string; address?: string } })?.data;
-        setUser({
+        const profile = (profileRes as { data?: { id?: number; name?: string; email?: string; mobileNumber?: string; location?: string } })?.data;
+        setUser((prev: UserData) => ({
+          ...prev,
           id: profile?.id,
-          name: profile?.name ?? '',
-          email: profile?.email ?? '',
-          phone: profile?.mobileNumber ?? '',
-          pan: profile?.pan,
-          address: profile?.address,
+          name: profile?.name ?? prev.name,
+          email: profile?.email ?? prev.email,
+          phone: profile?.mobileNumber ?? prev.phone,
+          address: profile?.location ?? prev.address,
           isLoggedIn: true,
-        });
+        }));
+        
+        // Refresh notification count via context
+        if (profile?.id) {
+          refreshNotifications();
+        }
       })
-      .catch(() => {
+      .catch((err: Error) => {
+        console.error('Profile fetch failed:', err);
         setUser((prev) => ({ ...prev, isLoggedIn: true }));
       });
-  }, [isAuthenticated, user.isLoggedIn, api.authApi]);
+  }, [isAuthenticated, user.isLoggedIn, user.name, api.authApi, fetchUnreadNotificationsCount]);
 
   const handleLoginToDonate = () => {
     if (isAuthenticated) {
@@ -167,6 +209,23 @@ function AppContent() {
       if (success) {
         setPaymentStatus('success');
         toast.success('Payment successful!');
+        
+        // Trigger real persistence and notification (only for logged-in users)
+        // Guest donations are already handled in the guest-donate API call
+        if (user.isLoggedIn) {
+          processDonation({
+            amount: donationData.amount,
+            address: donationData.address,
+            donationType: donationData.donationType,
+            name: donationData.name,
+            pan: donationData.panNumber,
+            country: donationData.country,
+          }).then((res: { success: boolean }) => {
+             if (res.success) {
+               refreshNotifications();
+             }
+          });
+        }
       } else {
         setPaymentStatus('failed');
         toast.error('Payment failed. Please try again.');
@@ -191,6 +250,21 @@ function AppContent() {
 
   const handleUpdatePassword = (data: any) => {
     toast.success('Password updated successfully!');
+    refreshNotifications();
+  };
+
+  const handleForgotPasswordSubmit = async (email: string) => {
+    const result = await forgotPassword(email);
+    return {
+      success: result.success,
+      error: result.error,
+      // No reset link for production flow in temp password mode, but for UI compatibility we can pass something if needed, 
+      // or the UI handles success message. ForgotPassword.tsx expects { success, error, resetLink? }.
+      // Since we send a temp password, we don't return a link.
+      // But we should check ForgotPassword.tsx to see if it handles success without link correctly.
+      // Looking at line 40 of ForgotPassword.tsx: if (result.success) setSent(true); if (result.resetLink) setResetLink...
+      // So resetLink is optional. It will show "Check your email".
+    };
   };
 
   // When authenticated (e.g. after reload), show dashboard not entry
@@ -226,8 +300,36 @@ function AppContent() {
           <SignIn
             onSignIn={handleSignIn}
             onCreateAccount={() => setCurrentScreen('create-account')}
+            onForgotPassword={() => setCurrentScreen('forgot-password')}
             onBack={() => setCurrentScreen('entry')}
           />
+        );
+
+      case 'forgot-password':
+        return (
+          <ForgotPassword
+            onSubmit={handleForgotPasswordSubmit}
+            onBack={() => setCurrentScreen('sign-in')}
+          />
+        );
+      case 'reset-password':
+        const urlParams = new URLSearchParams(window.location.search);
+        return (
+            <ResetPassword
+                token={urlParams.get('token') || ''}
+                onBack={() => {
+                    // Clear query param
+                    window.history.replaceState({}, '', window.location.pathname);
+                    setCurrentScreen('sign-in');
+                }}
+                onReset={async (pwd) => {
+                    const res = await resetPassword(urlParams.get('token') || '', pwd);
+                    if (res.success) {
+                        refreshNotifications();
+                    }
+                    return res;
+                }}
+            />
         );
 
       case 'donate-guest':
@@ -274,7 +376,6 @@ function AppContent() {
             <PortalHeader
               currentPage="dashboard"
               onNavigate={handleNavigate}
-              userName={user.name}
               onLogout={handleLogout}
             />
             <main className="max-w-[1392px] mx-auto p-[24px]">
@@ -289,7 +390,6 @@ function AppContent() {
             <PortalHeader
               currentPage="donate"
               onNavigate={handleNavigate}
-              userName={user.name}
               onLogout={handleLogout}
             />
             <main className="max-w-[1392px] mx-auto p-[24px]">
@@ -310,7 +410,6 @@ function AppContent() {
             <PortalHeader
               currentPage="reports"
               onNavigate={handleNavigate}
-              userName={user.name}
               onLogout={handleLogout}
             />
             <main className="max-w-[1392px] mx-auto p-[24px]">
@@ -325,7 +424,6 @@ function AppContent() {
             <PortalHeader
               currentPage="profile"
               onNavigate={handleNavigate}
-              userName={user.name}
               onLogout={handleLogout}
             />
             <main className="max-w-[1392px] mx-auto p-[24px]">

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Get, Request } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Request, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -26,13 +26,28 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
 
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Forgot password - Send reset link (donor portal)' })
+  async forgotPasswordDonor(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPasswordDonor(dto);
+  }
+
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset password with token (donor portal)' })
+  async resetPasswordDonor(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPasswordDonor(dto);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user profile' })
   async getProfile(@Request() req) {
-    const user = await this.authService.findUserById(req.user.userId);
-    return user;
+    const profile = await this.authService.getProfile(req.user.userId);
+    if (!profile) {
+      throw new UnauthorizedException('User profile not found');
+    }
+    return profile;
   }
 
   // ——— Admin portal only (T_USER with User_Type Admin / Super Admin) ———
