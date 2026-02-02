@@ -15,6 +15,7 @@ import { RefundsModule } from './modules/refunds/refunds.module';
 import { EnquiriesModule } from './modules/enquiries/enquiries.module';
 import { CommunicationTemplatesModule } from './modules/communication-templates/communication-templates.module';
 import { EChallansModule } from './modules/e-challans/e-challans.module';
+import { DonationFormSettingsModule } from './modules/donation-form-settings/donation-form-settings.module';
 import { PaymentGatewayModule } from './modules/payment-gateway/payment-gateway.module';
 import { ReconciliationModule } from './modules/reconciliation/reconciliation.module';
 import { CampaignsModule } from './modules/campaigns/campaigns.module';
@@ -39,6 +40,7 @@ import { ExportLogModule } from './modules/export-log/export-log.module';
     EnquiriesModule,
     CommunicationTemplatesModule,
     EChallansModule,
+    DonationFormSettingsModule,
     PaymentGatewayModule,
     ReconciliationModule,
     CampaignsModule,
