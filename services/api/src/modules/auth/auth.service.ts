@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, Inject } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { DRIZZLE } from '../../database/database.module';
@@ -16,6 +16,7 @@ import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';
 import * as schema from '../../database/schema';
 import { EmailService } from '../email/email.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { generateStrongPassword } from '../../common/utils/password.util';
 
 const ADMIN_USER_TYPES = ['Admin', 'Super Admin'] as const;
 
@@ -118,7 +119,7 @@ export class AuthService {
 
     if (!user) {
         console.log('User not found for email:', normalizedEmail);
-        return { message: 'If this email is registered, you will receive a reset link.' };
+        throw new NotFoundException('Account with this email does not exist.');
     }
 
     console.log('User found:', user.id);
@@ -133,7 +134,7 @@ export class AuthService {
     // Send Email
     console.log('Sending email...');
     try {
-      await this.emailService.sendResetLink(normalizedEmail, resetLink);
+      await this.emailService.sendResetLink(normalizedEmail, user.name || 'User', resetLink);
       console.log('Reset link sent successfully');
     } catch (e) {
       console.error('Error sending email:', e);
@@ -173,12 +174,7 @@ export class AuthService {
   }
 
   private generateTemporaryPassword(length = 10): string {
-    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
-    let retVal = '';
-    for (let i = 0, n = charset.length; i < length; ++i) {
-        retVal += charset.charAt(Math.floor(Math.random() * n));
-    }
-    return retVal;
+    return generateStrongPassword(length);
   }
 
   // ——— Admin-only (T_USER with User_Type Admin / Super Admin) ———
@@ -239,12 +235,13 @@ export class AuthService {
       );
     const user = rows[0];
     if (!user) {
-      return { message: 'If this email is registered as an admin, you will receive a reset link.' };
+      throw new NotFoundException('Account with this email does not exist.');
     }
     const token = randomBytes(32).toString('hex');
     setResetToken(token, normalizedEmail);
     const baseUrl = this.configService.get<string>('ADMIN_APP_URL') || 'http://localhost:5173';
     const resetLink = `${baseUrl}/reset-password?token=${token}`;
+    await this.emailService.sendResetLink(normalizedEmail, user.name || 'Admin', resetLink);
     return {
       message: 'If this email is registered as an admin, you will receive a reset link.',
       resetLink: this.configService.get<string>('NODE_ENV') === 'development' ? resetLink : undefined,
