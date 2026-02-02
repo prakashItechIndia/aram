@@ -33,7 +33,7 @@ export class DonorsService {
     @Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>,
     private emailService: EmailService,
     private notificationsService: NotificationsService,
-  ) {}
+  ) { }
 
   /** List users from T_USER where User_Type = Standard User (donors). */
   async findAll() {
@@ -84,7 +84,7 @@ export class DonorsService {
         'You have donated before with this PAN. Please use Login to Donate.',
       );
     }
-    
+
     // Check Mobile
     const mobile = dto.mobile.trim();
     const existingByMobile = await this.db
@@ -92,9 +92,9 @@ export class DonorsService {
       .top(1)
       .from(tUser)
       .where(eq(tUser.mobileNumber, mobile));
-    
+
     if (existingByMobile[0]) {
-       throw new ConflictException(
+      throw new ConflictException(
         'An account with this mobile number already exists. Please use Login to Donate.',
       );
     }
@@ -130,11 +130,27 @@ export class DonorsService {
       return { donorId: created.id };
     } catch {
       // Create new user in T_USER
-      // Generate temp pass
-      const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
+      // Generate temp pass with restrictions: uppercase, number, special char
+      const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const numbers = '0123456789';
+      const specials = '!@#$%';
+      const lowers = 'abcdefghijklmnopqrstuvwxyz';
+      const all = upper + lowers + numbers + specials;
+
       let tempPass = '';
-      for (let i = 0; i < 10; ++i) tempPass += charset.charAt(Math.floor(Math.random() * charset.length));
-      
+      // Ensure at least one of each required type
+      tempPass += upper.charAt(Math.floor(Math.random() * upper.length));
+      tempPass += numbers.charAt(Math.floor(Math.random() * numbers.length));
+      tempPass += specials.charAt(Math.floor(Math.random() * specials.length));
+
+      // Fill remaining 7 characters
+      for (let i = 0; i < 7; ++i) {
+        tempPass += all.charAt(Math.floor(Math.random() * all.length));
+      }
+
+      // Shuffle to avoid predictable pattern
+      tempPass = tempPass.split('').sort(() => 0.5 - Math.random()).join('');
+
       const hashedPassword = Buffer.from(tempPass).toString('base64');
 
       await this.db.insert(tUser).values({

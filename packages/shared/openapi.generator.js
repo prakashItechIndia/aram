@@ -162,12 +162,20 @@ async function generateApiClient() {
 
     const ignoreFile = path.join(__dirname, '.openapi-generator-ignore');
     let ignoreArg = '';
+
+    // Use relative paths to avoid issues with spaces in absolute paths
+    // This is necessary because openapi-generator-cli often fails with spaces in paths even when quoted
+    const relInput = fs.existsSync(openApiSource) ? path.relative(__dirname, openApiSource) : openApiSource;
+    const relOutput = path.relative(__dirname, tempDir);
+    const relConfig = path.relative(__dirname, configFile);
+
     if (fs.existsSync(ignoreFile)) {
-      ignoreArg = ` --ignore-file-override "${ignoreFile}"`;
+      const relIgnore = path.relative(__dirname, ignoreFile);
+      ignoreArg = ` --ignore-file-override "${relIgnore}"`;
     }
 
     execSync(
-      `${openapiGeneratorCmd} generate -i "${openApiSource}" --skip-validate-spec --generator-name typescript-axios --output "${tempDir}" --config "${configFile}"${ignoreArg}`,
+      `${openapiGeneratorCmd} generate -i "${relInput}" --skip-validate-spec --generator-name typescript-axios --output "${relOutput}" --config "${relConfig}"${ignoreArg}`,
       { stdio: 'inherit', cwd: __dirname, shell: true },
     );
 

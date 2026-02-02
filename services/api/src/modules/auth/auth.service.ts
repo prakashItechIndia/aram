@@ -27,7 +27,7 @@ export class AuthService {
     private configService: ConfigService,
     private emailService: EmailService,
     private notificationsService: NotificationsService,
-  ) {}
+  ) { }
 
   /** Validate against existing T_USER table (E_Mail, Password; supports bcrypt or legacy plain/base64). */
   async validateUser(email: string, pass: string): Promise<any> {
@@ -62,7 +62,8 @@ export class AuthService {
   /** Register inserts into T_USER (existing table). Password stored as bcrypt. */
   async register(registerDto: RegisterDto) {
     if (!this.db) throw new Error('Database not initialized');
-    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+    // Base64 encoding for password to fit 50 chars in DB
+    const hashedPassword = Buffer.from(registerDto.password).toString('base64');
     await this.db.insert(tUser).values({
       name: registerDto.name,
       userType: 'Standard User',
@@ -89,8 +90,8 @@ export class AuthService {
     const user = rows[0];
 
     if (!user) {
-        console.log('User not found for email:', normalizedEmail);
-        return { message: 'If this email is registered, you will receive a reset link.' };
+      console.log('User not found for email:', normalizedEmail);
+      return { message: 'If this email is registered, you will receive a reset link.' };
     }
 
     console.log('User found:', user.id);
@@ -112,9 +113,9 @@ export class AuthService {
     }
 
     // Return link in dev mode for convenience
-    return { 
-        message: 'If this email is registered, you will receive a reset link.',
-        resetLink: this.configService.get<string>('NODE_ENV') === 'development' ? resetLink : undefined 
+    return {
+      message: 'If this email is registered, you will receive a reset link.',
+      resetLink: this.configService.get<string>('NODE_ENV') === 'development' ? resetLink : undefined
     };
   }
 
@@ -145,12 +146,25 @@ export class AuthService {
   }
 
   private generateTemporaryPassword(length = 10): string {
-    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
+    const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const numbers = '0123456789';
+    const specials = '!@#$%';
+    const lowers = 'abcdefghijklmnopqrstuvwxyz';
+    const all = upper + lowers + numbers + specials;
+
     let retVal = '';
-    for (let i = 0, n = charset.length; i < length; ++i) {
-        retVal += charset.charAt(Math.floor(Math.random() * n));
+    // Ensure at least one of each required type
+    retVal += upper.charAt(Math.floor(Math.random() * upper.length));
+    retVal += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    retVal += specials.charAt(Math.floor(Math.random() * specials.length));
+
+    // Fill remaining characters
+    for (let i = 0; i < length - 3; ++i) {
+      retVal += all.charAt(Math.floor(Math.random() * all.length));
     }
-    return retVal;
+
+    // Shuffle
+    return retVal.split('').sort(() => 0.5 - Math.random()).join('');
   }
 
   // ——— Admin-only (T_USER with User_Type Admin / Super Admin) ———

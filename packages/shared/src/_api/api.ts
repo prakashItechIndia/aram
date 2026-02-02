@@ -1403,23 +1403,6 @@ export const DonorsApiAxiosParamCreator = function (configuration?: Configuratio
                 options: localVarRequestOptions,
             };
         },
-        donorsControllerGetMyProfile: async (options: any = {}): Promise<RequestArgs> => {
-            const localVarPath = `/donors/me`;
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            const localVarRequestOptions = { method: 'GET', ...(configuration?.baseOptions ?? {}), ...options };
-            const localVarHeaderParameter = {} as any;
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...(configuration?.baseOptions?.headers ?? {}), ...options.headers };
-            return { url: toPathString(localVarUrlObj), options: localVarRequestOptions };
-        },
-        donorsControllerGuestDonate: async (createGuestDonorDto: any, options: any = {}): Promise<RequestArgs> => {
-            const localVarPath = `/donors/guest-donate`;
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            const localVarRequestOptions = { method: 'POST', ...(configuration?.baseOptions ?? {}), ...options };
-            const localVarHeaderParameter = { 'Content-Type': 'application/json' } as any;
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...(configuration?.baseOptions?.headers ?? {}), ...options.headers };
-            localVarRequestOptions.data = createGuestDonorDto;
-            return { url: toPathString(localVarUrlObj), options: localVarRequestOptions };
-        },
     }
 };
 
@@ -1449,14 +1432,6 @@ export const DonorsApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.donorsControllerFindOne(id, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
-        async donorsControllerGetMyProfile(options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<any>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.donorsControllerGetMyProfile(options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
-        async donorsControllerGuestDonate(createGuestDonorDto: any, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ donorId: number }>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.donorsControllerGuestDonate(createGuestDonorDto, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
     }
 };
 
@@ -1467,17 +1442,22 @@ export const DonorsApiFp = function(configuration?: Configuration) {
 export const DonorsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = DonorsApiFp(configuration)
     return {
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
         donorsControllerFindAll(options?: any): AxiosPromise<void> {
             return localVarFp.donorsControllerFindAll(options).then((request) => request(axios, basePath));
         },
+        /**
+         * 
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
         donorsControllerFindOne(id: number, options?: any): AxiosPromise<void> {
             return localVarFp.donorsControllerFindOne(id, options).then((request) => request(axios, basePath));
-        },
-        donorsControllerGetMyProfile(options?: any): AxiosPromise<any> {
-            return localVarFp.donorsControllerGetMyProfile(options).then((request) => request(axios, basePath));
-        },
-        donorsControllerGuestDonate(createGuestDonorDto: any, options?: any): AxiosPromise<{ donorId: number }> {
-            return localVarFp.donorsControllerGuestDonate(createGuestDonorDto, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -1508,14 +1488,6 @@ export class DonorsApi extends BaseAPI {
      */
     public donorsControllerFindOne(id: number, options?: any) {
         return DonorsApiFp(this.configuration).donorsControllerFindOne(id, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    public donorsControllerGetMyProfile(options?: any) {
-        return DonorsApiFp(this.configuration).donorsControllerGetMyProfile(options).then((request) => request(this.axios, this.basePath));
-    }
-
-    public donorsControllerGuestDonate(createGuestDonorDto: any, options?: any) {
-        return DonorsApiFp(this.configuration).donorsControllerGuestDonate(createGuestDonorDto, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

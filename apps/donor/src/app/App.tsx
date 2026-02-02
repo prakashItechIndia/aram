@@ -78,7 +78,7 @@ function AppContent() {
           phone: '',
           isLoggedIn: true,
         });
-        
+
         // Fetch persistent notification count
         if (profile?.id) {
           fetchUnreadNotificationsCount(profile.id).then((count: number) => {
@@ -134,7 +134,7 @@ function AppContent() {
       } catch {
         setUser({ name: email.split('@')[0], email, phone: '', isLoggedIn: true });
       }
-      toast.success('Signed in successfully!');
+      toast.success('Log in successfully');
       setCurrentScreen('dashboard');
     } else {
       toast.error(result.error ?? 'Sign in failed');
@@ -144,7 +144,7 @@ function AppContent() {
   const handleLogout = () => {
     apiLogout();
     setUser({ name: '', email: '', phone: '', isLoggedIn: false });
-    toast.info('Logged out successfully');
+    toast.success('Logged out successfully');
     setCurrentScreen('entry');
   };
 
@@ -256,15 +256,15 @@ function AppContent() {
       case 'reset-password':
         const urlParams = new URLSearchParams(window.location.search);
         return (
-            <ResetPassword
-                token={urlParams.get('token') || ''}
-                onBack={() => {
-                    // Clear query param
-                    window.history.replaceState({}, '', window.location.pathname);
-                    setCurrentScreen('sign-in');
-                }}
-                onReset={(pwd) => resetPassword(urlParams.get('token') || '', pwd)}
-            />
+          <ResetPassword
+            token={urlParams.get('token') || ''}
+            onBack={() => {
+              // Clear query param
+              window.history.replaceState({}, '', window.location.pathname);
+              setCurrentScreen('sign-in');
+            }}
+            onReset={(pwd) => resetPassword(urlParams.get('token') || '', pwd)}
+          />
         );
 
       case 'donate-guest':
