@@ -2289,7 +2289,10 @@ export const DonorsApiAxiosParamCreator = function (configuration?: Configuratio
             };
         },
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 01de6d2b6de8b7198e5a3388fd966add9c583f75
         /**
          * 
          * @param {*} [options] Override http request option.
@@ -2354,7 +2357,10 @@ export const DonorsApiAxiosParamCreator = function (configuration?: Configuratio
                 options: localVarRequestOptions,
             };
         },
+<<<<<<< HEAD
 >>>>>>> 64adf76f2b6874ed87c3ddb6d298344c9fd5a043
+=======
+>>>>>>> 01de6d2b6de8b7198e5a3388fd966add9c583f75
     }
 };
 
@@ -2385,7 +2391,10 @@ export const DonorsApiFp = function(configuration?: Configuration) {
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 01de6d2b6de8b7198e5a3388fd966add9c583f75
         /**
          * 
          * @param {*} [options] Override http request option.
@@ -2405,7 +2414,10 @@ export const DonorsApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.donorsControllerGuestDonate(createGuestDonorDto, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
+<<<<<<< HEAD
 >>>>>>> 64adf76f2b6874ed87c3ddb6d298344c9fd5a043
+=======
+>>>>>>> 01de6d2b6de8b7198e5a3388fd966add9c583f75
     }
 };
 
@@ -2434,7 +2446,10 @@ export const DonorsApiFactory = function (configuration?: Configuration, basePat
             return localVarFp.donorsControllerFindOne(id, options).then((request) => request(axios, basePath));
         },
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 01de6d2b6de8b7198e5a3388fd966add9c583f75
         /**
          * 
          * @param {*} [options] Override http request option.
@@ -2452,7 +2467,10 @@ export const DonorsApiFactory = function (configuration?: Configuration, basePat
         donorsControllerGuestDonate(createGuestDonorDto: CreateGuestDonorDto, options?: any): AxiosPromise<void> {
             return localVarFp.donorsControllerGuestDonate(createGuestDonorDto, options).then((request) => request(axios, basePath));
         },
+<<<<<<< HEAD
 >>>>>>> 64adf76f2b6874ed87c3ddb6d298344c9fd5a043
+=======
+>>>>>>> 01de6d2b6de8b7198e5a3388fd966add9c583f75
     };
 };
 
@@ -2484,7 +2502,10 @@ export class DonorsApi extends BaseAPI {
         return DonorsApiFp(this.configuration).donorsControllerFindOne(id, options).then((request) => request(this.axios, this.basePath));
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 01de6d2b6de8b7198e5a3388fd966add9c583f75
 
     /**
      * 
@@ -2506,7 +2527,10 @@ export class DonorsApi extends BaseAPI {
     public donorsControllerGuestDonate(createGuestDonorDto: CreateGuestDonorDto, options?: any) {
         return DonorsApiFp(this.configuration).donorsControllerGuestDonate(createGuestDonorDto, options).then((request) => request(this.axios, this.basePath));
     }
+<<<<<<< HEAD
 >>>>>>> 64adf76f2b6874ed87c3ddb6d298344c9fd5a043
+=======
+>>>>>>> 01de6d2b6de8b7198e5a3388fd966add9c583f75
 }
 
 
