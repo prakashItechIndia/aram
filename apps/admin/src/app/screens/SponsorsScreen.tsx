@@ -16,6 +16,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import { useApi } from '../context/ApiContext';
+import { toast } from '../components/ui/toast';
 
 interface Sponsor {
   id: string;
@@ -56,6 +57,7 @@ export function SponsorsScreen() {
   const { api, apiFetch } = useApi();
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterLoading, setFilterLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
@@ -64,30 +66,66 @@ export function SponsorsScreen() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const [sponsorToDelete, setSponsorToDelete] = useState<Sponsor | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // Filter state - must be declared before fetchSponsors
+  const [filterTier, setFilterTier] = useState('');
+  const [filterContributionType, setFilterContributionType] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterSearch, setFilterSearch] = useState('');
+  const [filterFeaturedOnly, setFilterFeaturedOnly] = useState(false);
 
   // Editor state
   const [sponsorName, setSponsorName] = useState('');
+  const [sponsorLogo, setSponsorLogo] = useState('');
   const [sponsorWebsite, setSponsorWebsite] = useState('');
   const [contributionType, setContributionType] = useState<Sponsor['contributionType']>('Financial');
   const [tier, setTier] = useState<Sponsor['tier']>('Silver');
+  const [displayOrder, setDisplayOrder] = useState(0);
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
+  const [showOnHomepage, setShowOnHomepage] = useState(false);
 
   const fetchSponsors = useCallback(async () => {
     try {
-      setLoading(true);
+      if (isInitialLoad) {
+        setLoading(true);
+      } else {
+        setFilterLoading(true);
+      }
       setError(null);
-      const res = await api.sponsorsApi.sponsorsControllerFindAll();
-      const data = (res as { data?: unknown }).data;
-      const list = Array.isArray(data) ? data : [];
-      setSponsors(list.map((row: Record<string, unknown>) => mapApiToSponsor(row)));
+      
+      // Build query params
+      const params = new URLSearchParams();
+      if (filterTier) params.append('tier', filterTier);
+      if (filterContributionType) params.append('contributionType', filterContributionType);
+      if (filterStatus) params.append('status', filterStatus);
+      if (filterSearch) params.append('search', filterSearch);
+      if (filterFeaturedOnly) params.append('featuredOnly', 'true');
+      
+      const queryString = params.toString();
+      const url = `/website/sponsors${queryString ? `?${queryString}` : ''}`;
+      
+      const res = await apiFetch(url);
+      if (!res.ok) throw new Error('Failed to fetch sponsors');
+      
+      const list = await res.json();
+      setSponsors(Array.isArray(list) ? list.map((row: Record<string, unknown>) => mapApiToSponsor(row)) : []);
+      
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+      }
     } catch (e: unknown) {
-      setError((e as Error)?.message ?? 'Failed to load sponsors');
+      const errorMsg = (e as Error)?.message ?? 'Failed to load sponsors';
+      setError(errorMsg);
+      toast.error(errorMsg);
       setSponsors([]);
     } finally {
       setLoading(false);
+      setFilterLoading(false);
     }
-  }, [api.sponsorsApi]);
+  }, [apiFetch, filterTier, filterContributionType, filterStatus, filterSearch, filterFeaturedOnly, isInitialLoad]);
 
   useEffect(() => {
     fetchSponsors();
@@ -96,47 +134,129 @@ export function SponsorsScreen() {
   const handleEdit = (sponsor: Sponsor) => {
     setSelectedSponsor(sponsor);
     setSponsorName(sponsor.name);
+    setSponsorLogo(sponsor.logo);
     setSponsorWebsite(sponsor.website);
     setContributionType(sponsor.contributionType);
     setTier(sponsor.tier);
+    setDisplayOrder(sponsor.displayOrder);
     setIsActive(sponsor.active);
     setIsFeatured(sponsor.featured);
+    setShowOnHomepage(sponsor.featured); // Using featured as showOnHomepage
     setShowEditor(true);
   };
 
   const handleNew = () => {
     setSelectedSponsor(null);
     setSponsorName('');
+    setSponsorLogo('');
     setSponsorWebsite('');
     setContributionType('Financial');
     setTier('Silver');
+    setDisplayOrder(0);
     setIsActive(true);
     setIsFeatured(false);
+    setShowOnHomepage(false);
     setShowEditor(true);
   };
 
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Only JPG, PNG, SVG, and WebP files are allowed');
+      return;
+    }
+
+    // Validate file size (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('File size must be less than 2MB');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Get auth token from session storage
+      const authStr = sessionStorage.getItem('aram_admin_auth');
+      const authData = authStr ? JSON.parse(authStr) : null;
+      const accessToken = authData?.accessToken;
+
+      if (!accessToken) {
+        throw new Error('Not authenticated');
+      }
+
+      // Use API base URL
+      const apiBase = window.location.origin.includes('5173') 
+        ? 'http://localhost:3000/api' 
+        : '/api';
+
+      const res = await fetch(`${apiBase}/website/sponsors/upload-logo`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || 'Upload failed');
+      }
+
+      const data = await res.json();
+      setSponsorLogo(data.logoUrl);
+      toast.success('Logo uploaded successfully');
+    } catch (e: unknown) {
+      const errorMsg = (e as Error)?.message ?? 'Failed to upload logo';
+      toast.error(errorMsg);
+    } finally {
+      setUploading(false);
+      // Reset the input so the same file can be selected again
+      event.target.value = '';
+    }
+  };
+
   const handleSave = async () => {
+    if (!sponsorName.trim()) {
+      toast.error('Sponsor name is required');
+      return;
+    }
+
     try {
       setSaving(true);
       const body = JSON.stringify({
         name: sponsorName,
+        logoUrl: sponsorLogo || undefined,
         websiteUrl: sponsorWebsite || undefined,
         contributionType,
         tier,
+        displayOrder,
         isActive,
         featured: isFeatured,
+        showOnHomepage,
+        addedBy: 'Admin', // You can replace with actual user info if available
       });
+      
       if (selectedSponsor) {
         const res = await apiFetch(`/website/sponsors/${selectedSponsor.id}`, { method: 'PATCH', body });
         if (!res.ok) throw new Error(await res.text());
+        toast.success('Sponsor updated successfully');
       } else {
         const res = await apiFetch('/website/sponsors', { method: 'POST', body });
         if (!res.ok) throw new Error(await res.text());
+        toast.success('Sponsor added successfully');
       }
       setShowEditor(false);
       await fetchSponsors();
     } catch (e: unknown) {
-      setError((e as Error)?.message ?? 'Failed to save sponsor');
+      const errorMsg = (e as Error)?.message ?? 'Failed to save sponsor';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -153,15 +273,26 @@ export function SponsorsScreen() {
       setSaving(true);
       const res = await apiFetch(`/website/sponsors/${sponsorToDelete.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error(await res.text());
+      toast.success('Sponsor deleted successfully');
       setShowDeleteModal(false);
       setDeleteReason('');
       setSponsorToDelete(null);
       await fetchSponsors();
     } catch (e: unknown) {
-      setError((e as Error)?.message ?? 'Failed to delete sponsor');
+      const errorMsg = (e as Error)?.message ?? 'Failed to delete sponsor';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setSaving(false);
     }
+  };
+
+  const resetFilters = () => {
+    setFilterTier('');
+    setFilterContributionType('');
+    setFilterStatus('');
+    setFilterSearch('');
+    setFilterFeaturedOnly(false);
   };
 
   const getTierColor = (tier: string) => {
@@ -259,7 +390,7 @@ export function SponsorsScreen() {
         <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px] mb-[24px]">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-[14px] font-semibold text-[#0D0D0D]">Filters</h3>
-            <button className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
+            <button onClick={resetFilters} className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
               Reset All
             </button>
           </div>
@@ -267,10 +398,14 @@ export function SponsorsScreen() {
           <div className="grid grid-cols-4 gap-[16px]">
             <div>
               <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">Tier</label>
-              <select className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]">
-                <option>All Tiers</option>
+              <select 
+                value={filterTier}
+                onChange={(e) => setFilterTier(e.target.value)}
+                className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+              >
+                <option value="">All Tiers</option>
                 {TIERS.map((tier) => (
-                  <option key={tier}>{tier}</option>
+                  <option key={tier} value={tier}>{tier}</option>
                 ))}
               </select>
             </div>
@@ -279,20 +414,28 @@ export function SponsorsScreen() {
               <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
                 Contribution Type
               </label>
-              <select className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]">
-                <option>All Types</option>
+              <select 
+                value={filterContributionType}
+                onChange={(e) => setFilterContributionType(e.target.value)}
+                className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+              >
+                <option value="">All Types</option>
                 {CONTRIBUTION_TYPES.map((type) => (
-                  <option key={type}>{type}</option>
+                  <option key={type} value={type}>{type}</option>
                 ))}
               </select>
             </div>
 
             <div>
               <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">Status</label>
-              <select className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]">
-                <option>All</option>
-                <option>Active</option>
-                <option>Inactive</option>
+              <select 
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+              >
+                <option value="">All</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
               </select>
             </div>
 
@@ -302,6 +445,8 @@ export function SponsorsScreen() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6E6E6E]" />
                 <input
                   type="text"
+                  value={filterSearch}
+                  onChange={(e) => setFilterSearch(e.target.value)}
                   placeholder="Sponsor name..."
                   className="w-full h-[44px] pl-[36px] pr-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
                 />
@@ -311,7 +456,12 @@ export function SponsorsScreen() {
 
           <div className="mt-4">
             <label className="flex items-center gap-2">
-              <input type="checkbox" className="w-4 h-4 accent-[#F36A4F]" />
+              <input 
+                type="checkbox" 
+                checked={filterFeaturedOnly}
+                onChange={(e) => setFilterFeaturedOnly(e.target.checked)}
+                className="w-4 h-4 accent-[#F36A4F]" 
+              />
               <span className="text-[13px] text-[#3D3D3D]">Featured only</span>
             </label>
           </div>
@@ -326,7 +476,25 @@ export function SponsorsScreen() {
         </div>
 
         <div className="space-y-3">
-          {sponsors.map((sponsor) => (
+          {filterLoading ? (
+            <div className="text-center py-12">
+              <div className="inline-block w-8 h-8 border-4 border-[#F36A4F] border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-[14px] text-[#6E6E6E] mt-4">Loading...</p>
+            </div>
+          ) : sponsors.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-[14px] text-[#6E6E6E]">No sponsors found matching your filters.</p>
+              {(filterTier || filterContributionType || filterStatus || filterSearch || filterFeaturedOnly) && (
+                <button 
+                  onClick={resetFilters}
+                  className="mt-2 text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium"
+                >
+                  Clear all filters
+                </button>
+              )}
+            </div>
+          ) : (
+            sponsors.map((sponsor) => (
             <div
               key={sponsor.id}
               className="flex items-center gap-4 p-[16px] bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB] hover:bg-white transition-colors"
@@ -397,7 +565,7 @@ export function SponsorsScreen() {
                 </button>
               </div>
             </div>
-          ))}
+          )))}
         </div>
       </div>
 
@@ -425,9 +593,9 @@ export function SponsorsScreen() {
                 </label>
                 <div className="flex items-center gap-4">
                   <div className="w-24 h-24 bg-[#F8F8F8] rounded-[12px] border-2 border-dashed border-[#DBDBDB] flex items-center justify-center">
-                    {selectedSponsor?.logo ? (
+                    {sponsorLogo ? (
                       <img
-                        src={selectedSponsor.logo}
+                        src={sponsorLogo}
                         alt="Logo preview"
                         className="w-full h-full object-contain p-2"
                       />
@@ -435,10 +603,23 @@ export function SponsorsScreen() {
                       <ImageIcon className="w-8 h-8 text-[#DBDBDB]" />
                     )}
                   </div>
-                  <button className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D] flex items-center gap-2">
+                  <input
+                    type="file"
+                    id="sponsor-logo-upload"
+                    accept="image/jpeg,image/png,image/svg+xml,image/webp"
+                    onChange={handleLogoUpload}
+                    className="hidden"
+                    disabled={uploading}
+                  />
+                  <label
+                    htmlFor="sponsor-logo-upload"
+                    className={`h-[44px] px-[20px] rounded-full border border-[#DBDBDB] ${
+                      uploading ? 'bg-[#F3F3F3] cursor-not-allowed' : 'hover:bg-[#F3F3F3] cursor-pointer'
+                    } text-[14px] font-medium text-[#3D3D3D] flex items-center gap-2`}
+                  >
                     <Upload className="w-4 h-4" />
-                    Upload Logo
-                  </button>
+                    {uploading ? 'Uploading...' : 'Upload Logo'}
+                  </label>
                   <p className="text-[12px] text-[#6E6E6E]">
                     JPG, PNG or SVG. Max 2MB.
                     <br />
@@ -504,6 +685,22 @@ export function SponsorsScreen() {
                     ))}
                   </select>
                 </div>
+
+                <div className="col-span-2">
+                  <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                    Display Order
+                  </label>
+                  <input
+                    type="number"
+                    value={displayOrder}
+                    onChange={(e) => setDisplayOrder(parseInt(e.target.value) || 0)}
+                    className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                    placeholder="0"
+                  />
+                  <p className="text-[12px] text-[#6E6E6E] mt-1">
+                    Lower numbers appear first (0 = highest priority)
+                  </p>
+                </div>
               </div>
 
               {/* Toggles */}
@@ -522,7 +719,10 @@ export function SponsorsScreen() {
                   <input
                     type="checkbox"
                     checked={isFeatured}
-                    onChange={(e) => setIsFeatured(e.target.checked)}
+                    onChange={(e) => {
+                      setIsFeatured(e.target.checked);
+                      setShowOnHomepage(e.target.checked);
+                    }}
                     className="w-4 h-4 accent-[#F36A4F]"
                   />
                   <span className="text-[13px] text-[#3D3D3D]">

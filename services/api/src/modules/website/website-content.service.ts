@@ -26,14 +26,17 @@ export class WebsiteContentService {
   }
 
   async create(dto: CreateWebsiteContentDto) {
+    const publishedAt = dto.status === 'Published' ? new Date() : null;
+    
     await this.db.insert(websiteContent).values({
       sectionKey: dto.sectionKey,
       contentJson: dto.contentJson,
       version: dto.version ?? 1,
       name: dto.name ?? null,
       slug: dto.slug ?? null,
-      status: dto.status ?? null,
+      status: dto.status ?? 'Draft',
       modifiedBy: dto.modifiedBy ?? null,
+      publishedAt,
     });
     const rows = await this.db
       .select()
@@ -54,7 +57,13 @@ export class WebsiteContentService {
     if (dto.version !== undefined) updates.version = dto.version;
     if (dto.name !== undefined) updates.name = dto.name;
     if (dto.slug !== undefined) updates.slug = dto.slug;
-    if (dto.status !== undefined) updates.status = dto.status;
+    if (dto.status !== undefined) {
+      updates.status = dto.status;
+      // Set publishedAt when changing status to Published
+      if (dto.status === 'Published' && existing.status !== 'Published') {
+        updates.publishedAt = new Date();
+      }
+    }
     if (dto.modifiedBy !== undefined) updates.modifiedBy = dto.modifiedBy;
     await this.db.update(websiteContent).set(updates as Record<string, unknown>).where(eq(websiteContent.id, id));
     return this.findById(id);

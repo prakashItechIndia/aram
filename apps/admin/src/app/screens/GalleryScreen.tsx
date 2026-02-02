@@ -98,35 +98,64 @@ export function GalleryScreen() {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterLoading, setFilterLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // Filter state - must be declared before fetchGallery
+  const [filterAlbum, setFilterAlbum] = useState('');
+  const [filterTag, setFilterTag] = useState('');
+  const [filterVisibility, setFilterVisibility] = useState('');
+  const [filterSearch, setFilterSearch] = useState('');
 
   const fetchGallery = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
-      const imgRes = await api.galleryApi.galleryControllerFindAll();
-      const imgData = (imgRes as { data?: unknown }).data;
-      const imgList = Array.isArray(imgData) ? imgData : [];
-      setImages(imgList.map((row: Record<string, unknown>) => mapApiToImage(row)));
-
-      const albumsApi = (api as { galleryAlbumsApi?: { galleryAlbumsControllerFindAll: () => Promise<unknown> } }).galleryAlbumsApi;
-      if (albumsApi?.galleryAlbumsControllerFindAll) {
-        const albRes = await albumsApi.galleryAlbumsControllerFindAll();
-        const albData = (albRes as { data?: unknown }).data;
-        const albList = Array.isArray(albData) ? albData : [];
-        setAlbums(albList.map((row: Record<string, unknown>) => mapApiToAlbum(row)));
+      if (isInitialLoad) {
+        setLoading(true);
       } else {
-        setAlbums([]);
+        setFilterLoading(true);
+      }
+      setError(null);
+      
+      // Build query params for images
+      const params = new URLSearchParams();
+      if (filterAlbum) params.append('albumId', filterAlbum);
+      if (filterTag) params.append('tag', filterTag);
+      if (filterVisibility) params.append('visibility', filterVisibility);
+      if (filterSearch) params.append('search', filterSearch);
+      
+      const queryString = params.toString();
+      const url = `/website/gallery${queryString ? `?${queryString}` : ''}`;
+      
+      const imgRes = await apiFetch(url);
+      if (!imgRes.ok) throw new Error('Failed to fetch gallery');
+      
+      const imgList = await imgRes.json();
+      setImages(Array.isArray(imgList) ? imgList.map((row: Record<string, unknown>) => mapApiToImage(row)) : []);
+
+      // Fetch albums only on initial load
+      if (isInitialLoad) {
+        const albumsApi = (api as { galleryAlbumsApi?: { galleryAlbumsControllerFindAll: () => Promise<unknown> } }).galleryAlbumsApi;
+        if (albumsApi?.galleryAlbumsControllerFindAll) {
+          const albRes = await albumsApi.galleryAlbumsControllerFindAll();
+          const albData = (albRes as { data?: unknown }).data;
+          const albList = Array.isArray(albData) ? albData : [];
+          setAlbums(albList.map((row: Record<string, unknown>) => mapApiToAlbum(row)));
+        } else {
+          setAlbums([]);
+        }
+        setIsInitialLoad(false);
       }
     } catch (e: unknown) {
       setError((e as Error)?.message ?? 'Failed to load gallery');
       setImages([]);
-      setAlbums([]);
+      if (isInitialLoad) setAlbums([]);
     } finally {
       setLoading(false);
+      setFilterLoading(false);
     }
-  }, [api]);
+  }, [api, apiFetch, filterAlbum, filterTag, filterVisibility, filterSearch, isInitialLoad]);
 
   useEffect(() => {
     fetchGallery();
@@ -227,6 +256,13 @@ export function GalleryScreen() {
   const handlePreview = (image: GalleryImage) => {
     setPreviewImage(image);
     setShowPreview(true);
+  };
+
+  const resetFilters = () => {
+    setFilterAlbum('');
+    setFilterTag('');
+    setFilterVisibility('');
+    setFilterSearch('');
   };
 
   const handleDownload = (image: GalleryImage) => {
@@ -407,7 +443,7 @@ export function GalleryScreen() {
         <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px] mb-[24px]">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-[14px] font-semibold text-[#0D0D0D]">Filters</h3>
-            <button className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
+            <button onClick={resetFilters} className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
               Reset All
             </button>
           </div>
@@ -415,30 +451,42 @@ export function GalleryScreen() {
           <div className="grid grid-cols-4 gap-[16px]">
             <div>
               <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">Album</label>
-              <select className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]">
-                <option>All Albums</option>
+              <select 
+                value={filterAlbum}
+                onChange={(e) => setFilterAlbum(e.target.value)}
+                className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+              >
+                <option value="">All Albums</option>
                 {albums.map((album) => (
-                  <option key={album.id}>{album.name}</option>
+                  <option key={album.id} value={album.id}>{album.name}</option>
                 ))}
               </select>
             </div>
 
             <div>
               <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">Tags</label>
-              <select className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]">
-                <option>All Tags</option>
+              <select 
+                value={filterTag}
+                onChange={(e) => setFilterTag(e.target.value)}
+                className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+              >
+                <option value="">All Tags</option>
                 {TAGS.map((tag) => (
-                  <option key={tag}>{tag}</option>
+                  <option key={tag} value={tag}>{tag}</option>
                 ))}
               </select>
             </div>
 
             <div>
               <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">Visibility</label>
-              <select className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]">
-                <option>All</option>
-                <option>Public</option>
-                <option>Private</option>
+              <select 
+                value={filterVisibility}
+                onChange={(e) => setFilterVisibility(e.target.value)}
+                className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+              >
+                <option value="">All</option>
+                <option value="Public">Public</option>
+                <option value="Private">Private</option>
               </select>
             </div>
 
@@ -448,6 +496,8 @@ export function GalleryScreen() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6E6E6E]" />
                 <input
                   type="text"
+                  value={filterSearch}
+                  onChange={(e) => setFilterSearch(e.target.value)}
                   placeholder="Search images..."
                   className="w-full h-[44px] pl-[36px] pr-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
                 />
@@ -508,7 +558,24 @@ export function GalleryScreen() {
 
       {/* Images Grid/List */}
       <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[24px]">
-        {viewMode === 'grid' ? (
+        {filterLoading ? (
+          <div className="text-center py-12">
+            <div className="inline-block w-8 h-8 border-4 border-[#F36A4F] border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-[14px] text-[#6E6E6E] mt-4">Loading...</p>
+          </div>
+        ) : images.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-[14px] text-[#6E6E6E]">No images found matching your filters.</p>
+            {(filterAlbum || filterTag || filterVisibility || filterSearch) && (
+              <button 
+                onClick={resetFilters}
+                className="mt-2 text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
+        ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-4 gap-[16px]">
             {images.map((image) => (
               <div

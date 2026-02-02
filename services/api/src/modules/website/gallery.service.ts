@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, and, like, or, SQL } from 'drizzle-orm';
 import { DRIZZLE } from '../../database/database.module';
 import { gallery } from '../../database/models/gallery.model';
 import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';
@@ -7,12 +7,50 @@ import * as schema from '../../database/schema';
 import type { CreateGalleryItemDto } from './dto/create-gallery-item.dto';
 import type { UpdateGalleryItemDto } from './dto/update-gallery-item.dto';
 
+export interface GalleryFilters {
+  albumId?: string;
+  tag?: string;
+  visibility?: string;
+  search?: string;
+}
+
 @Injectable()
 export class GalleryService {
   constructor(@Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>) {}
 
-  async findAll() {
-    return this.db.select().from(gallery);
+  async findAll(filters?: GalleryFilters) {
+    const conditions: SQL[] = [];
+
+    if (filters?.albumId) {
+      conditions.push(eq(gallery.albumId, parseInt(filters.albumId)));
+    }
+
+    if (filters?.tag) {
+      conditions.push(like(gallery.tagsJson, `%${filters.tag}%`));
+    }
+
+    if (filters?.visibility) {
+      conditions.push(eq(gallery.visibility, filters.visibility));
+    }
+
+    if (filters?.search) {
+      const searchPattern = `%${filters.search}%`;
+      conditions.push(
+        or(
+          like(gallery.title, searchPattern),
+          like(gallery.caption, searchPattern),
+          like(gallery.photographer, searchPattern),
+        )!
+      );
+    }
+
+    const query = this.db.select().from(gallery);
+    
+    if (conditions.length > 0) {
+      return query.where(and(...conditions));
+    }
+    
+    return query;
   }
 
   async findById(id: number) {
