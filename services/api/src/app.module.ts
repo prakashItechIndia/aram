@@ -1,14 +1,16 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
+import { S3Module } from './modules/s3/s3.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { FeatureConfigModule } from './modules/config/config.module';
 import { DonorsModule } from './modules/donors/donors.module';
 import { DonationCategoriesModule } from './modules/donation-categories/donation-categories.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { ReceiptsModule } from './modules/receipts/receipts.module';
+import { ReceiptSettingsModule } from './modules/receipt-settings/receipt-settings.module';
 import { RefundsModule } from './modules/refunds/refunds.module';
 import { EnquiriesModule } from './modules/enquiries/enquiries.module';
 import { CommunicationTemplatesModule } from './modules/communication-templates/communication-templates.module';
@@ -25,12 +27,14 @@ import { ExportLogModule } from './modules/export-log/export-log.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,
+    S3Module,
     AuthModule,
     FeatureConfigModule,
     DonorsModule,
     DonationCategoriesModule,
     TransactionsModule,
     ReceiptsModule,
+    ReceiptSettingsModule,
     RefundsModule,
     EnquiriesModule,
     CommunicationTemplatesModule,

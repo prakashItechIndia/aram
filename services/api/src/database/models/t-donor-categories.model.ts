@@ -1,22 +1,26 @@
 import {
   int,
   nvarchar,
+  nchar,
   bit,
-  datetime2,
+  datetime,
   mssqlTable,
 } from 'drizzle-orm/mssql-core';
 
 /**
- * Existing DB table: T_DONOR_CATEGORIES (donation categories).
+ * LEGACY DB table: T_DONOR_CATEGORIES (old donation categories).
+ * Use donation_categories table instead for new development.
  */
 export const tDonorCategories = mssqlTable('T_DONOR_CATEGORIES', {
-  id: int('Id').primaryKey(),
-  categoryCode: nvarchar('Category_Code', { length: 32 }),
-  displayName: nvarchar('Display_Name', { length: 128 }),
-  is80gEligible: bit('Is_80G_Eligible'),
-  sortOrder: int('Sort_Order'),
+  id: int('Id').primaryKey().identity(),
+  accountNumber: nvarchar('Account_Number', { length: 30 }),
+  donorTypes: nvarchar('Donor_Types', { length: 50 }),
+  donationCode: nchar('Donation_Code', { length: 10 }),
+  donationPageShow: bit('DonationPage_Show'),
   isActive: bit('Is_Active'),
-  createdDate: datetime2('Created_Date', { precision: 3 }),
+  isDeleted: bit('Is_Deleted'),
+  createdBy: int('Created_By'),
+  createdDate: datetime('Created_Date'),
 });
 
 export type TDonorCategory = typeof tDonorCategories.$inferSelect;

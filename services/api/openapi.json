@@ -35,7 +35,7 @@
             "description": ""
           }
         },
-        "summary": "Login user",
+        "summary": "Login user (donor portal)",
         "tags": [
           "auth"
         ]
@@ -60,7 +60,7 @@
             "description": ""
           }
         },
-        "summary": "Register user",
+        "summary": "Register user (donor portal)",
         "tags": [
           "auth"
         ]
@@ -81,6 +81,101 @@
           }
         ],
         "summary": "Get user profile",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/admin/login": {
+      "post": {
+        "operationId": "AuthController_adminLogin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminLoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Admin portal login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/admin/forgot-password": {
+      "post": {
+        "operationId": "AuthController_forgotPassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Admin forgot password",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/admin/reset-password": {
+      "post": {
+        "operationId": "AuthController_resetPassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Admin reset password with token",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/admin/profile": {
+      "get": {
+        "operationId": "AuthController_getAdminProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Admin profile (Admin/Super Admin only)",
         "tags": [
           "auth"
         ]
@@ -127,6 +222,49 @@
         "parameters": [],
         "responses": {
           "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "donors"
+        ]
+      }
+    },
+    "/donors/me": {
+      "get": {
+        "operationId": "DonorsController_getMyProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "donors"
+        ]
+      }
+    },
+    "/donors/guest-donate": {
+      "post": {
+        "operationId": "DonorsController_guestDonate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGuestDonorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
             "description": ""
           }
         },
@@ -614,9 +752,40 @@
     "/website/content": {
       "get": {
         "operationId": "WebsiteContentController_findAll",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "sectionKey",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "website-content"
+        ]
+      },
+      "post": {
+        "operationId": "WebsiteContentController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWebsiteContentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
             "description": ""
           }
         },
@@ -628,6 +797,58 @@
     "/website/content/{id}": {
       "get": {
         "operationId": "WebsiteContentController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "website-content"
+        ]
+      },
+      "patch": {
+        "operationId": "WebsiteContentController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWebsiteContentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "website-content"
+        ]
+      },
+      "delete": {
+        "operationId": "WebsiteContentController_remove",
         "parameters": [
           {
             "name": "id",
@@ -660,11 +881,85 @@
         "tags": [
           "sponsors"
         ]
+      },
+      "post": {
+        "operationId": "SponsorsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSponsorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "sponsors"
+        ]
       }
     },
     "/website/sponsors/{id}": {
       "get": {
         "operationId": "SponsorsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "sponsors"
+        ]
+      },
+      "patch": {
+        "operationId": "SponsorsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSponsorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "sponsors"
+        ]
+      },
+      "delete": {
+        "operationId": "SponsorsController_remove",
         "parameters": [
           {
             "name": "id",
@@ -697,6 +992,28 @@
         "tags": [
           "gallery"
         ]
+      },
+      "post": {
+        "operationId": "GalleryController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGalleryItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "gallery"
+        ]
       }
     },
     "/website/gallery/{id}": {
@@ -719,6 +1036,169 @@
         },
         "tags": [
           "gallery"
+        ]
+      },
+      "patch": {
+        "operationId": "GalleryController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGalleryItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "gallery"
+        ]
+      },
+      "delete": {
+        "operationId": "GalleryController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "gallery"
+        ]
+      }
+    },
+    "/website/gallery/albums": {
+      "get": {
+        "operationId": "GalleryAlbumsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "gallery-albums"
+        ]
+      },
+      "post": {
+        "operationId": "GalleryAlbumsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGalleryAlbumDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "gallery-albums"
+        ]
+      }
+    },
+    "/website/gallery/albums/{id}": {
+      "get": {
+        "operationId": "GalleryAlbumsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "gallery-albums"
+        ]
+      },
+      "patch": {
+        "operationId": "GalleryAlbumsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGalleryAlbumDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "gallery-albums"
+        ]
+      },
+      "delete": {
+        "operationId": "GalleryAlbumsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "gallery-albums"
         ]
       }
     },
@@ -807,6 +1287,52 @@
           "email",
           "password",
           "name"
+        ]
+      },
+      "AdminLoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@aram.org"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "ForgotPasswordDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@aram.org"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ResetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Reset token from forgot-password email/link"
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 6
+          }
+        },
+        "required": [
+          "token",
+          "newPassword"
         ]
       },
       "FeatureConfigItemDto": {
@@ -914,6 +1440,329 @@
           "items",
           "donationForm"
         ]
+      },
+      "CreateGuestDonorDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "mobile": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "pan": {
+            "type": "string",
+            "description": "PAN in format AAAAA0000A"
+          },
+          "country": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "donationType": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "mobile",
+          "address",
+          "pan",
+          "amount",
+          "donationType"
+        ]
+      },
+      "CreateWebsiteContentDto": {
+        "type": "object",
+        "properties": {
+          "sectionKey": {
+            "type": "string",
+            "description": "Section key (e.g. hero, mission_vision)"
+          },
+          "contentJson": {
+            "type": "string",
+            "description": "JSON content for the section"
+          },
+          "version": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "modifiedBy": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sectionKey",
+          "contentJson"
+        ]
+      },
+      "UpdateWebsiteContentDto": {
+        "type": "object",
+        "properties": {
+          "sectionKey": {
+            "type": "string"
+          },
+          "contentJson": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "modifiedBy": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateSponsorDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "logoUrl": {
+            "type": "string"
+          },
+          "websiteUrl": {
+            "type": "string"
+          },
+          "contributionType": {
+            "type": "string"
+          },
+          "tier": {
+            "type": "string"
+          },
+          "displayOrder": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "showOnHomepage": {
+            "type": "boolean"
+          },
+          "addedBy": {
+            "type": "string"
+          },
+          "featured": {
+            "type": "boolean"
+          },
+          "displayStartDate": {
+            "type": "string"
+          },
+          "displayEndDate": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateSponsorDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "logoUrl": {
+            "type": "string"
+          },
+          "websiteUrl": {
+            "type": "string"
+          },
+          "contributionType": {
+            "type": "string"
+          },
+          "tier": {
+            "type": "string"
+          },
+          "displayOrder": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "showOnHomepage": {
+            "type": "boolean"
+          },
+          "addedBy": {
+            "type": "string"
+          },
+          "featured": {
+            "type": "boolean"
+          },
+          "displayStartDate": {
+            "type": "string"
+          },
+          "displayEndDate": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateGalleryItemDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "altText": {
+            "type": "string"
+          },
+          "imagePath": {
+            "type": "string"
+          },
+          "albumId": {
+            "type": "number"
+          },
+          "tagsJson": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "caption": {
+            "type": "string"
+          },
+          "photographer": {
+            "type": "string"
+          },
+          "visibility": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "string"
+          },
+          "thumbnailPath": {
+            "type": "string"
+          },
+          "uploadedBy": {
+            "type": "string"
+          },
+          "altTextGeneratedByAi": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "title",
+          "imagePath"
+        ]
+      },
+      "UpdateGalleryItemDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "altText": {
+            "type": "string"
+          },
+          "imagePath": {
+            "type": "string"
+          },
+          "albumId": {
+            "type": "number"
+          },
+          "tagsJson": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "caption": {
+            "type": "string"
+          },
+          "photographer": {
+            "type": "string"
+          },
+          "visibility": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "string"
+          },
+          "thumbnailPath": {
+            "type": "string"
+          },
+          "uploadedBy": {
+            "type": "string"
+          },
+          "altTextGeneratedByAi": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateGalleryAlbumDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "coverImageUrl": {
+            "type": "string"
+          },
+          "imageCount": {
+            "type": "number"
+          },
+          "visibility": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateGalleryAlbumDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "coverImageUrl": {
+            "type": "string"
+          },
+          "imageCount": {
+            "type": "number"
+          },
+          "visibility": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        }
       }
     }
   }

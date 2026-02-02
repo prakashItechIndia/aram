@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   FileText,
   Plus,
@@ -19,6 +19,7 @@ import {
   RotateCcw,
   Search,
 } from 'lucide-react';
+import { useApi } from '../context/ApiContext';
 
 interface Page {
   id: string;
@@ -37,35 +38,19 @@ interface Section {
   enabled: boolean;
 }
 
-const mockPages: Page[] = [
-  {
-    id: '1',
-    name: 'Home',
-    slug: '/home',
-    status: 'Published',
-    lastModified: '2026-01-20 10:30 AM',
-    modifiedBy: 'Admin User',
-    version: 15,
-  },
-  {
-    id: '2',
-    name: 'About',
-    slug: '/about',
-    status: 'Published',
-    lastModified: '2026-01-18 03:45 PM',
-    modifiedBy: 'Content Editor',
-    version: 8,
-  },
-  {
-    id: '3',
-    name: 'Contact',
-    slug: '/contact',
-    status: 'Draft',
-    lastModified: '2026-01-19 11:20 AM',
-    modifiedBy: 'Admin User',
-    version: 3,
-  },
-];
+function mapApiToPage(row: Record<string, unknown>): Page {
+  const updatedAt = row.updatedAt as string | undefined;
+  const dateStr = updatedAt ? new Date(updatedAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }) : '';
+  return {
+    id: String(row.id ?? ''),
+    name: String(row.name ?? row.sectionKey ?? ''),
+    slug: String(row.slug ?? ''),
+    status: (row.status as Page['status']) ?? 'Draft',
+    lastModified: dateStr,
+    modifiedBy: String(row.modifiedBy ?? ''),
+    version: Number(row.version ?? 1),
+  };
+}
 
 const homeSections: Section[] = [
   { id: '1', name: 'Hero Section', type: 'hero', enabled: true },
@@ -76,6 +61,32 @@ const homeSections: Section[] = [
 ];
 
 export function ContentScreen() {
+  const { api, apiFetch, user } = useApi();
+  const [pages, setPages] = useState<Page[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const fetchContent = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await api.websiteContentApi.websiteContentControllerFindAll('');
+      const data = (res as { data?: unknown }).data;
+      const list = Array.isArray(data) ? data : [];
+      setPages(list.map((row: Record<string, unknown>) => mapApiToPage(row)));
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? 'Failed to load content');
+      setPages([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [api.websiteContentApi]);
+
+  useEffect(() => {
+    fetchContent();
+  }, [fetchContent]);
+
   const [selectedPage, setSelectedPage] = useState<Page | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [showSEO, setShowSEO] = useState(false);
@@ -84,6 +95,16 @@ export function ContentScreen() {
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [showReasonModal, setShowReasonModal] = useState(false);
   const [publishReason, setPublishReason] = useState('');
+
+  // Page form state
+  const [pageName, setPageName] = useState('');
+  const [pageSlug, setPageSlug] = useState('');
+  const [sectionKey, setSectionKey] = useState('');
+
+  // SEO state
+  const [metaTitle, setMetaTitle] = useState('');
+  const [metaDescription, setMetaDescription] = useState('');
+  const [canonicalUrl, setCanonicalUrl] = useState('');
 
   // Hero section state
   const [heroHeadline, setHeroHeadline] = useState('Transforming Lives Through Education');
@@ -96,21 +117,147 @@ export function ContentScreen() {
 
   const handleEditPage = (page: Page) => {
     setSelectedPage(page);
+    setPageName(page.name);
+    setPageSlug(page.slug);
+    setSectionKey(page.name.toLowerCase().replace(/\s+/g, '_'));
+    // Load SEO data if available
     setShowEditor(true);
   };
 
+  const handleNewPage = () => {
+    setSelectedPage(null);
+    setPageName('');
+    setPageSlug('');
+    setSectionKey('');
+    setMetaTitle('');
+    setMetaDescription('');
+    setCanonicalUrl('');
+    setShowEditor(true);
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+
+      // Build content JSON
+      const contentData = {
+        meta: {
+          title: metaTitle,
+          description: metaDescription,
+          canonicalUrl: canonicalUrl,
+        },
+        sections: {
+          hero: {
+            headline: heroHeadline,
+            subheadline: heroSubheadline,
+            ctaText: heroCTAText,
+            ctaLink: heroCTALink,
+            showStats: showDonationStats,
+          },
+        },
+      };
+
+      const payload = {
+        name: pageName,
+        slug: pageSlug || pageName.toLowerCase().replace(/\s+/g, '-'),
+        sectionKey: sectionKey || pageName.toLowerCase().replace(/\s+/g, '_'),
+        contentJson: JSON.stringify(contentData),
+        status: 'Draft',
+        modifiedBy: user?.email || 'Admin',
+        version: selectedPage ? (selectedPage.version + 1) : 1,
+      };
+
+      if (selectedPage) {
+        // Update existing
+        const res = await apiFetch(`/website/content/${selectedPage.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(await res.text());
+      } else {
+        // Create new
+        const res = await apiFetch('/website/content', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(await res.text());
+      }
+
+      await fetchContent();
+      setShowEditor(false);
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? 'Failed to save draft');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handlePublish = () => {
+    if (!pageName.trim()) {
+      setError('Page name is required');
+      return;
+    }
     setShowReasonModal(true);
   };
 
-  const confirmPublish = () => {
-    console.log('Publishing with reason:', publishReason);
-    if (selectedPage) {
-      selectedPage.status = 'Published';
+  const confirmPublish = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+
+      // Build content JSON
+      const contentData = {
+        meta: {
+          title: metaTitle,
+          description: metaDescription,
+          canonicalUrl: canonicalUrl,
+        },
+        sections: {
+          hero: {
+            headline: heroHeadline,
+            subheadline: heroSubheadline,
+            ctaText: heroCTAText,
+            ctaLink: heroCTALink,
+            showStats: showDonationStats,
+          },
+        },
+        publishReason: publishReason,
+      };
+
+      const payload = {
+        name: pageName,
+        slug: pageSlug || pageName.toLowerCase().replace(/\s+/g, '-'),
+        sectionKey: sectionKey || pageName.toLowerCase().replace(/\s+/g, '_'),
+        contentJson: JSON.stringify(contentData),
+        status: 'Published',
+        modifiedBy: user?.email || 'Admin',
+        version: selectedPage ? (selectedPage.version + 1) : 1,
+      };
+
+      if (selectedPage) {
+        const res = await apiFetch(`/website/content/${selectedPage.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(await res.text());
+      } else {
+        const res = await apiFetch('/website/content', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(await res.text());
+      }
+
+      await fetchContent();
+      setShowReasonModal(false);
+      setPublishReason('');
+      setShowEditor(false);
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? 'Failed to publish');
+    } finally {
+      setSaving(false);
     }
-    setShowReasonModal(false);
-    setPublishReason('');
-    setShowEditor(false);
   };
 
   const getStatusColor = (status: string) => {
@@ -134,10 +281,7 @@ export function ContentScreen() {
           </div>
 
           <button
-            onClick={() => {
-              setSelectedPage(null);
-              setShowEditor(true);
-            }}
+            onClick={handleNewPage}
             className="h-[44px] px-[20px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] transition-colors flex items-center gap-2 text-[14px] font-medium text-white"
           >
             <Plus className="w-4 h-4" />
@@ -146,30 +290,42 @@ export function ContentScreen() {
         </div>
       </div>
 
+      {error && (
+        <div className="mb-4 p-4 bg-[#FFEBEE] rounded-[12px] text-[14px] text-[#C62828]">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="py-12 text-center text-[14px] text-[#6E6E6E]">Loading content...</div>
+      ) : (
+        <>
       {/* Summary Cards */}
       <div className="grid grid-cols-4 gap-[16px] mb-[24px]">
         <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
           <p className="text-[13px] text-[#6E6E6E] mb-1">Total Pages</p>
-          <p className="text-[24px] font-semibold text-[#0D0D0D]">{mockPages.length}</p>
+          <p className="text-[24px] font-semibold text-[#0D0D0D]">{pages.length}</p>
         </div>
 
         <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
           <p className="text-[13px] text-[#6E6E6E] mb-1">Published</p>
           <p className="text-[24px] font-semibold text-[#2E7D32]">
-            {mockPages.filter((p) => p.status === 'Published').length}
+            {pages.filter((p) => p.status === 'Published').length}
           </p>
         </div>
 
         <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
           <p className="text-[13px] text-[#6E6E6E] mb-1">Drafts</p>
           <p className="text-[24px] font-semibold text-[#E65100]">
-            {mockPages.filter((p) => p.status === 'Draft').length}
+            {pages.filter((p) => p.status === 'Draft').length}
           </p>
         </div>
 
         <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
           <p className="text-[13px] text-[#6E6E6E] mb-1">Last Updated</p>
-          <p className="text-[13px] font-semibold text-[#0D0D0D]">Today, 10:30 AM</p>
+          <p className="text-[13px] font-semibold text-[#0D0D0D]">
+            {pages[0]?.lastModified ?? '—'}
+          </p>
         </div>
       </div>
 
@@ -203,7 +359,7 @@ export function ContentScreen() {
               </tr>
             </thead>
             <tbody>
-              {mockPages.map((page) => (
+              {pages.map((page) => (
                 <tr key={page.id} className="border-b border-[#DBDBDB] hover:bg-[#F8F8F8]">
                   <td className="h-[56px] px-[16px] text-[14px] text-[#0D0D0D] font-medium">
                     <div className="flex items-center gap-2">
@@ -275,6 +431,8 @@ export function ContentScreen() {
           </table>
         </div>
       </div>
+        </>
+      )}
 
       {/* Page Editor Modal */}
       {showEditor && (
@@ -298,6 +456,59 @@ export function ContentScreen() {
             </div>
 
             <div className="p-[24px]">
+              {/* Page Basic Info */}
+              <div className="mb-6 space-y-4">
+                <div>
+                  <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                    Page Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={pageName}
+                    onChange={(e) => {
+                      setPageName(e.target.value);
+                      // Auto-generate slug and section key
+                      if (!selectedPage) {
+                        const slug = e.target.value.toLowerCase().replace(/\s+/g, '-');
+                        const key = e.target.value.toLowerCase().replace(/\s+/g, '_');
+                        setPageSlug(slug);
+                        setSectionKey(key);
+                      }
+                    }}
+                    className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                    placeholder="e.g., Home, About Us, Contact"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-[16px]">
+                  <div>
+                    <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                      URL Slug *
+                    </label>
+                    <input
+                      type="text"
+                      value={pageSlug}
+                      onChange={(e) => setPageSlug(e.target.value)}
+                      className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F] font-mono"
+                      placeholder="e.g., home, about-us"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                      Section Key *
+                    </label>
+                    <input
+                      type="text"
+                      value={sectionKey}
+                      onChange={(e) => setSectionKey(e.target.value)}
+                      className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F] font-mono"
+                      placeholder="e.g., home, about_us"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* SEO Settings */}
               <div className="mb-6">
                 <button
@@ -325,11 +536,13 @@ export function ContentScreen() {
                       </label>
                       <input
                         type="text"
-                        defaultValue="Aram Foundation - Transform Lives Through Education"
+                        value={metaTitle}
+                        onChange={(e) => setMetaTitle(e.target.value)}
                         className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
                         placeholder="Max 60 characters"
                         maxLength={60}
                       />
+                      <p className="text-[11px] text-[#6E6E6E] mt-1">{metaTitle.length}/60</p>
                     </div>
 
                     <div>
@@ -337,11 +550,13 @@ export function ContentScreen() {
                         Meta Description
                       </label>
                       <textarea
-                        defaultValue="Join Aram Foundation in our mission to provide quality education and healthcare to underprivileged communities."
+                        value={metaDescription}
+                        onChange={(e) => setMetaDescription(e.target.value)}
                         className="w-full h-[80px] px-[12px] py-[10px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F] resize-none"
                         placeholder="Max 160 characters"
                         maxLength={160}
                       />
+                      <p className="text-[11px] text-[#6E6E6E] mt-1">{metaDescription.length}/160</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-[16px]">
@@ -361,6 +576,8 @@ export function ContentScreen() {
                         </label>
                         <input
                           type="url"
+                          value={canonicalUrl}
+                          onChange={(e) => setCanonicalUrl(e.target.value)}
                           className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
                           placeholder="https://aramfoundation.org/home"
                         />
@@ -579,7 +796,7 @@ export function ContentScreen() {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => {
-                    setSelectedPage(selectedPage || mockPages[0]);
+                    setSelectedPage(selectedPage || (pages[0] ?? null));
                     setShowPreview(true);
                   }}
                   className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D] flex items-center gap-2"
@@ -587,16 +804,21 @@ export function ContentScreen() {
                   <Eye className="w-4 h-4" />
                   Preview
                 </button>
-                <button className="h-[44px] px-[20px] rounded-full border border-[#F36A4F] text-[#F36A4F] hover:bg-[#FEF1EE] text-[14px] font-medium flex items-center gap-2">
+                <button
+                  onClick={handleSaveDraft}
+                  disabled={saving || !pageName.trim()}
+                  className="h-[44px] px-[20px] rounded-full border border-[#F36A4F] text-[#F36A4F] hover:bg-[#FEF1EE] text-[14px] font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <Save className="w-4 h-4" />
-                  Save Draft
+                  {saving ? 'Saving...' : 'Save Draft'}
                 </button>
                 <button
                   onClick={handlePublish}
-                  className="h-[44px] px-[20px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-white text-[14px] font-medium flex items-center gap-2"
+                  disabled={saving || !pageName.trim()}
+                  className="h-[44px] px-[20px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-white text-[14px] font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <CheckCircle className="w-4 h-4" />
-                  Publish
+                  {saving ? 'Publishing...' : 'Publish'}
                 </button>
               </div>
             </div>
@@ -718,10 +940,10 @@ export function ContentScreen() {
               </button>
               <button
                 onClick={confirmPublish}
-                disabled={!publishReason.trim()}
+                disabled={saving || !publishReason.trim()}
                 className="h-[44px] px-[20px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-white text-[14px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Confirm & Publish
+                {saving ? 'Publishing...' : 'Confirm & Publish'}
               </button>
             </div>
           </div>

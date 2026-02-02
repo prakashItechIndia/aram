@@ -11,7 +11,7 @@ import {
  * Website gallery (Phase 3) – images, albums.
  */
 export const gallery = mssqlTable('gallery', {
-  id: int('id').primaryKey(),
+  id: int('id').primaryKey().identity(),
   title: nvarchar('title', { length: 255 }).notNull(),
   description: nvarchar('description', { length: 'max' }),
   altText: nvarchar('alt_text', { length: 255 }),

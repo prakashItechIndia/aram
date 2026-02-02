@@ -5,6 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // All file storage uses S3; no local /uploads
   app.setGlobalPrefix('api');
   app.enableCors({
     origin: [
