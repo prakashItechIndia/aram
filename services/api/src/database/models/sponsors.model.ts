@@ -13,7 +13,7 @@ import {
  * User Stories WC-003: display_start_date, display_end_date (auto-hide after end date).
  */
 export const sponsors = mssqlTable('sponsors', {
-  id: int('id').primaryKey(),
+  id: int('id').primaryKey().identity(),
   name: nvarchar('name', { length: 255 }).notNull(),
   logoUrl: nvarchar('logo_url', { length: 512 }),
   websiteUrl: nvarchar('website_url', { length: 512 }),

@@ -18,6 +18,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['@aram/shared'],
+    // Exclude so Vite uses alias to source; pre-bundling can use stale lib and miss galleryAlbumsApi
+    exclude: ['@aram/shared'],
   },
 })

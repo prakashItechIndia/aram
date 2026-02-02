@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useMemo, useRef, useState } from 'react';
 import { createAramApi, type AramApiClient, type HttpClientMinState } from '@aram/shared';
 
-const getApiBaseUrl = (): string => {
+export const getApiBaseUrl = (): string => {
   try {
     const meta = import.meta as { env?: { VITE_API_URL?: string } };
     return meta?.env?.VITE_API_URL ?? 'http://localhost:3000/api';
@@ -41,6 +41,8 @@ type ApiContextValue = {
   api: AramApiClient;
   user: AuthUser;
   isAuthenticated: boolean;
+  /** Authenticated fetch for API mutate (POST, PATCH, DELETE). Uses Bearer token from context. */
+  apiFetch: (path: string, options?: { method?: string; body?: string }) => Promise<Response>;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   forgotPassword: (email: string) => Promise<{ success: boolean; error?: string; resetLink?: string }>;
   resetPassword: (token: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
@@ -84,6 +86,20 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     const basePath = getApiBaseUrl();
     return createAramApi({ basePath, httpClientMinState });
   }, [httpClientMinState]);
+
+  const apiFetch = useCallback(
+    (path: string, options?: { method?: string; body?: string }) => {
+      const basePath = getApiBaseUrl();
+      const url = path.startsWith('http') ? path : `${basePath}${path.startsWith('/') ? path : `/${path}`}`;
+      const token = userRef.current?.accessToken;
+      const headers: Record<string, string> = {
+        ...(options?.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+      return fetch(url, { method: options?.method ?? 'GET', headers, body: options?.body });
+    },
+    [],
+  );
 
   const login = useCallback(
     async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
@@ -176,13 +192,14 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       api,
       user,
       isAuthenticated: !!user?.accessToken,
+      apiFetch,
       login,
       forgotPassword,
       resetPassword,
       logout,
       setUser,
     }),
-    [api, user, login, forgotPassword, resetPassword, logout, setUser],
+    [api, user, apiFetch, login, forgotPassword, resetPassword, logout, setUser],
   );
 
   return <ApiContext.Provider value={value}>{children}</ApiContext.Provider>;

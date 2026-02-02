@@ -49,7 +49,7 @@ interface UserData {
 import { ResetPassword } from './components/screens/ResetPassword';
 
 function AppContent() {
-  const { api, login: apiLogin, register: apiRegister, logout: apiLogout, isAuthenticated, forgotPassword, resetPassword, fetchUnreadNotificationsCount, createNotification } = useApi();
+  const { api, login: apiLogin, register: apiRegister, logout: apiLogout, isAuthenticated, forgotPassword, resetPassword, fetchUnreadNotificationsCount, processDonation } = useApi();
   const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
     // Check for reset password token in URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -171,18 +171,19 @@ function AppContent() {
         setPaymentStatus('success');
         toast.success('Payment successful!');
         
-        // Trigger persistent notification
-        if (user.id) {
-          createNotification({
-            userId: user.id,
-            type: 'success',
-            title: 'Donated',
-            message: `Thank you for your donation of ₹${donationData.amount.toLocaleString()}! Receipt ${lastDonation?.receiptNo || ''} has been generated.`,
-          }).then(() => {
-             // Refresh count immediately
-             fetchUnreadNotificationsCount(user.id!).then(setNotificationCount);
-          });
-        }
+        // Trigger real persistence and notification
+        processDonation({
+          amount: donationData.amount,
+          address: donationData.address,
+          donationType: donationData.donationType,
+          name: donationData.name,
+          pan: donationData.panNumber,
+          country: donationData.country,
+        }).then((res: { success: boolean }) => {
+           if (res.success && user.id) {
+             fetchUnreadNotificationsCount(user.id).then(setNotificationCount);
+           }
+        });
       } else {
         setPaymentStatus('failed');
         toast.error('Payment failed. Please try again.');
@@ -278,7 +279,13 @@ function AppContent() {
                     window.history.replaceState({}, '', window.location.pathname);
                     setCurrentScreen('sign-in');
                 }}
-                onReset={(pwd) => resetPassword(urlParams.get('token') || '', pwd)}
+                onReset={async (pwd) => {
+                    const res = await resetPassword(urlParams.get('token') || '', pwd);
+                    if (res.success && user?.id) {
+                        fetchUnreadNotificationsCount(user.id).then(setNotificationCount);
+                    }
+                    return res;
+                }}
             />
         );
 

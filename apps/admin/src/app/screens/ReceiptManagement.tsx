@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AlertCircle, X, Check, Eye, Info } from 'lucide-react';
+import { useApi, getApiBaseUrl } from '../context/ApiContext';
 
 type TabType =
   | 'numbering'
@@ -24,6 +25,10 @@ interface ReceiptTypeConfig {
 }
 
 export function ReceiptManagement() {
+  const { user, apiFetch } = useApi();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('numbering');
   
   // Numbering settings
@@ -145,16 +150,227 @@ export function ReceiptManagement() {
     { id: 'search', label: 'Search Defaults' },
   ];
 
+  const fetchSettings = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const baseUrl = getApiBaseUrl();
+      const response = await fetch(`${baseUrl}/receipt-settings`);
+
+      if (!response.ok) throw new Error('Failed to fetch settings');
+      const data = await response.json();
+
+      // Update all state variables from API response
+      if (data.receiptPrefix) setReceiptPrefix(data.receiptPrefix);
+      if (data.startingNumber) setStartingNumber(data.startingNumber);
+      if (data.paddingLength) setPaddingLength(String(data.paddingLength));
+      if (data.noGapEnforcement !== undefined) setNoGapEnforcement(data.noGapEnforcement);
+      if (data.autoCreateNewSeries !== undefined) setAutoCreateNewSeries(data.autoCreateNewSeries);
+      if (data.manualApprovalRequired !== undefined) setManualApprovalRequired(data.manualApprovalRequired);
+      if (data.receiptTypes) setReceiptTypes(data.receiptTypes);
+
+      // Generation Rules
+      if (data.autoGenerateOnSuccess !== undefined) setAutoGenerateOnSuccess(data.autoGenerateOnSuccess);
+      if (data.generationDelay !== undefined) setGenerationDelay(String(data.generationDelay));
+      if (data.autoGenerateImports !== undefined) setAutoGenerateImports(data.autoGenerateImports);
+      if (data.allowManualOffline !== undefined) setAllowManualOffline(data.allowManualOffline);
+      if (data.allowManualBulk !== undefined) setAllowManualBulk(data.allowManualBulk);
+      if (data.allowBackdated !== undefined) setAllowBackdated(data.allowBackdated);
+      if (data.backdateWindow !== undefined) setBackdateWindow(String(data.backdateWindow));
+      if (data.showBackdateStamp !== undefined) setShowBackdateStamp(data.showBackdateStamp);
+      if (data.requireReasonManual !== undefined) setRequireReasonManual(data.requireReasonManual);
+
+      // Template Rules
+      if (data.defaultTemplateOnline) setDefaultTemplateOnline(data.defaultTemplateOnline);
+      if (data.defaultTemplateOffline) setDefaultTemplateOffline(data.defaultTemplateOffline);
+      if (data.template80g) setTemplate80G(data.template80g);
+      if (data.templateNon80g) setTemplateNon80G(data.templateNon80g);
+      if (data.forceRegenerateOnUpdate !== undefined) setForceRegenerateOnUpdate(data.forceRegenerateOnUpdate);
+      if (data.lockContentAfterGeneration !== undefined) setLockContentAfterGeneration(data.lockContentAfterGeneration);
+
+      // Mandatory Fields
+      if (data.mobileRequired !== undefined) setMobileRequired(data.mobileRequired);
+      if (data.emailRequired !== undefined) setEmailRequired(data.emailRequired);
+      if (data.addressRequired !== undefined) setAddressRequired(data.addressRequired);
+      if (data.panRule) setPanRule(data.panRule);
+      if (data.panThreshold !== undefined) setPanThreshold(String(data.panThreshold));
+      if (data.donationCategoryRequired !== undefined) setCategoryRequired(data.donationCategoryRequired);
+      if (data.donationTypeRequired !== undefined) setTypeRequired(data.donationTypeRequired);
+      if (data.panAutoUppercase !== undefined) setPanAutoUppercase(data.panAutoUppercase);
+      if (data.pincodeValidation !== undefined) setPincodeValidation(data.pincodeValidation);
+      if (data.duplicateWarning !== undefined) setDuplicateWarning(data.duplicateWarning);
+
+      // Delivery Settings
+      if (data.autoSendEmailOnReceiptGeneration !== undefined) setAutoSendEmail(data.autoSendEmailOnReceiptGeneration);
+      if (data.emailSubjectFormat) setEmailSubject(data.emailSubjectFormat);
+      if (data.emailSenderName) setSenderName(data.emailSenderName);
+      if (data.emailReplyTo) setReplyToEmail(data.emailReplyTo);
+      if (data.emailRetryAttempts !== undefined) setEmailRetryAttempts(String(data.emailRetryAttempts));
+      if (data.emailFailureAlertsNotifyAdmin !== undefined) setEmailFailureAlert(data.emailFailureAlertsNotifyAdmin);
+      if (data.autoSendSmsOnReceiptGeneration !== undefined) setAutoSendSMS(data.autoSendSmsOnReceiptGeneration);
+      if (data.smsTemplate) setSmsTemplate(data.smsTemplate);
+      if (data.smsShortLink !== undefined) setSmsShortLink(data.smsShortLink);
+
+      // Storage & Access
+      if (data.storageMode) setStorageMode(data.storageMode);
+      if (data.linkSecurity) setLinkSecurity(data.linkSecurity);
+      if (data.linkExpiryDays !== undefined) setLinkExpiry(String(data.linkExpiryDays));
+      if (data.allowRegenerationTemplate !== undefined) setAllowRegenerationTemplate(data.allowRegenerationTemplate);
+      if (data.allowRegenerationAnytime !== undefined) setAllowRegenerationAnytime(data.allowRegenerationAnytime);
+
+      // Bulk Operations
+      if (data.bulkGenerationAllowed !== undefined) setBulkGenerationAllowed(data.bulkGenerationAllowed);
+      if (data.maxBatchSize !== undefined) setMaxBatchSize(String(data.maxBatchSize));
+      if (data.zipFilenameFormat) setZipFilenameFormat(data.zipFilenameFormat);
+      if (data.includeIndexCsv !== undefined) setIncludeIndexCSV(data.includeIndexCsv);
+      if (data.runInBackground !== undefined) setRunInBackground(data.runInBackground);
+
+      // Status Workflow & Reprint/Reissue
+      if (data.allowMarkReissued !== undefined) setAllowMarkReissued(data.allowMarkReissued);
+      if (data.autoMarkDelivered !== undefined) setAutoMarkDelivered(data.autoMarkDelivered);
+      if (data.allowReprint !== undefined) setAllowReprint(data.allowReprint);
+      if (data.allowResendEmail !== undefined) setAllowResendEmail(data.allowResendEmail);
+      if (data.allowCorrection !== undefined) setAllowCorrection(data.allowCorrection);
+      if (data.requireReasonReprint !== undefined) setRequireReasonReprint(data.requireReasonReprint);
+      if (data.requireReasonCorrection !== undefined) setRequireReasonCorrection(data.requireReasonCorrection);
+
+      // Audit & Compliance
+      if (data.requireReasonManualGen !== undefined) setRequireReasonManualGen(data.requireReasonManualGen);
+      if (data.requireReasonRegenerate !== undefined) setRequireReasonRegenerate(data.requireReasonRegenerate);
+      if (data.requireReasonCancel !== undefined) setRequireReasonCancel(data.requireReasonCancel);
+
+      // Search Defaults
+      if (data.defaultDateFilter) setDefaultDateFilter(data.defaultDateFilter);
+      if (data.defaultPageSize !== undefined) setDefaultPageSize(String(data.defaultPageSize));
+      if (data.exportFormatsCsv !== undefined || data.exportFormatsExcel !== undefined || data.exportFormatsPdf !== undefined) {
+        setExportFormats({
+          csv: data.exportFormatsCsv ?? true,
+          excel: data.exportFormatsExcel ?? true,
+          pdf: data.exportFormatsPdf ?? true,
+        });
+      }
+      if (data.maskPii !== undefined) setMaskPII(data.maskPii);
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? 'Failed to load settings');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
   const handleSave = () => {
     setShowReasonModal(true);
   };
 
-  const confirmSave = () => {
+  const confirmSave = async () => {
     if (!saveReason.trim()) return;
-    console.log('Saving receipt settings with reason:', saveReason);
-    setShowReasonModal(false);
-    setSaveReason('');
-    setHasChanges(false);
+    
+    try {
+      setSaving(true);
+      setError(null);
+
+      const payload = {
+        // Numbering & Series
+        receiptPrefix,
+        startingNumber,
+        paddingLength: parseInt(paddingLength),
+        noGapEnforcement,
+        autoCreateNewSeries,
+        manualApprovalRequired,
+        receiptTypes,
+        // Generation Rules
+        autoGenerateOnSuccess,
+        generationDelay: parseInt(generationDelay),
+        autoGenerateImports,
+        allowManualOffline,
+        allowManualBulk,
+        allowBackdated,
+        backdateWindow: parseInt(backdateWindow),
+        showBackdateStamp,
+        requireReasonManual,
+        // Template Rules
+        defaultTemplateOnline,
+        defaultTemplateOffline,
+        template80g: template80G,
+        templateNon80g: templateNon80G,
+        forceRegenerateOnUpdate,
+        lockContentAfterGeneration,
+        // Mandatory Fields
+        mobileRequired,
+        emailRequired,
+        addressRequired,
+        donationCategoryRequired: categoryRequired,
+        donationTypeRequired: typeRequired,
+        panRule,
+        panThreshold: parseInt(panThreshold),
+        panAutoUppercase,
+        pincodeValidation,
+        duplicateWarning,
+        // Delivery Settings
+        autoSendEmailOnReceiptGeneration: autoSendEmail,
+        emailSubjectFormat: emailSubject,
+        emailSenderName: senderName,
+        emailReplyTo: replyToEmail,
+        emailRetryAttempts: parseInt(emailRetryAttempts),
+        emailFailureAlertsNotifyAdmin: emailFailureAlert,
+        autoSendSmsOnReceiptGeneration: autoSendSMS,
+        smsTemplate,
+        smsShortLink,
+        // Storage & Access
+        storageMode,
+        linkSecurity,
+        linkExpiryDays: parseInt(linkExpiry),
+        allowRegenerationTemplate,
+        allowRegenerationAnytime,
+        // Bulk Operations
+        bulkGenerationAllowed,
+        maxBatchSize: parseInt(maxBatchSize),
+        zipFilenameFormat,
+        includeIndexCsv: includeIndexCSV,
+        runInBackground,
+        // Status Workflow & Reprint/Reissue
+        allowMarkReissued,
+        autoMarkDelivered,
+        allowReprint,
+        allowResendEmail,
+        allowCorrection,
+        requireReasonReprint,
+        requireReasonCorrection,
+        requireReasonManualGen,
+        requireReasonRegenerate,
+        requireReasonCancel,
+        // Audit & Compliance
+        retentionYears: parseInt(retentionYears),
+        // Search Defaults
+        defaultDateFilter,
+        defaultPageSize: parseInt(defaultPageSize),
+        exportFormatsCsv: exportFormats.csv,
+        exportFormatsExcel: exportFormats.excel,
+        exportFormatsPdf: exportFormats.pdf,
+        maskPii: maskPII,
+        // Metadata
+        updatedBy: (user?.accessToken && 'Admin') || 'System',
+      };
+
+      const response = await apiFetch('/receipt-settings', {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error('Failed to save settings');
+      
+      setShowReasonModal(false);
+      setSaveReason('');
+      setHasChanges(false);
+      await fetchSettings();
+    } catch (e: unknown) {
+      setError((e as Error)?.message ?? 'Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const toggleReceiptType = (id: ReceiptType, field: 'enabled' | 'isDefault') => {
@@ -188,12 +404,43 @@ export function ReceiptManagement() {
         </div>
         <button
           onClick={handleSave}
-          disabled={!hasChanges}
+          disabled={!hasChanges || saving}
           className="h-[44px] px-[18px] bg-[#F36A4F] text-white rounded-[999px] text-[16px] leading-[24px] font-medium hover:bg-[#D7563D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Save Changes
+          {saving ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-[#FEE] border border-[#FCC] rounded-[16px] p-[16px] flex items-start gap-[12px]">
+          <AlertCircle className="w-5 h-5 text-[#F36A4F] flex-shrink-0 mt-[2px]" />
+          <div className="flex-1">
+            <h4 className="text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[4px]">Error</h4>
+            <p className="text-[14px] leading-[20px] text-[#6E6E6E]">{error}</p>
+          </div>
+          <button
+            onClick={() => setError(null)}
+            className="text-[#6E6E6E] hover:text-[#0D0D0D] flex-shrink-0"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="bg-white border border-[#DBDBDB] rounded-[16px] p-[48px] flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F36A4F] mx-auto mb-[16px]"></div>
+            <p className="text-[16px] leading-[24px] text-[#6E6E6E]">Loading settings...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Content - Only show when not loading */}
+      {!loading && (
+        <div className="flex flex-col gap-[24px]">
 
       {/* Tabs */}
       <div className="bg-white border border-[#DBDBDB] rounded-[16px] overflow-hidden">
@@ -2145,14 +2392,16 @@ export function ReceiptManagement() {
               </button>
               <button
                 onClick={confirmSave}
-                disabled={!saveReason.trim()}
+                disabled={!saveReason.trim() || saving}
                 className="h-[44px] px-[18px] bg-[#F36A4F] text-white rounded-[999px] text-[16px] leading-[24px] font-medium hover:bg-[#D7563D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Confirm & Save
+                {saving ? 'Saving...' : 'Confirm & Save'}
               </button>
             </div>
           </div>
         </div>
+      )}
+      </div>
       )}
     </div>
   );

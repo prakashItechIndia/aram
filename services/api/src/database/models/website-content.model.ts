@@ -10,7 +10,7 @@ import {
  * CMS (Phase 2) – hero, mission_vision, etc.
  */
 export const websiteContent = mssqlTable('website_content', {
-  id: int('id').primaryKey(),
+  id: int('id').primaryKey().identity(),
   sectionKey: nvarchar('section_key', { length: 64 }).notNull(),
   contentJson: nvarchar('content_json', { length: 'max' }).notNull(),
   version: int('version').default(1),

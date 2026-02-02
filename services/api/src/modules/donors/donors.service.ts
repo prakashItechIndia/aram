@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, Inject } from '@nestjs/common';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { DRIZZLE } from '../../database/database.module';
 import { tUser } from '../../database/models/t-user.model';
 import { donors } from '../../database/models/donors.model';
@@ -89,6 +89,75 @@ export class DonorsService {
     }
 
     return donorInfo;
+  }
+
+  /**
+   * Process a logged-in donation:
+   * 1. Update T_USER personal details.
+   * 2. Insert into T_EChallan.
+   * 3. Create persistent notification.
+   */
+  async processDonation(userId: number, dto: any) {
+    const now = new Date();
+    
+    // 1. Update T_USER
+    await this.db
+      .update(tUser)
+      .set({
+        name: dto.name,
+        location: dto.address,
+      })
+      .where(eq(tUser.id, userId));
+
+    // Also update donors table if exists
+    const userRows = await this.db.select().from(tUser).where(eq(tUser.id, userId));
+    const user = userRows[0];
+    if (user?.eMail) {
+      await this.db
+        .update(donors)
+        .set({
+          name: dto.name,
+          address: dto.address,
+          country: dto.country,
+          updatedAt: now,
+        } as any)
+        .where(eq(donors.email, user.eMail));
+    }
+
+    // 2. Find Category Id
+    const catRows = await this.db
+      .select()
+      .from(schema.tDonorCategories)
+      .where(eq(schema.tDonorCategories.displayName, dto.donationType));
+    const categoryId = catRows[0]?.id || 1;
+
+    // 3. Insert into T_EChallan
+    // Find max ID since it's not identity
+    const maxIdRes = await this.db.select({ maxId: sql<number>`max(${schema.tEChallan.id})` }).from(schema.tEChallan);
+    const nextId = (maxIdRes[0]?.maxId || 0) + 1;
+
+    const challanNumber = `CH${now.getTime()}`;
+    await this.db.insert(schema.tEChallan).values({
+      id: nextId,
+      challanNumber,
+      donorId: userId,
+      amount: dto.amount.toString(),
+      categoryId,
+      paymentMode: 'Online',
+      donationDate: now,
+      createdBy: userId,
+      createdDate: now,
+    });
+
+    // 4. Create Notification
+    await this.notificationsService.create({
+      userId,
+      type: 'success',
+      title: 'Donated',
+      message: `Thank you for your donation of ₹${dto.amount}! Transaction recorded as ${challanNumber}.`,
+    });
+
+    return { success: true, challanNumber };
   }
 
   /**

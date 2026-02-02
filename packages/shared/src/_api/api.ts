@@ -24,6 +24,336 @@ import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } fr
 /**
  * 
  * @export
+ * @interface AdminLoginDto
+ */
+export interface AdminLoginDto {
+    /**
+     * 
+     * @type {string}
+     * @memberof AdminLoginDto
+     */
+    email: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AdminLoginDto
+     */
+    password: string;
+}
+/**
+ * 
+ * @export
+ * @interface CreateGalleryAlbumDto
+ */
+export interface CreateGalleryAlbumDto {
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGalleryAlbumDto
+     */
+    name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGalleryAlbumDto
+     */
+    coverImageUrl?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof CreateGalleryAlbumDto
+     */
+    imageCount?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGalleryAlbumDto
+     */
+    visibility?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof CreateGalleryAlbumDto
+     */
+    sortOrder?: number;
+}
+/**
+ * 
+ * @export
+ * @interface CreateGalleryItemDto
+ */
+export interface CreateGalleryItemDto {
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGalleryItemDto
+     */
+    title: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGalleryItemDto
+     */
+    description?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGalleryItemDto
+     */
+    altText?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGalleryItemDto
+     */
+    imagePath: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof CreateGalleryItemDto
+     */
+    albumId?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGalleryItemDto
+     */
+    tagsJson?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof CreateGalleryItemDto
+     */
+    sortOrder?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGalleryItemDto
+     */
+    caption?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGalleryItemDto
+     */
+    photographer?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGalleryItemDto
+     */
+    visibility?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGalleryItemDto
+     */
+    fileSize?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGalleryItemDto
+     */
+    thumbnailPath?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGalleryItemDto
+     */
+    uploadedBy?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof CreateGalleryItemDto
+     */
+    altTextGeneratedByAi?: boolean;
+}
+/**
+ * 
+ * @export
+ * @interface CreateGuestDonorDto
+ */
+export interface CreateGuestDonorDto {
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGuestDonorDto
+     */
+    name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGuestDonorDto
+     */
+    email: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGuestDonorDto
+     */
+    mobile: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGuestDonorDto
+     */
+    address: string;
+    /**
+     * PAN in format AAAAA0000A
+     * @type {string}
+     * @memberof CreateGuestDonorDto
+     */
+    pan: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGuestDonorDto
+     */
+    country?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof CreateGuestDonorDto
+     */
+    amount: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateGuestDonorDto
+     */
+    donationType: string;
+}
+/**
+ * 
+ * @export
+ * @interface CreateSponsorDto
+ */
+export interface CreateSponsorDto {
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateSponsorDto
+     */
+    name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateSponsorDto
+     */
+    logoUrl?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateSponsorDto
+     */
+    websiteUrl?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateSponsorDto
+     */
+    contributionType?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateSponsorDto
+     */
+    tier?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof CreateSponsorDto
+     */
+    displayOrder?: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof CreateSponsorDto
+     */
+    isActive?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof CreateSponsorDto
+     */
+    showOnHomepage?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateSponsorDto
+     */
+    addedBy?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof CreateSponsorDto
+     */
+    featured?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateSponsorDto
+     */
+    displayStartDate?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateSponsorDto
+     */
+    displayEndDate?: string;
+}
+/**
+ * 
+ * @export
+ * @interface CreateWebsiteContentDto
+ */
+export interface CreateWebsiteContentDto {
+    /**
+     * Section key (e.g. hero, mission_vision)
+     * @type {string}
+     * @memberof CreateWebsiteContentDto
+     */
+    sectionKey: string;
+    /**
+     * JSON content for the section
+     * @type {string}
+     * @memberof CreateWebsiteContentDto
+     */
+    contentJson: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof CreateWebsiteContentDto
+     */
+    version?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateWebsiteContentDto
+     */
+    name?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateWebsiteContentDto
+     */
+    slug?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateWebsiteContentDto
+     */
+    status?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateWebsiteContentDto
+     */
+    modifiedBy?: string;
+}
+/**
+ * 
+ * @export
  * @interface DonationFormConfigDto
  */
 export interface DonationFormConfigDto {
@@ -152,6 +482,19 @@ export interface FeatureConfigItemDto {
 /**
  * 
  * @export
+ * @interface ForgotPasswordDto
+ */
+export interface ForgotPasswordDto {
+    /**
+     * 
+     * @type {string}
+     * @memberof ForgotPasswordDto
+     */
+    email: string;
+}
+/**
+ * 
+ * @export
  * @interface GetFeatureConfigResponseDto
  */
 export interface GetFeatureConfigResponseDto {
@@ -211,6 +554,281 @@ export interface RegisterDto {
      * @memberof RegisterDto
      */
     name: string;
+}
+/**
+ * 
+ * @export
+ * @interface ResetPasswordDto
+ */
+export interface ResetPasswordDto {
+    /**
+     * Reset token from forgot-password email/link
+     * @type {string}
+     * @memberof ResetPasswordDto
+     */
+    token: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResetPasswordDto
+     */
+    newPassword: string;
+}
+/**
+ * 
+ * @export
+ * @interface UpdateGalleryAlbumDto
+ */
+export interface UpdateGalleryAlbumDto {
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateGalleryAlbumDto
+     */
+    name?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateGalleryAlbumDto
+     */
+    coverImageUrl?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof UpdateGalleryAlbumDto
+     */
+    imageCount?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateGalleryAlbumDto
+     */
+    visibility?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof UpdateGalleryAlbumDto
+     */
+    sortOrder?: number;
+}
+/**
+ * 
+ * @export
+ * @interface UpdateGalleryItemDto
+ */
+export interface UpdateGalleryItemDto {
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateGalleryItemDto
+     */
+    title?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateGalleryItemDto
+     */
+    description?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateGalleryItemDto
+     */
+    altText?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateGalleryItemDto
+     */
+    imagePath?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof UpdateGalleryItemDto
+     */
+    albumId?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateGalleryItemDto
+     */
+    tagsJson?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof UpdateGalleryItemDto
+     */
+    sortOrder?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateGalleryItemDto
+     */
+    caption?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateGalleryItemDto
+     */
+    photographer?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateGalleryItemDto
+     */
+    visibility?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateGalleryItemDto
+     */
+    fileSize?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateGalleryItemDto
+     */
+    thumbnailPath?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateGalleryItemDto
+     */
+    uploadedBy?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof UpdateGalleryItemDto
+     */
+    altTextGeneratedByAi?: boolean;
+}
+/**
+ * 
+ * @export
+ * @interface UpdateSponsorDto
+ */
+export interface UpdateSponsorDto {
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateSponsorDto
+     */
+    name?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateSponsorDto
+     */
+    logoUrl?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateSponsorDto
+     */
+    websiteUrl?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateSponsorDto
+     */
+    contributionType?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateSponsorDto
+     */
+    tier?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof UpdateSponsorDto
+     */
+    displayOrder?: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof UpdateSponsorDto
+     */
+    isActive?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof UpdateSponsorDto
+     */
+    showOnHomepage?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateSponsorDto
+     */
+    addedBy?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof UpdateSponsorDto
+     */
+    featured?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateSponsorDto
+     */
+    displayStartDate?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateSponsorDto
+     */
+    displayEndDate?: string;
+}
+/**
+ * 
+ * @export
+ * @interface UpdateWebsiteContentDto
+ */
+export interface UpdateWebsiteContentDto {
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateWebsiteContentDto
+     */
+    sectionKey?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateWebsiteContentDto
+     */
+    contentJson?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof UpdateWebsiteContentDto
+     */
+    version?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateWebsiteContentDto
+     */
+    name?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateWebsiteContentDto
+     */
+    slug?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateWebsiteContentDto
+     */
+    status?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateWebsiteContentDto
+     */
+    modifiedBy?: string;
 }
 
 /**
@@ -476,6 +1094,108 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
     return {
         /**
          * 
+         * @summary Admin portal login
+         * @param {AdminLoginDto} adminLoginDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authControllerAdminLogin: async (adminLoginDto: AdminLoginDto, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'adminLoginDto' is not null or undefined
+            assertParamExists('authControllerAdminLogin', 'adminLoginDto', adminLoginDto)
+            const localVarPath = `/auth/admin/login`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(adminLoginDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Admin forgot password
+         * @param {ForgotPasswordDto} forgotPasswordDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authControllerForgotPassword: async (forgotPasswordDto: ForgotPasswordDto, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'forgotPasswordDto' is not null or undefined
+            assertParamExists('authControllerForgotPassword', 'forgotPasswordDto', forgotPasswordDto)
+            const localVarPath = `/auth/admin/forgot-password`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(forgotPasswordDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Admin profile (Admin/Super Admin only)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authControllerGetAdminProfile: async (options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/auth/admin/profile`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get user profile
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -506,7 +1226,7 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
         },
         /**
          * 
-         * @summary Login user
+         * @summary Login user (donor portal)
          * @param {LoginDto} loginDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -542,7 +1262,7 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
         },
         /**
          * 
-         * @summary Register user
+         * @summary Register user (donor portal)
          * @param {RegisterDto} registerDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -576,6 +1296,42 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Admin reset password with token
+         * @param {ResetPasswordDto} resetPasswordDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authControllerResetPassword: async (resetPasswordDto: ResetPasswordDto, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'resetPasswordDto' is not null or undefined
+            assertParamExists('authControllerResetPassword', 'resetPasswordDto', resetPasswordDto)
+            const localVarPath = `/auth/admin/reset-password`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(resetPasswordDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -588,6 +1344,38 @@ export const AuthApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
+         * @summary Admin portal login
+         * @param {AdminLoginDto} adminLoginDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async authControllerAdminLogin(adminLoginDto: AdminLoginDto, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authControllerAdminLogin(adminLoginDto, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @summary Admin forgot password
+         * @param {ForgotPasswordDto} forgotPasswordDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async authControllerForgotPassword(forgotPasswordDto: ForgotPasswordDto, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authControllerForgotPassword(forgotPasswordDto, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @summary Admin profile (Admin/Super Admin only)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async authControllerGetAdminProfile(options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authControllerGetAdminProfile(options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
          * @summary Get user profile
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -598,7 +1386,7 @@ export const AuthApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Login user
+         * @summary Login user (donor portal)
          * @param {LoginDto} loginDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -609,13 +1397,24 @@ export const AuthApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Register user
+         * @summary Register user (donor portal)
          * @param {RegisterDto} registerDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         async authControllerRegister(registerDto: RegisterDto, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.authControllerRegister(registerDto, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @summary Admin reset password with token
+         * @param {ResetPasswordDto} resetPasswordDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async authControllerResetPassword(resetPasswordDto: ResetPasswordDto, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authControllerResetPassword(resetPasswordDto, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
     }
@@ -630,6 +1429,35 @@ export const AuthApiFactory = function (configuration?: Configuration, basePath?
     return {
         /**
          * 
+         * @summary Admin portal login
+         * @param {AdminLoginDto} adminLoginDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authControllerAdminLogin(adminLoginDto: AdminLoginDto, options?: any): AxiosPromise<void> {
+            return localVarFp.authControllerAdminLogin(adminLoginDto, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Admin forgot password
+         * @param {ForgotPasswordDto} forgotPasswordDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authControllerForgotPassword(forgotPasswordDto: ForgotPasswordDto, options?: any): AxiosPromise<void> {
+            return localVarFp.authControllerForgotPassword(forgotPasswordDto, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Admin profile (Admin/Super Admin only)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authControllerGetAdminProfile(options?: any): AxiosPromise<void> {
+            return localVarFp.authControllerGetAdminProfile(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Get user profile
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -639,7 +1467,7 @@ export const AuthApiFactory = function (configuration?: Configuration, basePath?
         },
         /**
          * 
-         * @summary Login user
+         * @summary Login user (donor portal)
          * @param {LoginDto} loginDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -649,13 +1477,23 @@ export const AuthApiFactory = function (configuration?: Configuration, basePath?
         },
         /**
          * 
-         * @summary Register user
+         * @summary Register user (donor portal)
          * @param {RegisterDto} registerDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         authControllerRegister(registerDto: RegisterDto, options?: any): AxiosPromise<void> {
             return localVarFp.authControllerRegister(registerDto, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Admin reset password with token
+         * @param {ResetPasswordDto} resetPasswordDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authControllerResetPassword(resetPasswordDto: ResetPasswordDto, options?: any): AxiosPromise<void> {
+            return localVarFp.authControllerResetPassword(resetPasswordDto, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -669,6 +1507,41 @@ export const AuthApiFactory = function (configuration?: Configuration, basePath?
 export class AuthApi extends BaseAPI {
     /**
      * 
+     * @summary Admin portal login
+     * @param {AdminLoginDto} adminLoginDto 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApi
+     */
+    public authControllerAdminLogin(adminLoginDto: AdminLoginDto, options?: any) {
+        return AuthApiFp(this.configuration).authControllerAdminLogin(adminLoginDto, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Admin forgot password
+     * @param {ForgotPasswordDto} forgotPasswordDto 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApi
+     */
+    public authControllerForgotPassword(forgotPasswordDto: ForgotPasswordDto, options?: any) {
+        return AuthApiFp(this.configuration).authControllerForgotPassword(forgotPasswordDto, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Admin profile (Admin/Super Admin only)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApi
+     */
+    public authControllerGetAdminProfile(options?: any) {
+        return AuthApiFp(this.configuration).authControllerGetAdminProfile(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
      * @summary Get user profile
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -680,7 +1553,7 @@ export class AuthApi extends BaseAPI {
 
     /**
      * 
-     * @summary Login user
+     * @summary Login user (donor portal)
      * @param {LoginDto} loginDto 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -692,7 +1565,7 @@ export class AuthApi extends BaseAPI {
 
     /**
      * 
-     * @summary Register user
+     * @summary Register user (donor portal)
      * @param {RegisterDto} registerDto 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -700,6 +1573,18 @@ export class AuthApi extends BaseAPI {
      */
     public authControllerRegister(registerDto: RegisterDto, options?: any) {
         return AuthApiFp(this.configuration).authControllerRegister(registerDto, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Admin reset password with token
+     * @param {ResetPasswordDto} resetPasswordDto 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApi
+     */
+    public authControllerResetPassword(resetPasswordDto: ResetPasswordDto, options?: any) {
+        return AuthApiFp(this.configuration).authControllerResetPassword(resetPasswordDto, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -1403,22 +2288,69 @@ export const DonorsApiAxiosParamCreator = function (configuration?: Configuratio
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
         donorsControllerGetMyProfile: async (options: any = {}): Promise<RequestArgs> => {
             const localVarPath = `/donors/me`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            const localVarRequestOptions = { method: 'GET', ...(configuration?.baseOptions ?? {}), ...options };
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...(configuration?.baseOptions?.headers ?? {}), ...options.headers };
-            return { url: toPathString(localVarUrlObj), options: localVarRequestOptions };
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
         },
-        donorsControllerGuestDonate: async (createGuestDonorDto: any, options: any = {}): Promise<RequestArgs> => {
+        /**
+         * 
+         * @param {CreateGuestDonorDto} createGuestDonorDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        donorsControllerGuestDonate: async (createGuestDonorDto: CreateGuestDonorDto, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'createGuestDonorDto' is not null or undefined
+            assertParamExists('donorsControllerGuestDonate', 'createGuestDonorDto', createGuestDonorDto)
             const localVarPath = `/donors/guest-donate`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            const localVarRequestOptions = { method: 'POST', ...(configuration?.baseOptions ?? {}), ...options };
-            const localVarHeaderParameter = { 'Content-Type': 'application/json' } as any;
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...(configuration?.baseOptions?.headers ?? {}), ...options.headers };
-            localVarRequestOptions.data = createGuestDonorDto;
-            return { url: toPathString(localVarUrlObj), options: localVarRequestOptions };
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(createGuestDonorDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
         },
     }
 };
@@ -1449,11 +2381,22 @@ export const DonorsApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.donorsControllerFindOne(id, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
-        async donorsControllerGetMyProfile(options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<any>> {
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async donorsControllerGetMyProfile(options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.donorsControllerGetMyProfile(options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
-        async donorsControllerGuestDonate(createGuestDonorDto: any, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ donorId: number }>> {
+        /**
+         * 
+         * @param {CreateGuestDonorDto} createGuestDonorDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async donorsControllerGuestDonate(createGuestDonorDto: CreateGuestDonorDto, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.donorsControllerGuestDonate(createGuestDonorDto, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
@@ -1467,16 +2410,38 @@ export const DonorsApiFp = function(configuration?: Configuration) {
 export const DonorsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = DonorsApiFp(configuration)
     return {
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
         donorsControllerFindAll(options?: any): AxiosPromise<void> {
             return localVarFp.donorsControllerFindAll(options).then((request) => request(axios, basePath));
         },
+        /**
+         * 
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
         donorsControllerFindOne(id: number, options?: any): AxiosPromise<void> {
             return localVarFp.donorsControllerFindOne(id, options).then((request) => request(axios, basePath));
         },
-        donorsControllerGetMyProfile(options?: any): AxiosPromise<any> {
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        donorsControllerGetMyProfile(options?: any): AxiosPromise<void> {
             return localVarFp.donorsControllerGetMyProfile(options).then((request) => request(axios, basePath));
         },
-        donorsControllerGuestDonate(createGuestDonorDto: any, options?: any): AxiosPromise<{ donorId: number }> {
+        /**
+         * 
+         * @param {CreateGuestDonorDto} createGuestDonorDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        donorsControllerGuestDonate(createGuestDonorDto: CreateGuestDonorDto, options?: any): AxiosPromise<void> {
             return localVarFp.donorsControllerGuestDonate(createGuestDonorDto, options).then((request) => request(axios, basePath));
         },
     };
@@ -1510,11 +2475,24 @@ export class DonorsApi extends BaseAPI {
         return DonorsApiFp(this.configuration).donorsControllerFindOne(id, options).then((request) => request(this.axios, this.basePath));
     }
 
+    /**
+     * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DonorsApi
+     */
     public donorsControllerGetMyProfile(options?: any) {
         return DonorsApiFp(this.configuration).donorsControllerGetMyProfile(options).then((request) => request(this.axios, this.basePath));
     }
 
-    public donorsControllerGuestDonate(createGuestDonorDto: any, options?: any) {
+    /**
+     * 
+     * @param {CreateGuestDonorDto} createGuestDonorDto 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DonorsApi
+     */
+    public donorsControllerGuestDonate(createGuestDonorDto: CreateGuestDonorDto, options?: any) {
         return DonorsApiFp(this.configuration).donorsControllerGuestDonate(createGuestDonorDto, options).then((request) => request(this.axios, this.basePath));
     }
 }
@@ -1999,6 +2977,41 @@ export const GalleryApiAxiosParamCreator = function (configuration?: Configurati
     return {
         /**
          * 
+         * @param {CreateGalleryItemDto} createGalleryItemDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        galleryControllerCreate: async (createGalleryItemDto: CreateGalleryItemDto, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'createGalleryItemDto' is not null or undefined
+            assertParamExists('galleryControllerCreate', 'createGalleryItemDto', createGalleryItemDto)
+            const localVarPath = `/website/gallery`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(createGalleryItemDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -2059,6 +3072,78 @@ export const GalleryApiAxiosParamCreator = function (configuration?: Configurati
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        galleryControllerRemove: async (id: number, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('galleryControllerRemove', 'id', id)
+            const localVarPath = `/website/gallery/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {UpdateGalleryItemDto} updateGalleryItemDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        galleryControllerUpdate: async (id: number, updateGalleryItemDto: UpdateGalleryItemDto, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('galleryControllerUpdate', 'id', id)
+            // verify required parameter 'updateGalleryItemDto' is not null or undefined
+            assertParamExists('galleryControllerUpdate', 'updateGalleryItemDto', updateGalleryItemDto)
+            const localVarPath = `/website/gallery/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(updateGalleryItemDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -2069,6 +3154,16 @@ export const GalleryApiAxiosParamCreator = function (configuration?: Configurati
 export const GalleryApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = GalleryApiAxiosParamCreator(configuration)
     return {
+        /**
+         * 
+         * @param {CreateGalleryItemDto} createGalleryItemDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async galleryControllerCreate(createGalleryItemDto: CreateGalleryItemDto, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.galleryControllerCreate(createGalleryItemDto, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
         /**
          * 
          * @param {*} [options] Override http request option.
@@ -2088,6 +3183,27 @@ export const GalleryApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.galleryControllerFindOne(id, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
+        /**
+         * 
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async galleryControllerRemove(id: number, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.galleryControllerRemove(id, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {UpdateGalleryItemDto} updateGalleryItemDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async galleryControllerUpdate(id: number, updateGalleryItemDto: UpdateGalleryItemDto, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.galleryControllerUpdate(id, updateGalleryItemDto, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
     }
 };
 
@@ -2098,6 +3214,15 @@ export const GalleryApiFp = function(configuration?: Configuration) {
 export const GalleryApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = GalleryApiFp(configuration)
     return {
+        /**
+         * 
+         * @param {CreateGalleryItemDto} createGalleryItemDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        galleryControllerCreate(createGalleryItemDto: CreateGalleryItemDto, options?: any): AxiosPromise<void> {
+            return localVarFp.galleryControllerCreate(createGalleryItemDto, options).then((request) => request(axios, basePath));
+        },
         /**
          * 
          * @param {*} [options] Override http request option.
@@ -2115,6 +3240,25 @@ export const GalleryApiFactory = function (configuration?: Configuration, basePa
         galleryControllerFindOne(id: number, options?: any): AxiosPromise<void> {
             return localVarFp.galleryControllerFindOne(id, options).then((request) => request(axios, basePath));
         },
+        /**
+         * 
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        galleryControllerRemove(id: number, options?: any): AxiosPromise<void> {
+            return localVarFp.galleryControllerRemove(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {UpdateGalleryItemDto} updateGalleryItemDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        galleryControllerUpdate(id: number, updateGalleryItemDto: UpdateGalleryItemDto, options?: any): AxiosPromise<void> {
+            return localVarFp.galleryControllerUpdate(id, updateGalleryItemDto, options).then((request) => request(axios, basePath));
+        },
     };
 };
 
@@ -2125,6 +3269,17 @@ export const GalleryApiFactory = function (configuration?: Configuration, basePa
  * @extends {BaseAPI}
  */
 export class GalleryApi extends BaseAPI {
+    /**
+     * 
+     * @param {CreateGalleryItemDto} createGalleryItemDto 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GalleryApi
+     */
+    public galleryControllerCreate(createGalleryItemDto: CreateGalleryItemDto, options?: any) {
+        return GalleryApiFp(this.configuration).galleryControllerCreate(createGalleryItemDto, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * 
      * @param {*} [options] Override http request option.
@@ -2144,6 +3299,386 @@ export class GalleryApi extends BaseAPI {
      */
     public galleryControllerFindOne(id: number, options?: any) {
         return GalleryApiFp(this.configuration).galleryControllerFindOne(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {number} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GalleryApi
+     */
+    public galleryControllerRemove(id: number, options?: any) {
+        return GalleryApiFp(this.configuration).galleryControllerRemove(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {number} id 
+     * @param {UpdateGalleryItemDto} updateGalleryItemDto 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GalleryApi
+     */
+    public galleryControllerUpdate(id: number, updateGalleryItemDto: UpdateGalleryItemDto, options?: any) {
+        return GalleryApiFp(this.configuration).galleryControllerUpdate(id, updateGalleryItemDto, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+/**
+ * GalleryAlbumsApi - axios parameter creator
+ * @export
+ */
+export const GalleryAlbumsApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @param {CreateGalleryAlbumDto} createGalleryAlbumDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        galleryAlbumsControllerCreate: async (createGalleryAlbumDto: CreateGalleryAlbumDto, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'createGalleryAlbumDto' is not null or undefined
+            assertParamExists('galleryAlbumsControllerCreate', 'createGalleryAlbumDto', createGalleryAlbumDto)
+            const localVarPath = `/website/gallery/albums`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(createGalleryAlbumDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        galleryAlbumsControllerFindAll: async (options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/website/gallery/albums`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        galleryAlbumsControllerFindOne: async (id: number, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('galleryAlbumsControllerFindOne', 'id', id)
+            const localVarPath = `/website/gallery/albums/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        galleryAlbumsControllerRemove: async (id: number, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('galleryAlbumsControllerRemove', 'id', id)
+            const localVarPath = `/website/gallery/albums/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {UpdateGalleryAlbumDto} updateGalleryAlbumDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        galleryAlbumsControllerUpdate: async (id: number, updateGalleryAlbumDto: UpdateGalleryAlbumDto, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('galleryAlbumsControllerUpdate', 'id', id)
+            // verify required parameter 'updateGalleryAlbumDto' is not null or undefined
+            assertParamExists('galleryAlbumsControllerUpdate', 'updateGalleryAlbumDto', updateGalleryAlbumDto)
+            const localVarPath = `/website/gallery/albums/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(updateGalleryAlbumDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * GalleryAlbumsApi - functional programming interface
+ * @export
+ */
+export const GalleryAlbumsApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = GalleryAlbumsApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @param {CreateGalleryAlbumDto} createGalleryAlbumDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async galleryAlbumsControllerCreate(createGalleryAlbumDto: CreateGalleryAlbumDto, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.galleryAlbumsControllerCreate(createGalleryAlbumDto, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async galleryAlbumsControllerFindAll(options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.galleryAlbumsControllerFindAll(options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async galleryAlbumsControllerFindOne(id: number, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.galleryAlbumsControllerFindOne(id, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async galleryAlbumsControllerRemove(id: number, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.galleryAlbumsControllerRemove(id, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {UpdateGalleryAlbumDto} updateGalleryAlbumDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async galleryAlbumsControllerUpdate(id: number, updateGalleryAlbumDto: UpdateGalleryAlbumDto, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.galleryAlbumsControllerUpdate(id, updateGalleryAlbumDto, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+    }
+};
+
+/**
+ * GalleryAlbumsApi - factory interface
+ * @export
+ */
+export const GalleryAlbumsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = GalleryAlbumsApiFp(configuration)
+    return {
+        /**
+         * 
+         * @param {CreateGalleryAlbumDto} createGalleryAlbumDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        galleryAlbumsControllerCreate(createGalleryAlbumDto: CreateGalleryAlbumDto, options?: any): AxiosPromise<void> {
+            return localVarFp.galleryAlbumsControllerCreate(createGalleryAlbumDto, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        galleryAlbumsControllerFindAll(options?: any): AxiosPromise<void> {
+            return localVarFp.galleryAlbumsControllerFindAll(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        galleryAlbumsControllerFindOne(id: number, options?: any): AxiosPromise<void> {
+            return localVarFp.galleryAlbumsControllerFindOne(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        galleryAlbumsControllerRemove(id: number, options?: any): AxiosPromise<void> {
+            return localVarFp.galleryAlbumsControllerRemove(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {UpdateGalleryAlbumDto} updateGalleryAlbumDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        galleryAlbumsControllerUpdate(id: number, updateGalleryAlbumDto: UpdateGalleryAlbumDto, options?: any): AxiosPromise<void> {
+            return localVarFp.galleryAlbumsControllerUpdate(id, updateGalleryAlbumDto, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * GalleryAlbumsApi - object-oriented interface
+ * @export
+ * @class GalleryAlbumsApi
+ * @extends {BaseAPI}
+ */
+export class GalleryAlbumsApi extends BaseAPI {
+    /**
+     * 
+     * @param {CreateGalleryAlbumDto} createGalleryAlbumDto 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GalleryAlbumsApi
+     */
+    public galleryAlbumsControllerCreate(createGalleryAlbumDto: CreateGalleryAlbumDto, options?: any) {
+        return GalleryAlbumsApiFp(this.configuration).galleryAlbumsControllerCreate(createGalleryAlbumDto, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GalleryAlbumsApi
+     */
+    public galleryAlbumsControllerFindAll(options?: any) {
+        return GalleryAlbumsApiFp(this.configuration).galleryAlbumsControllerFindAll(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {number} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GalleryAlbumsApi
+     */
+    public galleryAlbumsControllerFindOne(id: number, options?: any) {
+        return GalleryAlbumsApiFp(this.configuration).galleryAlbumsControllerFindOne(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {number} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GalleryAlbumsApi
+     */
+    public galleryAlbumsControllerRemove(id: number, options?: any) {
+        return GalleryAlbumsApiFp(this.configuration).galleryAlbumsControllerRemove(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {number} id 
+     * @param {UpdateGalleryAlbumDto} updateGalleryAlbumDto 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GalleryAlbumsApi
+     */
+    public galleryAlbumsControllerUpdate(id: number, updateGalleryAlbumDto: UpdateGalleryAlbumDto, options?: any) {
+        return GalleryAlbumsApiFp(this.configuration).galleryAlbumsControllerUpdate(id, updateGalleryAlbumDto, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -2941,6 +4476,41 @@ export const SponsorsApiAxiosParamCreator = function (configuration?: Configurat
     return {
         /**
          * 
+         * @param {CreateSponsorDto} createSponsorDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        sponsorsControllerCreate: async (createSponsorDto: CreateSponsorDto, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'createSponsorDto' is not null or undefined
+            assertParamExists('sponsorsControllerCreate', 'createSponsorDto', createSponsorDto)
+            const localVarPath = `/website/sponsors`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(createSponsorDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -3001,6 +4571,78 @@ export const SponsorsApiAxiosParamCreator = function (configuration?: Configurat
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        sponsorsControllerRemove: async (id: number, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('sponsorsControllerRemove', 'id', id)
+            const localVarPath = `/website/sponsors/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {UpdateSponsorDto} updateSponsorDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        sponsorsControllerUpdate: async (id: number, updateSponsorDto: UpdateSponsorDto, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('sponsorsControllerUpdate', 'id', id)
+            // verify required parameter 'updateSponsorDto' is not null or undefined
+            assertParamExists('sponsorsControllerUpdate', 'updateSponsorDto', updateSponsorDto)
+            const localVarPath = `/website/sponsors/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(updateSponsorDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -3011,6 +4653,16 @@ export const SponsorsApiAxiosParamCreator = function (configuration?: Configurat
 export const SponsorsApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = SponsorsApiAxiosParamCreator(configuration)
     return {
+        /**
+         * 
+         * @param {CreateSponsorDto} createSponsorDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async sponsorsControllerCreate(createSponsorDto: CreateSponsorDto, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.sponsorsControllerCreate(createSponsorDto, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
         /**
          * 
          * @param {*} [options] Override http request option.
@@ -3030,6 +4682,27 @@ export const SponsorsApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.sponsorsControllerFindOne(id, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
+        /**
+         * 
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async sponsorsControllerRemove(id: number, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.sponsorsControllerRemove(id, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {UpdateSponsorDto} updateSponsorDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async sponsorsControllerUpdate(id: number, updateSponsorDto: UpdateSponsorDto, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.sponsorsControllerUpdate(id, updateSponsorDto, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
     }
 };
 
@@ -3040,6 +4713,15 @@ export const SponsorsApiFp = function(configuration?: Configuration) {
 export const SponsorsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = SponsorsApiFp(configuration)
     return {
+        /**
+         * 
+         * @param {CreateSponsorDto} createSponsorDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        sponsorsControllerCreate(createSponsorDto: CreateSponsorDto, options?: any): AxiosPromise<void> {
+            return localVarFp.sponsorsControllerCreate(createSponsorDto, options).then((request) => request(axios, basePath));
+        },
         /**
          * 
          * @param {*} [options] Override http request option.
@@ -3057,6 +4739,25 @@ export const SponsorsApiFactory = function (configuration?: Configuration, baseP
         sponsorsControllerFindOne(id: number, options?: any): AxiosPromise<void> {
             return localVarFp.sponsorsControllerFindOne(id, options).then((request) => request(axios, basePath));
         },
+        /**
+         * 
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        sponsorsControllerRemove(id: number, options?: any): AxiosPromise<void> {
+            return localVarFp.sponsorsControllerRemove(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {UpdateSponsorDto} updateSponsorDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        sponsorsControllerUpdate(id: number, updateSponsorDto: UpdateSponsorDto, options?: any): AxiosPromise<void> {
+            return localVarFp.sponsorsControllerUpdate(id, updateSponsorDto, options).then((request) => request(axios, basePath));
+        },
     };
 };
 
@@ -3067,6 +4768,17 @@ export const SponsorsApiFactory = function (configuration?: Configuration, baseP
  * @extends {BaseAPI}
  */
 export class SponsorsApi extends BaseAPI {
+    /**
+     * 
+     * @param {CreateSponsorDto} createSponsorDto 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SponsorsApi
+     */
+    public sponsorsControllerCreate(createSponsorDto: CreateSponsorDto, options?: any) {
+        return SponsorsApiFp(this.configuration).sponsorsControllerCreate(createSponsorDto, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * 
      * @param {*} [options] Override http request option.
@@ -3086,6 +4798,29 @@ export class SponsorsApi extends BaseAPI {
      */
     public sponsorsControllerFindOne(id: number, options?: any) {
         return SponsorsApiFp(this.configuration).sponsorsControllerFindOne(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {number} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SponsorsApi
+     */
+    public sponsorsControllerRemove(id: number, options?: any) {
+        return SponsorsApiFp(this.configuration).sponsorsControllerRemove(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {number} id 
+     * @param {UpdateSponsorDto} updateSponsorDto 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SponsorsApi
+     */
+    public sponsorsControllerUpdate(id: number, updateSponsorDto: UpdateSponsorDto, options?: any) {
+        return SponsorsApiFp(this.configuration).sponsorsControllerUpdate(id, updateSponsorDto, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -3255,10 +4990,48 @@ export const WebsiteContentApiAxiosParamCreator = function (configuration?: Conf
     return {
         /**
          * 
+         * @param {CreateWebsiteContentDto} createWebsiteContentDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        websiteContentControllerFindAll: async (options: any = {}): Promise<RequestArgs> => {
+        websiteContentControllerCreate: async (createWebsiteContentDto: CreateWebsiteContentDto, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'createWebsiteContentDto' is not null or undefined
+            assertParamExists('websiteContentControllerCreate', 'createWebsiteContentDto', createWebsiteContentDto)
+            const localVarPath = `/website/content`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(createWebsiteContentDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} sectionKey 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        websiteContentControllerFindAll: async (sectionKey: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'sectionKey' is not null or undefined
+            assertParamExists('websiteContentControllerFindAll', 'sectionKey', sectionKey)
             const localVarPath = `/website/content`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -3270,6 +5043,10 @@ export const WebsiteContentApiAxiosParamCreator = function (configuration?: Conf
             const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
+
+            if (sectionKey !== undefined) {
+                localVarQueryParameter['sectionKey'] = sectionKey;
+            }
 
 
     
@@ -3315,6 +5092,78 @@ export const WebsiteContentApiAxiosParamCreator = function (configuration?: Conf
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        websiteContentControllerRemove: async (id: number, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('websiteContentControllerRemove', 'id', id)
+            const localVarPath = `/website/content/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {UpdateWebsiteContentDto} updateWebsiteContentDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        websiteContentControllerUpdate: async (id: number, updateWebsiteContentDto: UpdateWebsiteContentDto, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('websiteContentControllerUpdate', 'id', id)
+            // verify required parameter 'updateWebsiteContentDto' is not null or undefined
+            assertParamExists('websiteContentControllerUpdate', 'updateWebsiteContentDto', updateWebsiteContentDto)
+            const localVarPath = `/website/content/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(updateWebsiteContentDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -3327,11 +5176,22 @@ export const WebsiteContentApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
+         * @param {CreateWebsiteContentDto} createWebsiteContentDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async websiteContentControllerFindAll(options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.websiteContentControllerFindAll(options);
+        async websiteContentControllerCreate(createWebsiteContentDto: CreateWebsiteContentDto, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.websiteContentControllerCreate(createWebsiteContentDto, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @param {string} sectionKey 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async websiteContentControllerFindAll(sectionKey: string, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.websiteContentControllerFindAll(sectionKey, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
         /**
@@ -3342,6 +5202,27 @@ export const WebsiteContentApiFp = function(configuration?: Configuration) {
          */
         async websiteContentControllerFindOne(id: number, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.websiteContentControllerFindOne(id, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async websiteContentControllerRemove(id: number, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.websiteContentControllerRemove(id, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {UpdateWebsiteContentDto} updateWebsiteContentDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async websiteContentControllerUpdate(id: number, updateWebsiteContentDto: UpdateWebsiteContentDto, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.websiteContentControllerUpdate(id, updateWebsiteContentDto, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
     }
@@ -3356,11 +5237,21 @@ export const WebsiteContentApiFactory = function (configuration?: Configuration,
     return {
         /**
          * 
+         * @param {CreateWebsiteContentDto} createWebsiteContentDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        websiteContentControllerFindAll(options?: any): AxiosPromise<void> {
-            return localVarFp.websiteContentControllerFindAll(options).then((request) => request(axios, basePath));
+        websiteContentControllerCreate(createWebsiteContentDto: CreateWebsiteContentDto, options?: any): AxiosPromise<void> {
+            return localVarFp.websiteContentControllerCreate(createWebsiteContentDto, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} sectionKey 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        websiteContentControllerFindAll(sectionKey: string, options?: any): AxiosPromise<void> {
+            return localVarFp.websiteContentControllerFindAll(sectionKey, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -3370,6 +5261,25 @@ export const WebsiteContentApiFactory = function (configuration?: Configuration,
          */
         websiteContentControllerFindOne(id: number, options?: any): AxiosPromise<void> {
             return localVarFp.websiteContentControllerFindOne(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        websiteContentControllerRemove(id: number, options?: any): AxiosPromise<void> {
+            return localVarFp.websiteContentControllerRemove(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {number} id 
+         * @param {UpdateWebsiteContentDto} updateWebsiteContentDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        websiteContentControllerUpdate(id: number, updateWebsiteContentDto: UpdateWebsiteContentDto, options?: any): AxiosPromise<void> {
+            return localVarFp.websiteContentControllerUpdate(id, updateWebsiteContentDto, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -3383,12 +5293,24 @@ export const WebsiteContentApiFactory = function (configuration?: Configuration,
 export class WebsiteContentApi extends BaseAPI {
     /**
      * 
+     * @param {CreateWebsiteContentDto} createWebsiteContentDto 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof WebsiteContentApi
      */
-    public websiteContentControllerFindAll(options?: any) {
-        return WebsiteContentApiFp(this.configuration).websiteContentControllerFindAll(options).then((request) => request(this.axios, this.basePath));
+    public websiteContentControllerCreate(createWebsiteContentDto: CreateWebsiteContentDto, options?: any) {
+        return WebsiteContentApiFp(this.configuration).websiteContentControllerCreate(createWebsiteContentDto, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} sectionKey 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WebsiteContentApi
+     */
+    public websiteContentControllerFindAll(sectionKey: string, options?: any) {
+        return WebsiteContentApiFp(this.configuration).websiteContentControllerFindAll(sectionKey, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -3400,6 +5322,29 @@ export class WebsiteContentApi extends BaseAPI {
      */
     public websiteContentControllerFindOne(id: number, options?: any) {
         return WebsiteContentApiFp(this.configuration).websiteContentControllerFindOne(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {number} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WebsiteContentApi
+     */
+    public websiteContentControllerRemove(id: number, options?: any) {
+        return WebsiteContentApiFp(this.configuration).websiteContentControllerRemove(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {number} id 
+     * @param {UpdateWebsiteContentDto} updateWebsiteContentDto 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WebsiteContentApi
+     */
+    public websiteContentControllerUpdate(id: number, updateWebsiteContentDto: UpdateWebsiteContentDto, options?: any) {
+        return WebsiteContentApiFp(this.configuration).websiteContentControllerUpdate(id, updateWebsiteContentDto, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
