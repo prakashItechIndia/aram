@@ -1,0 +1,331 @@
+ body {
+            background: #fff url(../images/logo-aram-bg.png);
+        }
+        * {
+            font-family: "Open sans", arial, tahoma, sans-serif;
+        }
+        .container {
+           /* width: 1000px;*/
+        }
+        .header {
+            background: #F7F9F8;
+            border-bottom: 3px solid #F36A34;
+            box-shadow: 0px 1px 2px #333;
+            padding:5px 0px;
+        }
+        .form-holder {
+            background: #FCFCFC;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 2px;
+            border-bottom: 2px solid #F36A34;
+            border-top: 2px solid #F36A34;
+            border-left: 1px solid #F36A34;
+            border-right: 1px solid #F36A34;
+            margin-bottom:20px;
+            overflow-x:hidden;
+           
+        }
+        .head1 {
+            font-weight: 600;
+            font-size: 20px;
+            text-align: center;
+            border-bottom: 1px solid #F36A34;
+            line-height: 40px;
+            color: #9B3435;
+            margin: 0px;
+            margin-top:-10px;
+        }
+        .form-control {          
+            box-shadow: 1px 1px 2px #fff;
+            padding:3px;
+            font-size:13px;
+            height:30px;
+            border-radius:2px;
+            border-color:#542C00;
+            
+        }
+        .form-control:focus
+        {
+            box-shadow: 1px 1px 2px #000;
+            border:1px solid #000;
+            color:#000;
+        }
+        .control-label {
+            line-height: 30px;
+            font-weight: normal;
+        }
+        label {
+            font-weight: 400;
+        }
+        .agree-box {
+            padding: 2px 10px;
+            background: #fff;
+            border-radius: 3px;
+            border: 1px solid #ccc;
+            box-shadow: 0px 2px 1px #ccc;
+        }
+        .logo-name{font-weight:400;
+         color:#ad2d2e;
+         }
+        .logo-name span{font-weight:200;
+         color:#c15730;}
+         
+         body hr
+         {
+             border-color:#bbb !important;
+         }
+         table#radRegisteredFor {
+    margin: 0 auto;
+}
+.cat {
+    background: none repeat scroll 0 0 #DDDDDD;
+    color: #666666;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 20px;
+    margin-left: -2%;
+    margin-right: -2%;
+    margin-top: -18px;
+    padding: 5px;
+}
+
+.form-group.col-md-4 > span,.form-group span {
+    display: block;
+    font-size: 12px;
+    line-height: 15px;
+    position: absolute;
+}
+.form-group.top-select
+{
+}
+.form-group span.LabelText
+{
+    font-size:14px;
+}
+.form-group span.LabelText label
+{
+   margin-left:10px;
+}
+.top-select
+{
+    color:#4C0F0F;
+    margin-bottom:0px;
+}
+.row.row-1
+{
+     margin-top: 10px;
+}
+.registration table tr{display:inline;}
+table tr td{padding:5px 0px 5px 15px;}
+table tr td label{margin-left:5px;}
+.appcategory
+{
+    padding:5px 13px;  
+    background: none repeat scroll 0 0 #4C0F0F;
+    box-shadow: inset 0 0 2px #000;
+    color: #FFFFFF;
+}
+.form-group label,#DivStatelbl,#DivDistrictlbl
+{
+    color:#4C0F0F;
+}
+
+.group-box {
+    margin: 2% auto;
+    width: 98%;
+    border:1px solid #EDEDED;
+    padding:2%;
+}
+
+.btn.btn-default {
+    background: none repeat scroll 0 0 #F36A34;
+    border-color: #DB5525;
+    color: #FFFFFF;
+}
+.btn.btn-default:hover
+{
+    background:#333;
+    border:1px solid #000;
+}
+.success-msg
+{
+        color: #000000;
+    font-size: 20px;
+    font-weight: 200;
+    text-align: center;
+}
+.success-title
+{
+      color: #AD2D2E;
+    font-weight: 100;
+    text-align: center;
+}
+.success-link
+{
+     color: #000000;
+    text-align: center;
+}
+.success-link a
+{   
+    color: #15137C;
+    text-decoration: underline;
+}
+.success-link a:hover
+{
+    color:#F36A34;
+}
+.documentslbl {
+    float: left;
+    margin-right: 3%;
+    width: 30%;
+}
+.documentsborder{
+    border: 1px solid;
+    margin-right:2%;
+    width:48%;
+}
+
+.browse > input {
+    border-left: 1px solid;
+    padding: 0 7px;
+}
+button, select {
+    background: none repeat scroll 0 0 #F2C9C9;
+    border: 1px solid #600E0E;
+    color: #4C0F0F;
+    margin: 4px;
+    text-transform: none;
+}
+.form-group select.form-control
+{
+    margin-top: 0px !important;
+  margin-left: -1px !important;
+  
+}
+.link-ifsc
+{
+    float:right;
+    color:#F36A34;
+    text-decoration:underline;
+}
+.link-ifsc:hover
+{
+    color:#4C0F0F;
+}
+#divSchool
+{
+    display:none;
+}
+.fileUpload
+{
+    padding-left:15px;
+}
+.appcategory span {
+    line-height: 32px;
+}
+
+/*login styles*/
+.form-signin {
+  max-width: 330px;
+  padding: 15px;
+  margin: 30px auto 0 auto;
+  box-shadow:0px 0px 2px #ccc;
+  border:1px solid #aaa;
+  border-radius:3px;
+}
+.form-signin .form-signin-heading,
+.form-signin .checkbox {
+  margin-bottom: 10px;
+  text-align:center;
+  font-size:22px;
+  
+}
+.form-signin .checkbox {
+  font-weight: normal;
+}
+.form-signin .form-control {
+  position: relative;
+  height: auto;
+  -webkit-box-sizing: border-box;
+     -moz-box-sizing: border-box;
+          box-sizing: border-box;
+  padding: 10px;
+  font-size: 16px;
+  border-color:#AD2D2E;
+  margin-bottom:15px;
+}
+.form-signin .form-control.last
+{
+    border-top:0px solid #fff;
+}
+.form-signin .form-control:focus {
+  z-index: 2;
+}
+.form-signin input[type="email"] {
+  margin-bottom: -1px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.form-signin input[type="password"] {
+  margin-bottom: 10px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.form-signin .btn-primary
+{
+    background:#AD2D2E;
+    border-color:#911F1F;
+}
+
+.form-signin .btn-primary:hover
+{
+     background:#383838;
+    border-color:#1C1C1C;
+}
+
+
+ TBODY > TR > TD.cssRegistered
+        {
+            
+            background-color: #006DCC;
+            color:White;
+        }        
+       
+      TBODY > TR > TD.cssAllocated
+        {
+            
+            background-color: #49AFCD;
+            color:White;
+        }     
+         TBODY > TR > TD.cssCancelled
+        {
+            
+            background-color: #999999;
+            color:White;
+        }         
+        
+      TBODY > TR > TD.cssSelected
+        {
+            
+            background-color: #5BB75B;
+            color:White;
+        }        
+      TBODY > TR > TD.cssRejected
+        {
+            
+            background-color: #B94A48;
+            color:White;
+        }        
+      TBODY > TR > TD.cssWaiting
+        {
+            
+             background-color: #F89406;
+             color:White;
+           
+        }
+.field-validation-error
+{
+    color:red;
+}  
+

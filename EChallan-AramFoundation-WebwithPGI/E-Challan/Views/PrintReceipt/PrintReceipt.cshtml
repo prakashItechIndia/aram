@@ -1,0 +1,310 @@
+﻿@model E_Challan.Models.ClsEChallan
+
+
+@section Title {
+    <title>Print Receipt</title>
+}
+
+
+@{
+    ViewBag.Title = "PrintReceipt";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section PHbreadcrumb {
+    <li>
+        <i class="icon-home home-icon"></i>
+        @*<a href="@Url.Action("Create","DashBoard")">Home</a>*@
+    </li>
+    <li class="active">Reports</li>
+    <li class="active">Print Receipt</li>
+
+}
+<div class="alert alert-block alert-warning" id="Divmess" style="display: none;">
+    <a href="~/Views/PrintReceipt/PrintReceipt.cshtml"></a>
+    <button type="button" class="close" data-dismiss="alert">
+        <i class="icon-remove"></i>
+    </button>
+    <i class="icon-ok green"></i>
+    <span id="divmessup" style="color: red; font-weight: bold"></span>
+</div>
+
+<div class="maskBox">
+    <img src="@Url.Content("~/Images/appLoader.gif")" />
+</div>
+
+@using (Html.BeginForm())
+{
+    @Html.ValidationSummary(true)
+    
+    <div class="page-content">
+        <!-- /.page-header -->
+        <div class="row">
+            <div class="col-md-12">
+                <!-- PAGE CONTENT BEGINS -->
+                <div class="widget-box">
+                    <div class="widget-header widget-header-blue widget-header-flat">
+                        <h4 class="lighter">Print Recepit
+                    <span class="gridTools">
+                        <ul class="ui-pg-button ">
+                            @*<li class="refresher"><span class="icon "></span></li>
+                            <li></li>
+                            <li><span class=" icon-plus-sign bigger-110 purple my-tooltip-link" id='btnGridAdd' rel='tooltip' title='Add State'></span></li>
+                            <li><span class="icon-trash bigger-110 red my-tooltip-link" id='btnDelete1' rel='tooltip' title='Delete State'></span></li>
+                            <li><span class="icon-refresh bigger-110 green my-tooltip-link" id='btnGridRefresh' rel='tooltip' title='Refresh Data'></span></li>*@
+                            <li>
+                                <input type="button" id="btnSubmint" class="btn btn-success" value="Get Print" /></li>
+                        </ul>
+                    </span>
+                        </h4>
+                    </div>
+                    <div class="widget-body">
+                        <div class="widget-main">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <div class="col-md-4" align="right">
+                                            <label>Search Key :</label>
+                                        </div>
+                                        <div class="col-md-6">
+                                            @Html.TextBoxFor(model => model.SearchKey, new { onkeyup = "onTextEvent()", @class = "form-control input-md", maxlength = "50" })
+                                            <span style="font-weight: bold">(Search by either Receipt Number or Name or Address or City or Mobile Number only )</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="form-group">
+                    @(Html.Kendo().Grid<E_Challan.Models.ClsEChallan>()
+                            .Name("PrintReceiptGrid")
+                            .Pageable()
+                            .Columns(columns =>
+                            {
+                                columns.Bound(p => p.Id).HeaderTemplate("ID").Visible(false);
+                                columns.Bound(p => p.Id).ClientTemplate("<input type='checkbox' #= IsCheck ? checked='checked':'' # class='chkbx' name='check' value='#= Id #'/>").Width(15)
+                               .HeaderTemplate("<input type='checkbox' id='masterCheckBox' onclick='checkAll(this)'/>").Filterable(false);
+                                // columns.Bound(p => p.Id).ClientTemplate("<input id='#= Id #' type='button' class='btn btn-success' value='View' onclick='OnGetReport(this.id)' />").Width(15);
+                                columns.Bound(p => p.strRecptNo).Width(75).Title("Receipt Number");
+                                columns.Bound(p => p.DonorTypes).Width(75).Title("Donor Types");
+                                //columns.Bound(p => p.strAccNo).Width(75).Title("A/C Number");
+                                columns.Bound(p => p.strNameOfDonar).Width(75).Title("Name");
+                                columns.Bound(p => p.strAddress).Width(75).Title("Address");
+                                columns.Bound(p => p.strCity).Width(75).Title("City");
+                                // columns.Bound(p => p.strPincode).Width(75).Title("Pincode");
+                                columns.Bound(p => p.strMobNumber).Width(75).Title("Mobile Number");
+                                columns.Bound(p => p.strEmail).Width(75).Title("E-Mail");
+                                //columns.Bound(p => p.strPaymentMode).Width(75).Title("Payment Mode");
+                                columns.Bound(p => p.decAmount).Width(75).Title("Amount");
+                                columns.Bound(p => p.srtRecptDate).Width(75).Title("Receipt Date").Format("{0:dd/MM/yyyy}");
+                            })
+                            .Selectable(selectable => selectable
+                                        .Mode(GridSelectionMode.Multiple))
+        //.Pageable(pager => { pager.PageSizes(true); })
+                                        .Scrollable()
+                            .HtmlAttributes(new { style = "height:400px;" })
+                            .DataSource(dataSource => dataSource
+                                .Ajax()
+                                .PageSize(100)
+                                .Read(read => read.Action("ReportGrid_Read", "PrintReceipt"))
+                             )
+                        )
+                </div>
+
+                        </div>
+                    </div>
+                </div>
+                <br />
+
+                
+                <!-- /widget-main -->
+            </div>
+            <!-- /widget-body -->
+        </div>
+    </div>  
+}
+
+<script type="text/javascript">
+
+    $(function () {
+        $('#PrintReceiptGrid').on('click', '.chkbx', function () {
+            var checked = $(this).is(':checked');
+            var grid = $('#PrintReceiptGrid').data().kendoGrid;
+            var dataItem = grid.dataItem($(this).closest('tr'));
+            dataItem.set('IsCheck', checked);
+        })
+
+        $("#FromDate").kendoDatePicker({
+            format: "dd/MM/yyyy",
+
+        });
+        $("#ToDate").kendoDatePicker({
+            format: "dd/MM/yyyy",
+        });
+    })
+
+    function checkAll(ele) {
+        var state = $(ele).is(':checked');
+        var grid = $('#PrintReceiptGrid').data().kendoGrid;
+        $.each(grid.dataSource.view(), function () {
+            if (this['IsCheck'] != state)
+                this.dirty = true;
+            this['IsCheck'] = state;
+        });
+        grid.refresh();
+    }
+
+
+    function onTextEvent() {
+        var text = $('#SearchKey').val();
+        if ($('.maskBox').length) {
+            $('.maskBox').height($(window).height()).fadeIn(500);
+
+        }
+        $.ajax(
+                {
+                    type: "POST",
+                    url: '@Url.Content("~/")' + "PrintReceipt/CheckPrintReceipt",
+                    dataType: "json",
+                    data: "SearchKey=" + text,
+
+                    success: function (data) {
+
+                        //var updatemsg = data.strStatusMsg;                                                               
+                        var d = $("#PrintReceiptGrid").data("kendoGrid");
+                        //d.dataSource.pageSize(10);
+                        //d.dataSource.data(data.lstEchallan);
+                        d.dataSource.read();
+                        $('.maskBox').height($(window).height()).fadeOut(500);
+                        clearvalidatemess();
+                    },
+                    error: function (req, status, error) {
+                        $("#UpdateError").modal('show');
+                    }
+                });
+            }
+
+            $(document).ready(function () {
+
+                $('input.myClass').prettyCheckable();
+
+                var selection = new Array();
+
+                $("#btnSubmint").click(function () {
+
+                    if ($('.maskBox').length) {
+                        $('.maskBox').height($(window).height()).fadeIn(500);
+
+                    }
+
+                    var items = $("#PrintReceiptGrid").data("kendoGrid").dataSource.data();
+                    var selection = [];
+                    for (var i = 0; i < items.length; i++) {
+                        var item = items[i];
+                        if (item.IsCheck) {
+                            selection.push(item.Id);
+                        }
+                    }
+
+                    if (selection.length == '0') {
+                        $(".ModalHeading").html("Print Receipt");
+                        $('#selectitem').modal('show')
+                        return false;
+                    }
+
+
+                    $.ajax(
+                                                {
+                                                    type: "POST",
+                                                    url: '@Url.Content("~/")' + "PrintReceipt/Checkreport",
+                                                    data: "strId=" + selection,
+                                                    dataType: "json",
+
+                                                    success: function (data) {
+                                                        var updatemsg = data;
+
+                                                        if (updatemsg == "Success") {
+
+
+
+                                                            var newopen = '@Url.Content("~/")' + "PrintReceipt/Report?strId=" + selection;
+                                                                    window.open(newopen);
+                                                                    $('.maskBox').height($(window).height()).fadeOut(500);
+
+                                                                }
+                                                                else if (updatemsg == "Error") {
+                                                                    $("#Divmess").fadeIn('slow');
+                                                                    $("#Divmess").delay(4000).fadeOut('slow');
+                                                                    $('#divmessup').html("No Receipt found..!");
+                                                                    $('#masterCheckBox').prop('checked', false);
+                                                                    // alert($('#divmessup').val());
+
+                                                                }
+
+                                                            },
+                                                    error: function (req, status, error) {
+
+                                                    }
+                                                });//.done(function () { $('#Div1').fadeIn('slow'); $("#Div1").delay(2000).fadeOut('slow'); });
+
+
+                    $('#myModal').modal('hide')
+
+
+                });
+            });
+
+                                                function OnGetReport(a) {
+
+
+                                                    $.ajax(
+                                                            {
+
+                                                                type: "POST",
+                                                                url: '@Url.Content("~/")' + "PrintReceipt/Checkreport",
+                                                        data: "Id=" + a,
+                                                        dataType: "json",
+
+                                                        success: function (data) {
+                                                            var updatemsg = strStatusMsg;
+
+                                                            if (updatemsg == "Error") {
+                                                                $("#Divmess").fadeIn('slow');
+                                                                $("#Divmess").delay(4000).fadeOut('slow');
+                                                                $('#divmessup').html("<span style='color:red'>Opps..! No record found.<span>");
+                                                            }
+                                                            else if (updatemsg == "Success") {
+                                                            }
+                                                        },
+                                                        error: function (req, status, error) {
+                                                            $("#UpdateError").modal('show');
+                                                        }
+                                                    });
+                                                }
+
+</script>
+
+<style>
+    .maskBox {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: url(../../Images/halfWhite.png);
+        z-index: 9999;
+    }
+
+        .maskBox img {
+            top: 48%;
+            left: 48%;
+            position: absolute;
+        }
+
+    .msg {
+        font-size: large;
+        color: #F26B34;
+    }
+</style>
+
+@Scripts.Render("~/bundles/jqueryval")
+

@@ -1,0 +1,1524 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+      <Schema Namespace="SaiAram_EchallanPGIModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2008" Alias="Self" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="T_BASIC_SETTING">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Aram_MailId" Type="nvarchar" MaxLength="500" />
+          <Property Name="Aram_ReplyTo_MailId" Type="nvarchar" MaxLength="500" />
+          <Property Name="Aram_CC_MailId" Type="nvarchar" MaxLength="500" />
+          <Property Name="Aram_BCC_MailId" Type="nvarchar(max)" />
+          <Property Name="Aram_Mail_Subject" Type="nvarchar(max)" />
+          <Property Name="Service_StartDate" Type="datetime" />
+          <Property Name="Service_EndDate" Type="datetime" />
+          <Property Name="Status" Type="bit" />
+          <Property Name="Aram_Mail_Body_1" Type="nvarchar(max)" />
+        </EntityType>
+        <EntityType Name="T_CFG_ERRORLOG">
+          <Key>
+            <PropertyRef Name="Error_ID" />
+          </Key>
+          <Property Name="Error_ID" Type="bigint" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ProjectName" Type="nvarchar" MaxLength="100" />
+          <Property Name="FormName" Type="nvarchar" MaxLength="100" />
+          <Property Name="CustomerID" Type="nvarchar" MaxLength="100" />
+          <Property Name="ProcessName" Type="nvarchar" MaxLength="100" />
+          <Property Name="Severity" Type="nvarchar" MaxLength="50" />
+          <Property Name="ErrorDetails" Type="nvarchar(max)" />
+          <Property Name="UserName" Type="nvarchar" MaxLength="50" />
+          <Property Name="RecordStatus" Type="nvarchar" MaxLength="50" />
+          <Property Name="Data_Date" Type="datetime" />
+          <Property Name="IsDelete" Type="bit" />
+        </EntityType>
+        <EntityType Name="T_CFG_Recipients">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Institution_Id" Type="bigint" Nullable="false" />
+          <Property Name="Email_Type" Type="varchar" MaxLength="200" />
+          <Property Name="Recipient_Type" Type="varchar" MaxLength="100" />
+          <Property Name="FromEmail" Type="varchar" MaxLength="500" />
+          <Property Name="ToEmails" Type="varchar" MaxLength="500" />
+          <Property Name="BCCs" Type="varchar" MaxLength="1000" />
+          <Property Name="CCs" Type="varchar" MaxLength="1000" />
+          <Property Name="Subject" Type="varchar" MaxLength="500" />
+          <Property Name="Signature" Type="varchar" MaxLength="500" />
+          <Property Name="Body" Type="nvarchar(max)" />
+          <Property Name="Active" Type="bit" />
+          <Property Name="Delete_Flag" Type="bit" />
+        </EntityType>
+        <EntityType Name="T_Country">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Country_Name" Type="nvarchar" MaxLength="200" />
+          <Property Name="Country_Code" Type="nvarchar" MaxLength="10" />
+          <Property Name="Is_Active" Type="bit" />
+          <Property Name="Created_By" Type="int" />
+          <Property Name="Created_Date" Type="datetime" />
+          <Property Name="Is_Deleted" Type="bit" />
+          <Property Name="Modified_By" Type="int" />
+          <Property Name="Modified_Date" Type="datetime" />
+        </EntityType>
+        <EntityType Name="T_DONOR_CATEGORIES">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Account_Number" Type="nvarchar" MaxLength="30" />
+          <Property Name="Donor_Types" Type="nvarchar" MaxLength="50" />
+          <Property Name="Donation_Code" Type="nchar" MaxLength="10" />
+          <Property Name="DonationPage_Show" Type="bit" />
+          <Property Name="Is_Active" Type="bit" />
+          <Property Name="Is_Deleted" Type="bit" />
+          <Property Name="Created_By" Type="int" />
+          <Property Name="Created_Date" Type="datetime" />
+        </EntityType>
+        <EntityType Name="T_EChallan">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Receipt_Number" Type="nvarchar" MaxLength="50" />
+          <Property Name="Donation_Types" Type="int" Nullable="false" />
+          <Property Name="Account_Number" Type="nvarchar" MaxLength="25" />
+          <Property Name="Name_Of_Donor" Type="nvarchar" MaxLength="100" />
+          <Property Name="Address" Type="nvarchar" MaxLength="500" />
+          <Property Name="State_Id" Type="int" />
+          <Property Name="State_Name" Type="nvarchar" MaxLength="100" />
+          <Property Name="Country_Id" Type="int" />
+          <Property Name="Country_Name" Type="nvarchar" MaxLength="100" />
+          <Property Name="City" Type="nvarchar" MaxLength="100" />
+          <Property Name="Pincode" Type="nvarchar" MaxLength="6" />
+          <Property Name="Telephone_Number" Type="nvarchar" MaxLength="15" />
+          <Property Name="Mobile_Number" Type="nvarchar" MaxLength="15" />
+          <Property Name="Email_Id" Type="nvarchar" MaxLength="50" />
+          <Property Name="Payment_Mode" Type="nvarchar" MaxLength="30" />
+          <Property Name="Amount" Type="decimal" Precision="18" Scale="2" />
+          <Property Name="Amount_In_Words" Type="nvarchar(max)" />
+          <Property Name="DD_OR_Cheque_Number" Type="nvarchar" MaxLength="10" />
+          <Property Name="DD_OR_Cheque_Date" Type="datetime" />
+          <Property Name="DD_OR_Cheque_BankName" Type="nvarchar" MaxLength="200" />
+          <Property Name="DD_OR_Cheque_Branch" Type="nvarchar" MaxLength="200" />
+          <Property Name="PANcard_Number" Type="nvarchar" MaxLength="50" />
+          <Property Name="Location" Type="nvarchar" MaxLength="100" />
+          <Property Name="Receipt_Date" Type="datetime" />
+          <Property Name="Is_Active" Type="bit" />
+          <Property Name="Created_by" Type="int" />
+          <Property Name="Created_Date" Type="datetime" />
+          <Property Name="Type" Type="nvarchar" MaxLength="10" />
+          <Property Name="Transaction_Reference_PGI_Number" Type="nvarchar" MaxLength="100" />
+          <Property Name="Bank_Reference_Number" Type="nvarchar" MaxLength="100" />
+          <Property Name="Transaction_Amount" Type="decimal" Precision="18" Scale="2" />
+          <Property Name="Bank_Id" Type="nvarchar" MaxLength="50" />
+          <Property Name="Bank_Merchant_Id" Type="nvarchar" MaxLength="50" />
+          <Property Name="Transaction_Type" Type="nvarchar" MaxLength="50" />
+          <Property Name="Auth_Status" Type="nvarchar" MaxLength="50" />
+          <Property Name="Transaction_Date" Type="nvarchar" MaxLength="100" />
+          <Property Name="Auth_Status_Message" Type="nvarchar" MaxLength="100" />
+        </EntityType>
+        <EntityType Name="T_Payment_Gateway_Config">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="bigint" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Setting_Name" Type="nvarchar" MaxLength="150" Nullable="false" />
+          <Property Name="Setting_Value" Type="nvarchar" MaxLength="500" Nullable="false" />
+        </EntityType>
+        <EntityType Name="T_Payment_Order_No">
+          <Key>
+            <PropertyRef Name="Doc_Type_Id" />
+          </Key>
+          <Property Name="Doc_Type_Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Doc_Type" Type="varchar" MaxLength="3" Nullable="false" />
+          <Property Name="Financial_Year" Type="varchar" MaxLength="9" Nullable="false" />
+          <Property Name="Institution_Id" Type="int" Nullable="false" />
+          <Property Name="Starting_No" Type="int" Nullable="false" />
+          <Property Name="Latest_No" Type="int" Nullable="false" />
+          <Property Name="Module_Tag" Type="varchar" MaxLength="15" Nullable="false" />
+          <Property Name="Created_By" Type="bigint" Nullable="false" />
+          <Property Name="Created_Date" Type="datetime" Nullable="false" />
+        </EntityType>
+        <EntityType Name="T_Payment_Transaction">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="bigint" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="EChallan_Id" Type="int" />
+          <Property Name="Fee_Type" Type="nvarchar" MaxLength="50" />
+          <Property Name="OrderId" Type="nvarchar" MaxLength="50" />
+          <Property Name="PaymentAmt" Type="nvarchar" MaxLength="50" />
+          <Property Name="MID" Type="nvarchar" MaxLength="50" />
+          <Property Name="MKEY" Type="nvarchar" MaxLength="50" />
+          <Property Name="paytmParams" Type="nvarchar(max)" />
+          <Property Name="Signature" Type="nvarchar" MaxLength="2000" />
+          <Property Name="PaytmUrl" Type="nvarchar" MaxLength="500" />
+          <Property Name="Token" Type="nvarchar" MaxLength="250" />
+          <Property Name="PaymentUrl" Type="nvarchar" MaxLength="500" />
+          <Property Name="Initiated_Time" Type="datetime" />
+          <Property Name="CURRENCY" Type="nvarchar" MaxLength="5" />
+          <Property Name="GATEWAYNAME" Type="nvarchar" MaxLength="20" />
+          <Property Name="RESPMSG" Type="nvarchar" MaxLength="500" />
+          <Property Name="BANKNAME" Type="nvarchar" MaxLength="150" />
+          <Property Name="PAYMENTMODE" Type="nvarchar" MaxLength="20" />
+          <Property Name="RESPCODE" Type="nvarchar" MaxLength="20" />
+          <Property Name="TXNID" Type="nvarchar" MaxLength="80" />
+          <Property Name="TXNAMOUNT" Type="nvarchar" MaxLength="25" />
+          <Property Name="TXN_STATUS" Type="nvarchar" MaxLength="20" />
+          <Property Name="BANKTXNID" Type="nvarchar" MaxLength="150" />
+          <Property Name="TXNDATE" Type="datetime" />
+          <Property Name="CHECKSUMHASH" Type="nvarchar" MaxLength="250" />
+          <Property Name="ValidateCheckSum" Type="nvarchar" MaxLength="25" />
+          <Property Name="ResponseTimeStamp" Type="nvarchar(max)" />
+          <Property Name="Version" Type="nvarchar" MaxLength="50" />
+          <Property Name="TXNTYPE" Type="nvarchar" MaxLength="50" />
+          <Property Name="Status_Flag" Type="bit" />
+        </EntityType>
+        <EntityType Name="T_Razorpay_Transaction">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="bigint" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="EChallan_Id" Type="bigint" Nullable="false" />
+          <Property Name="Fee_Type" Type="nvarchar" MaxLength="50" />
+          <Property Name="OrderId" Type="nvarchar" MaxLength="50" />
+          <Property Name="PaymentAmt" Type="nvarchar" MaxLength="50" />
+          <Property Name="MID" Type="nvarchar" MaxLength="50" />
+          <Property Name="MKEY" Type="nvarchar" MaxLength="50" />
+          <Property Name="OrderIdParams" Type="nvarchar(max)" />
+          <Property Name="RPayParams" Type="nvarchar(max)" />
+          <Property Name="RPayOrderId" Type="nvarchar" MaxLength="50" />
+          <Property Name="Initiated_Time" Type="datetime" />
+          <Property Name="CURRENCY" Type="nvarchar" MaxLength="5" />
+          <Property Name="GATEWAYNAME" Type="nvarchar" MaxLength="20" />
+          <Property Name="RESPMSG" Type="nvarchar(max)" />
+          <Property Name="RPayPaymentId" Type="nvarchar" MaxLength="50" />
+          <Property Name="RpaySignature" Type="nvarchar" MaxLength="2000" />
+          <Property Name="ValidateSignature" Type="nvarchar" MaxLength="25" />
+          <Property Name="TXN_STATUS" Type="nvarchar" MaxLength="20" />
+          <Property Name="TXNDATE" Type="datetime" />
+          <Property Name="BANKNAME" Type="nvarchar" MaxLength="150" />
+          <Property Name="PAYMENTMODE" Type="nvarchar" MaxLength="20" />
+          <Property Name="RESPCODE" Type="nvarchar" MaxLength="20" />
+          <Property Name="TXNID" Type="nvarchar" MaxLength="80" />
+          <Property Name="TXNAMOUNT" Type="nvarchar" MaxLength="25" />
+          <Property Name="TXNCHARGE" Type="nvarchar" MaxLength="25" />
+          <Property Name="BANKTXNID" Type="nvarchar" MaxLength="150" />
+          <Property Name="CHECKSUMHASH" Type="nvarchar" MaxLength="250" />
+          <Property Name="ValidateCheckSum" Type="nvarchar" MaxLength="25" />
+          <Property Name="ResponseTimeStamp" Type="nvarchar(max)" />
+          <Property Name="Version" Type="nvarchar" MaxLength="50" />
+          <Property Name="TXNTYPE" Type="nvarchar" MaxLength="50" />
+          <Property Name="Status_Flag" Type="bit" />
+        </EntityType>
+        <EntityType Name="T_State">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Country_Id" Type="int" />
+          <Property Name="State_Name" Type="nvarchar" MaxLength="200" />
+          <Property Name="Is_Active" Type="bit" />
+          <Property Name="Created_By" Type="int" />
+          <Property Name="Created_Date" Type="datetime" />
+          <Property Name="Is_Deleted" Type="bit" />
+          <Property Name="Modified_By" Type="int" />
+          <Property Name="Modified_Date" Type="datetime" />
+        </EntityType>
+        <EntityType Name="T_USER">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Name" Type="nvarchar" MaxLength="100" />
+          <Property Name="User_Type" Type="nvarchar" MaxLength="30" />
+          <Property Name="User_Name" Type="nvarchar" MaxLength="100" />
+          <Property Name="Password" Type="nvarchar" MaxLength="50" />
+          <Property Name="Mobile_Number" Type="nvarchar" MaxLength="15" />
+          <Property Name="Location" Type="nvarchar" MaxLength="300" />
+          <Property Name="E_Mail" Type="nvarchar" MaxLength="100" />
+          <Property Name="Is_Active" Type="bit" />
+          <Property Name="Created_By" Type="int" />
+          <Property Name="Created_Date" Type="datetime" />
+          <Property Name="Is_Deleted" Type="bit" />
+          <Property Name="Modified_By" Type="int" />
+          <Property Name="Modified_Date" Type="datetime" />
+        </EntityType>
+        <EntityType Name="T_User_Activites">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="EChallan_Id" Type="int" />
+          <Property Name="Type" Type="nvarchar" MaxLength="50" />
+          <Property Name="Done_By" Type="int" />
+          <Property Name="CurrentDate" Type="nvarchar" MaxLength="20" />
+          <Property Name="CurrentTime" Type="nvarchar" MaxLength="20" />
+        </EntityType>
+        <!--Errors Found During Generation:
+warning 6002: The table/view 'SaiAram_EchallanPGI.dbo.All-PGI-Data638' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
+        <EntityType Name="All-PGI-Data638">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Receipt_Number" Type="nvarchar" MaxLength="50" />
+          <Property Name="Donation Type" Type="varchar" MaxLength="14" />
+          <Property Name="Account_Number" Type="nvarchar" MaxLength="25" />
+          <Property Name="Name_Of_Donor" Type="nvarchar" MaxLength="100" />
+          <Property Name="Address" Type="nvarchar" MaxLength="500" />
+          <Property Name="State_Id" Type="int" />
+          <Property Name="State_Name" Type="nvarchar" MaxLength="100" />
+          <Property Name="Country_Id" Type="int" />
+          <Property Name="Country_Name" Type="nvarchar" MaxLength="100" />
+          <Property Name="City" Type="nvarchar" MaxLength="100" />
+          <Property Name="Pincode" Type="nvarchar" MaxLength="6" />
+          <Property Name="Telephone_Number" Type="nvarchar" MaxLength="15" />
+          <Property Name="Mobile_Number" Type="nvarchar" MaxLength="15" />
+          <Property Name="Email_Id" Type="nvarchar" MaxLength="50" />
+          <Property Name="Payment_Mode" Type="nvarchar" MaxLength="30" />
+          <Property Name="Amount" Type="decimal" Precision="18" Scale="2" />
+          <Property Name="Amount_In_Words" Type="nvarchar(max)" />
+          <Property Name="DD_OR_Cheque_Number" Type="nvarchar" MaxLength="10" />
+          <Property Name="DD_OR_Cheque_Date" Type="datetime" />
+          <Property Name="DD_OR_Cheque_BankName" Type="nvarchar" MaxLength="200" />
+          <Property Name="DD_OR_Cheque_Branch" Type="nvarchar" MaxLength="200" />
+          <Property Name="PANcard_Number" Type="nvarchar" MaxLength="50" />
+          <Property Name="Location" Type="nvarchar" MaxLength="100" />
+          <Property Name="Receipt_Date" Type="datetime" />
+          <Property Name="Is_Active" Type="bit" />
+          <Property Name="Created_by" Type="int" />
+          <Property Name="Created_Date" Type="datetime" />
+          <Property Name="Type" Type="nvarchar" MaxLength="10" />
+          <Property Name="Transaction_Reference_PGI_Number" Type="nvarchar" MaxLength="100" />
+          <Property Name="Bank_Reference_Number" Type="nvarchar" MaxLength="100" />
+          <Property Name="Transaction_Amount" Type="decimal" Precision="18" Scale="2" />
+          <Property Name="Bank_Id" Type="nvarchar" MaxLength="50" />
+          <Property Name="Bank_Merchant_Id" Type="nvarchar" MaxLength="50" />
+          <Property Name="Transaction_Type" Type="nvarchar" MaxLength="50" />
+          <Property Name="Auth_Status" Type="nvarchar" MaxLength="50" />
+          <Property Name="Transaction_Date" Type="nvarchar" MaxLength="100" />
+          <Property Name="Auth_Status_Message" Type="nvarchar" MaxLength="100" />
+        </EntityType>
+        <Function Name="FundCollectionMonthwiseWithParameters" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="FromDate" Type="datetime" Mode="In" />
+          <Parameter Name="ToDate" Type="datetime" Mode="In" />
+        </Function>
+        <Function Name="sp_FundCollection_Below" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
+        <Function Name="sp_FundCollection_DateOnly" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
+        <Function Name="sp_FundCollectionMonthwise" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
+        <Function Name="sp_GetCashDatewise" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
+        <Function Name="sp_GetCashFunds" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="Fromdate" Type="datetime" Mode="In" />
+          <Parameter Name="Todate" Type="datetime" Mode="In" />
+        </Function>
+        <Function Name="sp_GetDDChequeDatewise" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
+        <Function Name="sp_GetDDChequeFunds" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="Fromdate" Type="datetime" Mode="In" />
+          <Parameter Name="Todate" Type="datetime" Mode="In" />
+        </Function>
+        <Function Name="sp_GetFundCollectionReport" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="DonorType" Type="int" Mode="In" />
+          <Parameter Name="FromDate" Type="datetime" Mode="In" />
+          <Parameter Name="ToDate" Type="datetime" Mode="In" />
+        </Function>
+        <Function Name="sp_GetLogHistory" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="SearchKey" Type="nvarchar" Mode="In" />
+        </Function>
+        <Function Name="sp_GetReceiptDatewise" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="FromDate" Type="datetime" Mode="In" />
+          <Parameter Name="ToDate" Type="datetime" Mode="In" />
+        </Function>
+        <Function Name="sp_GetReceiptDt" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="SearchKey" Type="nvarchar" Mode="In" />
+        </Function>
+        <Function Name="sp_GetReceiptDt_By_ID" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="strId" Type="nvarchar(max)" Mode="In" />
+          <Parameter Name="intLoginId" Type="int" Mode="In" />
+        </Function>
+        <Function Name="sp_GetReceiptDt_By_Online" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="intId" Type="int" Mode="In" />
+        </Function>
+        <Function Name="sp_GetSettings" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
+        <Function Name="SP_PGI_UsedColumns" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
+        <Function Name="SplitString" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="str" Type="nvarchar" Mode="In" />
+          <Parameter Name="separator" Type="char" Mode="In" />
+          <ReturnType>
+            <CollectionType>
+              <RowType>
+                <Property Name="zeroBasedOccurance" Type="int" />
+                <Property Name="s" Type="nvarchar" MaxLength="4000" />
+              </RowType>
+            </CollectionType>
+          </ReturnType>
+        </Function>
+        <EntityContainer Name="SaiAram_EchallanPGIModelStoreContainer">
+          <EntitySet Name="T_BASIC_SETTING" EntityType="Self.T_BASIC_SETTING" Schema="dbo" store:Type="Tables" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" />
+          <EntitySet Name="T_CFG_ERRORLOG" EntityType="Self.T_CFG_ERRORLOG" Schema="dbo" store:Type="Tables" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" />
+          <EntitySet Name="T_CFG_Recipients" EntityType="Self.T_CFG_Recipients" Schema="dbo" store:Type="Tables" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" />
+          <EntitySet Name="T_Country" EntityType="Self.T_Country" Schema="dbo" store:Type="Tables" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" />
+          <EntitySet Name="T_DONOR_CATEGORIES" EntityType="Self.T_DONOR_CATEGORIES" Schema="dbo" store:Type="Tables" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" />
+          <EntitySet Name="T_EChallan" EntityType="Self.T_EChallan" Schema="dbo" store:Type="Tables" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" />
+          <EntitySet Name="T_Payment_Gateway_Config" EntityType="Self.T_Payment_Gateway_Config" Schema="dbo" store:Type="Tables" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" />
+          <EntitySet Name="T_Payment_Order_No" EntityType="Self.T_Payment_Order_No" Schema="dbo" store:Type="Tables" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" />
+          <EntitySet Name="T_Payment_Transaction" EntityType="Self.T_Payment_Transaction" Schema="dbo" store:Type="Tables" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" />
+          <EntitySet Name="T_Razorpay_Transaction" EntityType="Self.T_Razorpay_Transaction" Schema="dbo" store:Type="Tables" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" />
+          <EntitySet Name="T_State" EntityType="Self.T_State" Schema="dbo" store:Type="Tables" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" />
+          <EntitySet Name="T_USER" EntityType="Self.T_USER" Schema="dbo" store:Type="Tables" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" />
+          <EntitySet Name="T_User_Activites" EntityType="Self.T_User_Activites" Schema="dbo" store:Type="Tables" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" />
+          <EntitySet Name="All-PGI-Data638" EntityType="Self.All-PGI-Data638" store:Type="Views" store:Schema="dbo" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator">
+            <DefiningQuery>SELECT 
+[All-PGI-Data638].[Id] AS [Id], 
+[All-PGI-Data638].[Receipt_Number] AS [Receipt_Number], 
+[All-PGI-Data638].[Donation Type] AS [Donation Type], 
+[All-PGI-Data638].[Account_Number] AS [Account_Number], 
+[All-PGI-Data638].[Name_Of_Donor] AS [Name_Of_Donor], 
+[All-PGI-Data638].[Address] AS [Address], 
+[All-PGI-Data638].[State_Id] AS [State_Id], 
+[All-PGI-Data638].[State_Name] AS [State_Name], 
+[All-PGI-Data638].[Country_Id] AS [Country_Id], 
+[All-PGI-Data638].[Country_Name] AS [Country_Name], 
+[All-PGI-Data638].[City] AS [City], 
+[All-PGI-Data638].[Pincode] AS [Pincode], 
+[All-PGI-Data638].[Telephone_Number] AS [Telephone_Number], 
+[All-PGI-Data638].[Mobile_Number] AS [Mobile_Number], 
+[All-PGI-Data638].[Email_Id] AS [Email_Id], 
+[All-PGI-Data638].[Payment_Mode] AS [Payment_Mode], 
+[All-PGI-Data638].[Amount] AS [Amount], 
+[All-PGI-Data638].[Amount_In_Words] AS [Amount_In_Words], 
+[All-PGI-Data638].[DD_OR_Cheque_Number] AS [DD_OR_Cheque_Number], 
+[All-PGI-Data638].[DD_OR_Cheque_Date] AS [DD_OR_Cheque_Date], 
+[All-PGI-Data638].[DD_OR_Cheque_BankName] AS [DD_OR_Cheque_BankName], 
+[All-PGI-Data638].[DD_OR_Cheque_Branch] AS [DD_OR_Cheque_Branch], 
+[All-PGI-Data638].[PANcard_Number] AS [PANcard_Number], 
+[All-PGI-Data638].[Location] AS [Location], 
+[All-PGI-Data638].[Receipt_Date] AS [Receipt_Date], 
+[All-PGI-Data638].[Is_Active] AS [Is_Active], 
+[All-PGI-Data638].[Created_by] AS [Created_by], 
+[All-PGI-Data638].[Created_Date] AS [Created_Date], 
+[All-PGI-Data638].[Type] AS [Type], 
+[All-PGI-Data638].[Transaction_Reference_PGI_Number] AS [Transaction_Reference_PGI_Number], 
+[All-PGI-Data638].[Bank_Reference_Number] AS [Bank_Reference_Number], 
+[All-PGI-Data638].[Transaction_Amount] AS [Transaction_Amount], 
+[All-PGI-Data638].[Bank_Id] AS [Bank_Id], 
+[All-PGI-Data638].[Bank_Merchant_Id] AS [Bank_Merchant_Id], 
+[All-PGI-Data638].[Transaction_Type] AS [Transaction_Type], 
+[All-PGI-Data638].[Auth_Status] AS [Auth_Status], 
+[All-PGI-Data638].[Transaction_Date] AS [Transaction_Date], 
+[All-PGI-Data638].[Auth_Status_Message] AS [Auth_Status_Message]
+FROM [dbo].[All-PGI-Data638] AS [All-PGI-Data638]</DefiningQuery>
+          </EntitySet>
+        </EntityContainer>
+      </Schema>
+    </edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="SaiAram_EchallanPGIModel" Alias="Self" xmlns="http://schemas.microsoft.com/ado/2009/11/edm" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation">
+        <ComplexType Name="SplitString_Result">
+          <Property Name="zeroBasedOccurance" Type="Int32" />
+          <Property Name="s" Type="String" MaxLength="4000" FixedLength="false" Unicode="true" />
+        </ComplexType>
+        <EntityType Name="T_BASIC_SETTING">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" />
+          <Property Name="Aram_MailId" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="Aram_ReplyTo_MailId" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="Aram_CC_MailId" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="Aram_BCC_MailId" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Aram_Mail_Subject" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Service_StartDate" Type="DateTime" Precision="3" />
+          <Property Name="Service_EndDate" Type="DateTime" Precision="3" />
+          <Property Name="Status" Type="Boolean" />
+          <Property Name="Aram_Mail_Body_1" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="T_CFG_ERRORLOG">
+          <Key>
+            <PropertyRef Name="Error_ID" />
+          </Key>
+          <Property Name="Error_ID" Type="Int64" Nullable="false" annotation:StoreGeneratedPattern="Identity" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" />
+          <Property Name="ProjectName" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="FormName" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="CustomerID" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="ProcessName" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Severity" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="ErrorDetails" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="UserName" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="RecordStatus" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Data_Date" Type="DateTime" Precision="3" />
+          <Property Name="IsDelete" Type="Boolean" />
+        </EntityType>
+        <EntityType Name="T_CFG_Recipients">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" />
+          <Property Name="Institution_Id" Type="Int64" Nullable="false" />
+          <Property Name="Email_Type" Type="String" MaxLength="200" FixedLength="false" Unicode="false" />
+          <Property Name="Recipient_Type" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
+          <Property Name="FromEmail" Type="String" MaxLength="500" FixedLength="false" Unicode="false" />
+          <Property Name="ToEmails" Type="String" MaxLength="500" FixedLength="false" Unicode="false" />
+          <Property Name="BCCs" Type="String" MaxLength="1000" FixedLength="false" Unicode="false" />
+          <Property Name="CCs" Type="String" MaxLength="1000" FixedLength="false" Unicode="false" />
+          <Property Name="Subject" Type="String" MaxLength="500" FixedLength="false" Unicode="false" />
+          <Property Name="Signature" Type="String" MaxLength="500" FixedLength="false" Unicode="false" />
+          <Property Name="Body" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Active" Type="Boolean" />
+          <Property Name="Delete_Flag" Type="Boolean" />
+        </EntityType>
+        <EntityType Name="T_Country">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" />
+          <Property Name="Country_Name" Type="String" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Name="Country_Code" Type="String" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="Is_Active" Type="Boolean" />
+          <Property Name="Created_By" Type="Int32" />
+          <Property Name="Created_Date" Type="DateTime" Precision="3" />
+          <Property Name="Is_Deleted" Type="Boolean" />
+          <Property Name="Modified_By" Type="Int32" />
+          <Property Name="Modified_Date" Type="DateTime" Precision="3" />
+        </EntityType>
+        <EntityType Name="T_DONOR_CATEGORIES">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" />
+          <Property Name="Account_Number" Type="String" MaxLength="30" FixedLength="false" Unicode="true" />
+          <Property Name="Donor_Types" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Donation_Code" Type="String" MaxLength="10" FixedLength="true" Unicode="true" />
+          <Property Name="DonationPage_Show" Type="Boolean" />
+          <Property Name="Is_Active" Type="Boolean" />
+          <Property Name="Is_Deleted" Type="Boolean" />
+          <Property Name="Created_By" Type="Int32" />
+          <Property Name="Created_Date" Type="DateTime" Precision="3" />
+        </EntityType>
+        <EntityType Name="T_EChallan">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" />
+          <Property Name="Receipt_Number" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Donation_Types" Type="Int32" Nullable="false" />
+          <Property Name="Account_Number" Type="String" MaxLength="25" FixedLength="false" Unicode="true" />
+          <Property Name="Name_Of_Donor" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Address" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="State_Id" Type="Int32" />
+          <Property Name="State_Name" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Country_Id" Type="Int32" />
+          <Property Name="Country_Name" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="City" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Pincode" Type="String" MaxLength="6" FixedLength="false" Unicode="true" />
+          <Property Name="Telephone_Number" Type="String" MaxLength="15" FixedLength="false" Unicode="true" />
+          <Property Name="Mobile_Number" Type="String" MaxLength="15" FixedLength="false" Unicode="true" />
+          <Property Name="Email_Id" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Payment_Mode" Type="String" MaxLength="30" FixedLength="false" Unicode="true" />
+          <Property Name="Amount" Type="Decimal" Precision="18" Scale="2" />
+          <Property Name="Amount_In_Words" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="DD_OR_Cheque_Number" Type="String" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="DD_OR_Cheque_Date" Type="DateTime" Precision="3" />
+          <Property Name="DD_OR_Cheque_BankName" Type="String" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Name="DD_OR_Cheque_Branch" Type="String" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Name="PANcard_Number" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Location" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Receipt_Date" Type="DateTime" Precision="3" />
+          <Property Name="Is_Active" Type="Boolean" />
+          <Property Name="Created_by" Type="Int32" />
+          <Property Name="Created_Date" Type="DateTime" Precision="3" />
+          <Property Name="Type" Type="String" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="Transaction_Reference_PGI_Number" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Bank_Reference_Number" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Transaction_Amount" Type="Decimal" Precision="18" Scale="2" />
+          <Property Name="Bank_Id" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Bank_Merchant_Id" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Transaction_Type" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Auth_Status" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Transaction_Date" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Auth_Status_Message" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="T_Payment_Gateway_Config">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int64" Nullable="false" annotation:StoreGeneratedPattern="Identity" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" />
+          <Property Name="Setting_Name" Type="String" MaxLength="150" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="Setting_Value" Type="String" MaxLength="500" FixedLength="false" Unicode="true" Nullable="false" />
+        </EntityType>
+        <EntityType Name="T_Payment_Order_No">
+          <Key>
+            <PropertyRef Name="Doc_Type_Id" />
+          </Key>
+          <Property Name="Doc_Type_Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" />
+          <Property Name="Doc_Type" Type="String" MaxLength="3" FixedLength="false" Unicode="false" Nullable="false" />
+          <Property Name="Financial_Year" Type="String" MaxLength="9" FixedLength="false" Unicode="false" Nullable="false" />
+          <Property Name="Institution_Id" Type="Int32" Nullable="false" />
+          <Property Name="Starting_No" Type="Int32" Nullable="false" />
+          <Property Name="Latest_No" Type="Int32" Nullable="false" />
+          <Property Name="Module_Tag" Type="String" MaxLength="15" FixedLength="false" Unicode="false" Nullable="false" />
+          <Property Name="Created_By" Type="Int64" Nullable="false" />
+          <Property Name="Created_Date" Type="DateTime" Nullable="false" Precision="3" />
+        </EntityType>
+        <EntityType Name="T_Payment_Transaction">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int64" Nullable="false" annotation:StoreGeneratedPattern="Identity" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" />
+          <Property Name="EChallan_Id" Type="Int32" />
+          <Property Name="Fee_Type" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="OrderId" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="PaymentAmt" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="MID" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="MKEY" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="paytmParams" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Signature" Type="String" MaxLength="2000" FixedLength="false" Unicode="true" />
+          <Property Name="PaytmUrl" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="Token" Type="String" MaxLength="250" FixedLength="false" Unicode="true" />
+          <Property Name="PaymentUrl" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="Initiated_Time" Type="DateTime" Precision="3" />
+          <Property Name="CURRENCY" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+          <Property Name="GATEWAYNAME" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="RESPMSG" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="BANKNAME" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
+          <Property Name="PAYMENTMODE" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="RESPCODE" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="TXNID" Type="String" MaxLength="80" FixedLength="false" Unicode="true" />
+          <Property Name="TXNAMOUNT" Type="String" MaxLength="25" FixedLength="false" Unicode="true" />
+          <Property Name="TXN_STATUS" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="BANKTXNID" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
+          <Property Name="TXNDATE" Type="DateTime" Precision="3" />
+          <Property Name="CHECKSUMHASH" Type="String" MaxLength="250" FixedLength="false" Unicode="true" />
+          <Property Name="ValidateCheckSum" Type="String" MaxLength="25" FixedLength="false" Unicode="true" />
+          <Property Name="ResponseTimeStamp" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Version" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="TXNTYPE" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Status_Flag" Type="Boolean" />
+        </EntityType>
+        <EntityType Name="T_Razorpay_Transaction">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int64" Nullable="false" annotation:StoreGeneratedPattern="Identity" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" />
+          <Property Name="EChallan_Id" Type="Int64" Nullable="false" />
+          <Property Name="Fee_Type" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="OrderId" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="PaymentAmt" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="MID" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="MKEY" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="OrderIdParams" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="RPayParams" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="RPayOrderId" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Initiated_Time" Type="DateTime" Precision="3" />
+          <Property Name="CURRENCY" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+          <Property Name="GATEWAYNAME" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="RESPMSG" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="RPayPaymentId" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="RpaySignature" Type="String" MaxLength="2000" FixedLength="false" Unicode="true" />
+          <Property Name="ValidateSignature" Type="String" MaxLength="25" FixedLength="false" Unicode="true" />
+          <Property Name="TXN_STATUS" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="TXNDATE" Type="DateTime" Precision="3" />
+          <Property Name="BANKNAME" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
+          <Property Name="PAYMENTMODE" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="RESPCODE" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="TXNID" Type="String" MaxLength="80" FixedLength="false" Unicode="true" />
+          <Property Name="TXNAMOUNT" Type="String" MaxLength="25" FixedLength="false" Unicode="true" />
+          <Property Name="TXNCHARGE" Type="String" MaxLength="25" FixedLength="false" Unicode="true" />
+          <Property Name="BANKTXNID" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
+          <Property Name="CHECKSUMHASH" Type="String" MaxLength="250" FixedLength="false" Unicode="true" />
+          <Property Name="ValidateCheckSum" Type="String" MaxLength="25" FixedLength="false" Unicode="true" />
+          <Property Name="ResponseTimeStamp" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Version" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="TXNTYPE" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Status_Flag" Type="Boolean" />
+        </EntityType>
+        <EntityType Name="T_State">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" />
+          <Property Name="Country_Id" Type="Int32" />
+          <Property Name="State_Name" Type="String" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Name="Is_Active" Type="Boolean" />
+          <Property Name="Created_By" Type="Int32" />
+          <Property Name="Created_Date" Type="DateTime" Precision="3" />
+          <Property Name="Is_Deleted" Type="Boolean" />
+          <Property Name="Modified_By" Type="Int32" />
+          <Property Name="Modified_Date" Type="DateTime" Precision="3" />
+        </EntityType>
+        <EntityType Name="T_USER">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" />
+          <Property Name="Name" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="User_Type" Type="String" MaxLength="30" FixedLength="false" Unicode="true" />
+          <Property Name="User_Name" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Password" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Mobile_Number" Type="String" MaxLength="15" FixedLength="false" Unicode="true" />
+          <Property Name="Location" Type="String" MaxLength="300" FixedLength="false" Unicode="true" />
+          <Property Name="E_Mail" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Is_Active" Type="Boolean" />
+          <Property Name="Created_By" Type="Int32" />
+          <Property Name="Created_Date" Type="DateTime" Precision="3" />
+          <Property Name="Is_Deleted" Type="Boolean" />
+          <Property Name="Modified_By" Type="Int32" />
+          <Property Name="Modified_Date" Type="DateTime" Precision="3" />
+        </EntityType>
+        <EntityType Name="T_User_Activites">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" />
+          <Property Name="EChallan_Id" Type="Int32" />
+          <Property Name="Type" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Done_By" Type="Int32" />
+          <Property Name="CurrentDate" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="CurrentTime" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="All_PGI_Data638">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" />
+          <Property Name="Receipt_Number" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Donation_Type" Type="String" MaxLength="14" FixedLength="false" Unicode="false" />
+          <Property Name="Account_Number" Type="String" MaxLength="25" FixedLength="false" Unicode="true" />
+          <Property Name="Name_Of_Donor" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Address" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="State_Id" Type="Int32" />
+          <Property Name="State_Name" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Country_Id" Type="Int32" />
+          <Property Name="Country_Name" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="City" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Pincode" Type="String" MaxLength="6" FixedLength="false" Unicode="true" />
+          <Property Name="Telephone_Number" Type="String" MaxLength="15" FixedLength="false" Unicode="true" />
+          <Property Name="Mobile_Number" Type="String" MaxLength="15" FixedLength="false" Unicode="true" />
+          <Property Name="Email_Id" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Payment_Mode" Type="String" MaxLength="30" FixedLength="false" Unicode="true" />
+          <Property Name="Amount" Type="Decimal" Precision="18" Scale="2" />
+          <Property Name="Amount_In_Words" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="DD_OR_Cheque_Number" Type="String" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="DD_OR_Cheque_Date" Type="DateTime" Precision="3" />
+          <Property Name="DD_OR_Cheque_BankName" Type="String" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Name="DD_OR_Cheque_Branch" Type="String" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Name="PANcard_Number" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Location" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Receipt_Date" Type="DateTime" Precision="3" />
+          <Property Name="Is_Active" Type="Boolean" />
+          <Property Name="Created_by" Type="Int32" />
+          <Property Name="Created_Date" Type="DateTime" Precision="3" />
+          <Property Name="Type" Type="String" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="Transaction_Reference_PGI_Number" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Bank_Reference_Number" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Transaction_Amount" Type="Decimal" Precision="18" Scale="2" />
+          <Property Name="Bank_Id" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Bank_Merchant_Id" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Transaction_Type" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Auth_Status" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Transaction_Date" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Auth_Status_Message" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityContainer Name="SaiAramFoundationEntities" annotation:LazyLoadingEnabled="true" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation">
+          <EntitySet Name="T_BASIC_SETTING" EntityType="Self.T_BASIC_SETTING" />
+          <EntitySet Name="T_CFG_ERRORLOG" EntityType="Self.T_CFG_ERRORLOG" />
+          <EntitySet Name="T_CFG_Recipients" EntityType="Self.T_CFG_Recipients" />
+          <EntitySet Name="T_Country" EntityType="Self.T_Country" />
+          <EntitySet Name="T_DONOR_CATEGORIES" EntityType="Self.T_DONOR_CATEGORIES" />
+          <EntitySet Name="T_EChallan" EntityType="Self.T_EChallan" />
+          <EntitySet Name="T_Payment_Gateway_Config" EntityType="Self.T_Payment_Gateway_Config" />
+          <EntitySet Name="T_Payment_Order_No" EntityType="Self.T_Payment_Order_No" />
+          <EntitySet Name="T_Payment_Transaction" EntityType="Self.T_Payment_Transaction" />
+          <EntitySet Name="T_Razorpay_Transaction" EntityType="Self.T_Razorpay_Transaction" />
+          <EntitySet Name="T_State" EntityType="Self.T_State" />
+          <EntitySet Name="T_USER" EntityType="Self.T_USER" />
+          <EntitySet Name="T_User_Activites" EntityType="Self.T_User_Activites" />
+          <EntitySet Name="All_PGI_Data638" EntityType="Self.All_PGI_Data638" />
+          <FunctionImport Name="SplitString" IsComposable="true" ReturnType="Collection(SaiAram_EchallanPGIModel.SplitString_Result)">
+            <Parameter Name="str" Mode="In" Type="String" />
+            <Parameter Name="separator" Mode="In" Type="String" />
+          </FunctionImport>
+          <FunctionImport Name="FundCollectionMonthwiseWithParameters" ReturnType="Collection(SaiAram_EchallanPGIModel.FundCollectionMonthwiseWithParameters_Result)">
+            <Parameter Name="FromDate" Mode="In" Type="DateTime" />
+            <Parameter Name="ToDate" Mode="In" Type="DateTime" />
+          </FunctionImport>
+          <FunctionImport Name="sp_FundCollection_Below" ReturnType="Collection(SaiAram_EchallanPGIModel.sp_FundCollection_Below_Result)" />
+          <FunctionImport Name="sp_FundCollection_DateOnly" ReturnType="Collection(SaiAram_EchallanPGIModel.sp_FundCollection_DateOnly_Result)" />
+          <FunctionImport Name="sp_FundCollectionMonthwise" ReturnType="Collection(SaiAram_EchallanPGIModel.sp_FundCollectionMonthwise_Result)" />
+          <FunctionImport Name="sp_GetCashDatewise" />
+          <FunctionImport Name="sp_GetCashFunds">
+            <Parameter Name="Fromdate" Mode="In" Type="DateTime" />
+            <Parameter Name="Todate" Mode="In" Type="DateTime" />
+          </FunctionImport>
+          <FunctionImport Name="sp_GetDDChequeDatewise" />
+          <FunctionImport Name="sp_GetDDChequeFunds">
+            <Parameter Name="Fromdate" Mode="In" Type="DateTime" />
+            <Parameter Name="Todate" Mode="In" Type="DateTime" />
+          </FunctionImport>
+          <FunctionImport Name="sp_GetFundCollectionReport" ReturnType="Collection(SaiAram_EchallanPGIModel.sp_GetFundCollectionReport_Result)">
+            <Parameter Name="DonorType" Mode="In" Type="Int32" />
+            <Parameter Name="FromDate" Mode="In" Type="DateTime" />
+            <Parameter Name="ToDate" Mode="In" Type="DateTime" />
+          </FunctionImport>
+          <FunctionImport Name="sp_GetLogHistory" ReturnType="Collection(SaiAram_EchallanPGIModel.sp_GetLogHistory_Result)">
+            <Parameter Name="SearchKey" Mode="In" Type="String" />
+          </FunctionImport>
+          <FunctionImport Name="sp_GetReceiptDatewise" ReturnType="Collection(SaiAram_EchallanPGIModel.sp_GetReceiptDatewise_Result)">
+            <Parameter Name="FromDate" Mode="In" Type="DateTime" />
+            <Parameter Name="ToDate" Mode="In" Type="DateTime" />
+          </FunctionImport>
+          <FunctionImport Name="sp_GetReceiptDt" ReturnType="Collection(SaiAram_EchallanPGIModel.sp_GetReceiptDt_Result)">
+            <Parameter Name="SearchKey" Mode="In" Type="String" />
+          </FunctionImport>
+          <FunctionImport Name="sp_GetReceiptDt_By_ID" ReturnType="Collection(SaiAram_EchallanPGIModel.sp_GetReceiptDt_By_ID_Result)">
+            <Parameter Name="strId" Mode="In" Type="String" />
+            <Parameter Name="intLoginId" Mode="In" Type="Int32" />
+          </FunctionImport>
+          <FunctionImport Name="sp_GetReceiptDt_By_Online" ReturnType="Collection(SaiAram_EchallanPGIModel.sp_GetReceiptDt_By_Online_Result)">
+            <Parameter Name="intId" Mode="In" Type="Int32" />
+          </FunctionImport>
+          <FunctionImport Name="sp_GetSettings" ReturnType="Collection(SaiAram_EchallanPGIModel.sp_GetSettings_Result)" />
+          <FunctionImport Name="SP_PGI_UsedColumns" ReturnType="Collection(SaiAram_EchallanPGIModel.SP_PGI_UsedColumns_Result)" />
+        </EntityContainer>
+        <ComplexType Name="FundCollectionMonthwiseWithParameters_Result">
+          <Property Type="Int32" Name="DonorTypeId" Nullable="false" />
+          <Property Type="String" Name="Donor_Types" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Payment_Mode" Nullable="true" MaxLength="30" />
+          <Property Type="Decimal" Name="Amount" Nullable="true" Precision="38" Scale="2" />
+          <Property Type="String" Name="MonthYear" Nullable="true" MaxLength="34" />
+          <Property Type="String" Name="Months" Nullable="true" MaxLength="3" />
+        </ComplexType>
+        <ComplexType Name="sp_FundCollection_Below_Result">
+          <Property Type="String" Name="Donor_Types" Nullable="true" MaxLength="50" />
+          <Property Type="Decimal" Name="Amount" Nullable="true" Precision="38" Scale="2" />
+          <Property Type="DateTime" Name="Receipt_Date" Nullable="true" Precision="23" />
+          <Property Type="String" Name="Receipt_Number" Nullable="true" MaxLength="19" />
+        </ComplexType>
+        <ComplexType Name="sp_FundCollection_DateOnly_Result">
+          <Property Type="DateTime" Name="Receipt_Date" Nullable="true" Precision="23" />
+          <Property Type="DateTime" Name="TempDate" Nullable="true" Precision="23" />
+        </ComplexType>
+        <ComplexType Name="sp_FundCollectionMonthwise_Result">
+          <Property Type="Int32" Name="DonorTypeId" Nullable="false" />
+          <Property Type="String" Name="Donor_Types" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Payment_Mode" Nullable="true" MaxLength="30" />
+          <Property Type="Decimal" Name="Amount" Nullable="true" Precision="38" Scale="2" />
+          <Property Type="String" Name="MonthYear" Nullable="true" MaxLength="34" />
+          <Property Type="String" Name="Months" Nullable="true" MaxLength="3" />
+        </ComplexType>
+        <ComplexType Name="sp_GetFundCollectionReport_Result">
+          <Property Type="String" Name="Donor_Types" Nullable="true" MaxLength="50" />
+          <Property Type="Decimal" Name="Amount" Nullable="true" Precision="18" Scale="2" />
+          <Property Type="DateTime" Name="Receipt_Date" Nullable="true" Precision="23" />
+          <Property Type="String" Name="Receipt_Number" Nullable="true" MaxLength="50" />
+        </ComplexType>
+        <ComplexType Name="sp_GetLogHistory_Result">
+          <Property Type="Int32" Name="Id" Nullable="false" />
+          <Property Type="String" Name="Receipt_Number" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="CurrentDate" Nullable="true" MaxLength="20" />
+          <Property Type="String" Name="CurrentTime" Nullable="true" MaxLength="20" />
+          <Property Type="String" Name="Type" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Name" Nullable="true" MaxLength="100" />
+        </ComplexType>
+        <ComplexType Name="sp_GetReceiptDatewise_Result">
+          <Property Type="Int32" Name="Id" Nullable="false" />
+          <Property Type="String" Name="Receipt_Number" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Donor_Types" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Account_Number" Nullable="true" MaxLength="25" />
+          <Property Type="String" Name="Name_Of_Donor" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="Address" Nullable="true" MaxLength="500" />
+          <Property Type="String" Name="City" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="Pincode" Nullable="true" MaxLength="6" />
+          <Property Type="String" Name="Telephone_Number" Nullable="true" MaxLength="15" />
+          <Property Type="String" Name="Mobile_Number" Nullable="true" MaxLength="15" />
+          <Property Type="String" Name="Email_Id" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Payment_Mode" Nullable="true" MaxLength="30" />
+          <Property Type="Decimal" Name="Amount" Nullable="true" Precision="18" Scale="2" />
+          <Property Type="String" Name="Amount_In_Words" Nullable="true" />
+          <Property Type="String" Name="DD_OR_Cheque_Number" Nullable="true" MaxLength="10" />
+          <Property Type="DateTime" Name="DD_OR_Cheque_Date" Nullable="true" Precision="23" />
+          <Property Type="String" Name="PANcard_Number" Nullable="true" MaxLength="50" />
+          <Property Type="DateTime" Name="Receipt_Date" Nullable="true" Precision="23" />
+          <Property Type="Boolean" Name="Is_Active" Nullable="true" />
+        </ComplexType>
+        <ComplexType Name="sp_GetReceiptDt_Result">
+          <Property Type="Int32" Name="Id" Nullable="false" />
+          <Property Type="String" Name="Receipt_Number" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Donor_Types" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Account_Number" Nullable="true" MaxLength="25" />
+          <Property Type="String" Name="Name_Of_Donor" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="Address" Nullable="true" MaxLength="500" />
+          <Property Type="String" Name="City" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="Pincode" Nullable="true" MaxLength="6" />
+          <Property Type="String" Name="Telephone_Number" Nullable="true" MaxLength="15" />
+          <Property Type="String" Name="Mobile_Number" Nullable="true" MaxLength="15" />
+          <Property Type="String" Name="Email_Id" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Payment_Mode" Nullable="true" MaxLength="30" />
+          <Property Type="Decimal" Name="Amount" Nullable="true" Precision="18" Scale="2" />
+          <Property Type="String" Name="Amount_In_Words" Nullable="true" />
+          <Property Type="String" Name="DD_OR_Cheque_Number" Nullable="true" MaxLength="10" />
+          <Property Type="DateTime" Name="DD_OR_Cheque_Date" Nullable="true" Precision="23" />
+          <Property Type="String" Name="PANcard_Number" Nullable="true" MaxLength="50" />
+          <Property Type="DateTime" Name="Receipt_Date" Nullable="true" Precision="23" />
+          <Property Type="Boolean" Name="Is_Active" Nullable="true" />
+        </ComplexType>
+        <ComplexType Name="sp_GetReceiptDt_By_ID_Result">
+          <Property Type="Int32" Name="Id" Nullable="false" />
+          <Property Type="String" Name="Name" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="Receipt_Number" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Donor_Types" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Account_Number" Nullable="true" MaxLength="25" />
+          <Property Type="String" Name="Name_Of_Donor" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="Address" Nullable="true" MaxLength="500" />
+          <Property Type="String" Name="CityPincode" Nullable="true" MaxLength="109" />
+          <Property Type="String" Name="StateCountry" Nullable="true" MaxLength="204" />
+          <Property Type="String" Name="Telephone_Number" Nullable="true" MaxLength="15" />
+          <Property Type="String" Name="Mobile_Number" Nullable="true" MaxLength="15" />
+          <Property Type="String" Name="Email_Id" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Payment_Mode" Nullable="true" MaxLength="30" />
+          <Property Type="Decimal" Name="Amount" Nullable="true" Precision="18" Scale="2" />
+          <Property Type="String" Name="AmountInWords" Nullable="true" />
+          <Property Type="String" Name="DD_OR_Cheque_Number" Nullable="true" MaxLength="10" />
+          <Property Type="String" Name="DDChequetDate" Nullable="true" MaxLength="20" />
+          <Property Type="String" Name="DD_OR_Cheque_BankName" Nullable="true" MaxLength="200" />
+          <Property Type="String" Name="DD_OR_Cheque_Branch" Nullable="true" MaxLength="200" />
+          <Property Type="String" Name="PANcard_Number" Nullable="true" MaxLength="50" />
+          <Property Type="DateTime" Name="Receipt_Date" Nullable="true" Precision="23" />
+          <Property Type="String" Name="ReceiptDate" Nullable="true" MaxLength="20" />
+          <Property Type="Boolean" Name="Is_Active" Nullable="true" />
+        </ComplexType>
+        <ComplexType Name="sp_GetReceiptDt_By_Online_Result">
+          <Property Type="Int32" Name="Id" Nullable="false" />
+          <Property Type="String" Name="Receipt_Number" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Donor_Types" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Account_Number" Nullable="true" MaxLength="25" />
+          <Property Type="String" Name="Name_Of_Donor" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="Address" Nullable="true" MaxLength="500" />
+          <Property Type="String" Name="CityPincode" Nullable="true" MaxLength="109" />
+          <Property Type="String" Name="StateCountry" Nullable="true" MaxLength="204" />
+          <Property Type="String" Name="Telephone_Number" Nullable="true" MaxLength="15" />
+          <Property Type="String" Name="Mobile_Number" Nullable="true" MaxLength="15" />
+          <Property Type="String" Name="Email_Id" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Payment_Mode" Nullable="true" MaxLength="30" />
+          <Property Type="Decimal" Name="Amount" Nullable="true" Precision="18" Scale="2" />
+          <Property Type="String" Name="AmountInWords" Nullable="true" />
+          <Property Type="String" Name="DD_OR_Cheque_Number" Nullable="true" MaxLength="10" />
+          <Property Type="DateTime" Name="DD_OR_Cheque_Date" Nullable="true" Precision="23" />
+          <Property Type="String" Name="PANcard_Number" Nullable="true" MaxLength="50" />
+          <Property Type="DateTime" Name="Receipt_Date" Nullable="true" Precision="23" />
+          <Property Type="String" Name="ReceiptDate" Nullable="true" MaxLength="20" />
+          <Property Type="Boolean" Name="Is_Active" Nullable="true" />
+          <Property Type="Decimal" Name="Transaction_Amount" Nullable="true" Precision="18" Scale="2" />
+          <Property Type="String" Name="TransactionDate" Nullable="true" MaxLength="100" />
+        </ComplexType>
+        <ComplexType Name="sp_GetSettings_Result">
+          <Property Type="String" Name="billdeskcallurl" Nullable="false" MaxLength="64" />
+          <Property Type="String" Name="merchantid" Nullable="false" MaxLength="1" />
+          <Property Type="String" Name="securityid" Nullable="false" MaxLength="1" />
+          <Property Type="String" Name="checksumkey" Nullable="false" MaxLength="1" />
+          <Property Type="String" Name="messagecode" Nullable="false" MaxLength="1" />
+          <Property Type="String" Name="redirecturl" Nullable="false" MaxLength="40" />
+        </ComplexType>
+        <ComplexType Name="SP_PGI_UsedColumns_Result">
+          <Property Type="Int32" Name="Id" Nullable="false" />
+          <Property Type="Int32" Name="Donation_Types" Nullable="false" />
+          <Property Type="String" Name="Name_Of_Donor" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="Address" Nullable="true" MaxLength="500" />
+          <Property Type="Int32" Name="Country_Id" Nullable="true" />
+          <Property Type="String" Name="Mobile_Number" Nullable="true" MaxLength="15" />
+          <Property Type="String" Name="Email_Id" Nullable="true" MaxLength="50" />
+          <Property Type="Decimal" Name="Amount" Nullable="true" Precision="18" Scale="2" />
+          <Property Type="String" Name="PANcard_Number" Nullable="true" MaxLength="50" />
+          <Property Type="Boolean" Name="Is_Active" Nullable="true" />
+          <Property Type="DateTime" Name="Created_Date" Nullable="true" Precision="23" />
+          <Property Type="String" Name="Type" Nullable="true" MaxLength="10" />
+          <Property Type="String" Name="Receipt_Number" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Transaction_Reference_PGI_Number" Nullable="true" MaxLength="100" />
+          <Property Type="DateTime" Name="Receipt_Date" Nullable="true" Precision="23" />
+          <Property Type="String" Name="Bank_Reference_Number" Nullable="true" MaxLength="100" />
+          <Property Type="Decimal" Name="Transaction_Amount" Nullable="true" Precision="18" Scale="2" />
+          <Property Type="String" Name="Bank_Id" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Bank_Merchant_Id" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Transaction_Type" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Auth_Status" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Transaction_Date" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="Auth_Status_Message" Nullable="true" MaxLength="100" />
+        </ComplexType>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="SaiAram_EchallanPGIModelStoreContainer" CdmEntityContainer="SaiAramFoundationEntities">
+          <EntitySetMapping Name="T_BASIC_SETTING">
+            <EntityTypeMapping TypeName="SaiAram_EchallanPGIModel.T_BASIC_SETTING">
+              <MappingFragment StoreEntitySet="T_BASIC_SETTING">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Aram_MailId" ColumnName="Aram_MailId" />
+                <ScalarProperty Name="Aram_ReplyTo_MailId" ColumnName="Aram_ReplyTo_MailId" />
+                <ScalarProperty Name="Aram_CC_MailId" ColumnName="Aram_CC_MailId" />
+                <ScalarProperty Name="Aram_BCC_MailId" ColumnName="Aram_BCC_MailId" />
+                <ScalarProperty Name="Aram_Mail_Subject" ColumnName="Aram_Mail_Subject" />
+                <ScalarProperty Name="Service_StartDate" ColumnName="Service_StartDate" />
+                <ScalarProperty Name="Service_EndDate" ColumnName="Service_EndDate" />
+                <ScalarProperty Name="Status" ColumnName="Status" />
+                <ScalarProperty Name="Aram_Mail_Body_1" ColumnName="Aram_Mail_Body_1" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="T_CFG_ERRORLOG">
+            <EntityTypeMapping TypeName="SaiAram_EchallanPGIModel.T_CFG_ERRORLOG">
+              <MappingFragment StoreEntitySet="T_CFG_ERRORLOG">
+                <ScalarProperty Name="Error_ID" ColumnName="Error_ID" />
+                <ScalarProperty Name="ProjectName" ColumnName="ProjectName" />
+                <ScalarProperty Name="FormName" ColumnName="FormName" />
+                <ScalarProperty Name="CustomerID" ColumnName="CustomerID" />
+                <ScalarProperty Name="ProcessName" ColumnName="ProcessName" />
+                <ScalarProperty Name="Severity" ColumnName="Severity" />
+                <ScalarProperty Name="ErrorDetails" ColumnName="ErrorDetails" />
+                <ScalarProperty Name="UserName" ColumnName="UserName" />
+                <ScalarProperty Name="RecordStatus" ColumnName="RecordStatus" />
+                <ScalarProperty Name="Data_Date" ColumnName="Data_Date" />
+                <ScalarProperty Name="IsDelete" ColumnName="IsDelete" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="T_CFG_Recipients">
+            <EntityTypeMapping TypeName="SaiAram_EchallanPGIModel.T_CFG_Recipients">
+              <MappingFragment StoreEntitySet="T_CFG_Recipients">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Institution_Id" ColumnName="Institution_Id" />
+                <ScalarProperty Name="Email_Type" ColumnName="Email_Type" />
+                <ScalarProperty Name="Recipient_Type" ColumnName="Recipient_Type" />
+                <ScalarProperty Name="FromEmail" ColumnName="FromEmail" />
+                <ScalarProperty Name="ToEmails" ColumnName="ToEmails" />
+                <ScalarProperty Name="BCCs" ColumnName="BCCs" />
+                <ScalarProperty Name="CCs" ColumnName="CCs" />
+                <ScalarProperty Name="Subject" ColumnName="Subject" />
+                <ScalarProperty Name="Signature" ColumnName="Signature" />
+                <ScalarProperty Name="Body" ColumnName="Body" />
+                <ScalarProperty Name="Active" ColumnName="Active" />
+                <ScalarProperty Name="Delete_Flag" ColumnName="Delete_Flag" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="T_Country">
+            <EntityTypeMapping TypeName="SaiAram_EchallanPGIModel.T_Country">
+              <MappingFragment StoreEntitySet="T_Country">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Country_Name" ColumnName="Country_Name" />
+                <ScalarProperty Name="Country_Code" ColumnName="Country_Code" />
+                <ScalarProperty Name="Is_Active" ColumnName="Is_Active" />
+                <ScalarProperty Name="Created_By" ColumnName="Created_By" />
+                <ScalarProperty Name="Created_Date" ColumnName="Created_Date" />
+                <ScalarProperty Name="Is_Deleted" ColumnName="Is_Deleted" />
+                <ScalarProperty Name="Modified_By" ColumnName="Modified_By" />
+                <ScalarProperty Name="Modified_Date" ColumnName="Modified_Date" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="T_DONOR_CATEGORIES">
+            <EntityTypeMapping TypeName="SaiAram_EchallanPGIModel.T_DONOR_CATEGORIES">
+              <MappingFragment StoreEntitySet="T_DONOR_CATEGORIES">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Account_Number" ColumnName="Account_Number" />
+                <ScalarProperty Name="Donor_Types" ColumnName="Donor_Types" />
+                <ScalarProperty Name="Donation_Code" ColumnName="Donation_Code" />
+                <ScalarProperty Name="DonationPage_Show" ColumnName="DonationPage_Show" />
+                <ScalarProperty Name="Is_Active" ColumnName="Is_Active" />
+                <ScalarProperty Name="Is_Deleted" ColumnName="Is_Deleted" />
+                <ScalarProperty Name="Created_By" ColumnName="Created_By" />
+                <ScalarProperty Name="Created_Date" ColumnName="Created_Date" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="T_EChallan">
+            <EntityTypeMapping TypeName="SaiAram_EchallanPGIModel.T_EChallan">
+              <MappingFragment StoreEntitySet="T_EChallan">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Receipt_Number" ColumnName="Receipt_Number" />
+                <ScalarProperty Name="Donation_Types" ColumnName="Donation_Types" />
+                <ScalarProperty Name="Account_Number" ColumnName="Account_Number" />
+                <ScalarProperty Name="Name_Of_Donor" ColumnName="Name_Of_Donor" />
+                <ScalarProperty Name="Address" ColumnName="Address" />
+                <ScalarProperty Name="State_Id" ColumnName="State_Id" />
+                <ScalarProperty Name="State_Name" ColumnName="State_Name" />
+                <ScalarProperty Name="Country_Id" ColumnName="Country_Id" />
+                <ScalarProperty Name="Country_Name" ColumnName="Country_Name" />
+                <ScalarProperty Name="City" ColumnName="City" />
+                <ScalarProperty Name="Pincode" ColumnName="Pincode" />
+                <ScalarProperty Name="Telephone_Number" ColumnName="Telephone_Number" />
+                <ScalarProperty Name="Mobile_Number" ColumnName="Mobile_Number" />
+                <ScalarProperty Name="Email_Id" ColumnName="Email_Id" />
+                <ScalarProperty Name="Payment_Mode" ColumnName="Payment_Mode" />
+                <ScalarProperty Name="Amount" ColumnName="Amount" />
+                <ScalarProperty Name="Amount_In_Words" ColumnName="Amount_In_Words" />
+                <ScalarProperty Name="DD_OR_Cheque_Number" ColumnName="DD_OR_Cheque_Number" />
+                <ScalarProperty Name="DD_OR_Cheque_Date" ColumnName="DD_OR_Cheque_Date" />
+                <ScalarProperty Name="DD_OR_Cheque_BankName" ColumnName="DD_OR_Cheque_BankName" />
+                <ScalarProperty Name="DD_OR_Cheque_Branch" ColumnName="DD_OR_Cheque_Branch" />
+                <ScalarProperty Name="PANcard_Number" ColumnName="PANcard_Number" />
+                <ScalarProperty Name="Location" ColumnName="Location" />
+                <ScalarProperty Name="Receipt_Date" ColumnName="Receipt_Date" />
+                <ScalarProperty Name="Is_Active" ColumnName="Is_Active" />
+                <ScalarProperty Name="Created_by" ColumnName="Created_by" />
+                <ScalarProperty Name="Created_Date" ColumnName="Created_Date" />
+                <ScalarProperty Name="Type" ColumnName="Type" />
+                <ScalarProperty Name="Transaction_Reference_PGI_Number" ColumnName="Transaction_Reference_PGI_Number" />
+                <ScalarProperty Name="Bank_Reference_Number" ColumnName="Bank_Reference_Number" />
+                <ScalarProperty Name="Transaction_Amount" ColumnName="Transaction_Amount" />
+                <ScalarProperty Name="Bank_Id" ColumnName="Bank_Id" />
+                <ScalarProperty Name="Bank_Merchant_Id" ColumnName="Bank_Merchant_Id" />
+                <ScalarProperty Name="Transaction_Type" ColumnName="Transaction_Type" />
+                <ScalarProperty Name="Auth_Status" ColumnName="Auth_Status" />
+                <ScalarProperty Name="Transaction_Date" ColumnName="Transaction_Date" />
+                <ScalarProperty Name="Auth_Status_Message" ColumnName="Auth_Status_Message" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="T_Payment_Gateway_Config">
+            <EntityTypeMapping TypeName="SaiAram_EchallanPGIModel.T_Payment_Gateway_Config">
+              <MappingFragment StoreEntitySet="T_Payment_Gateway_Config">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Setting_Name" ColumnName="Setting_Name" />
+                <ScalarProperty Name="Setting_Value" ColumnName="Setting_Value" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="T_Payment_Order_No">
+            <EntityTypeMapping TypeName="SaiAram_EchallanPGIModel.T_Payment_Order_No">
+              <MappingFragment StoreEntitySet="T_Payment_Order_No">
+                <ScalarProperty Name="Doc_Type_Id" ColumnName="Doc_Type_Id" />
+                <ScalarProperty Name="Doc_Type" ColumnName="Doc_Type" />
+                <ScalarProperty Name="Financial_Year" ColumnName="Financial_Year" />
+                <ScalarProperty Name="Institution_Id" ColumnName="Institution_Id" />
+                <ScalarProperty Name="Starting_No" ColumnName="Starting_No" />
+                <ScalarProperty Name="Latest_No" ColumnName="Latest_No" />
+                <ScalarProperty Name="Module_Tag" ColumnName="Module_Tag" />
+                <ScalarProperty Name="Created_By" ColumnName="Created_By" />
+                <ScalarProperty Name="Created_Date" ColumnName="Created_Date" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="T_Payment_Transaction">
+            <EntityTypeMapping TypeName="SaiAram_EchallanPGIModel.T_Payment_Transaction">
+              <MappingFragment StoreEntitySet="T_Payment_Transaction">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="EChallan_Id" ColumnName="EChallan_Id" />
+                <ScalarProperty Name="Fee_Type" ColumnName="Fee_Type" />
+                <ScalarProperty Name="OrderId" ColumnName="OrderId" />
+                <ScalarProperty Name="PaymentAmt" ColumnName="PaymentAmt" />
+                <ScalarProperty Name="MID" ColumnName="MID" />
+                <ScalarProperty Name="MKEY" ColumnName="MKEY" />
+                <ScalarProperty Name="paytmParams" ColumnName="paytmParams" />
+                <ScalarProperty Name="Signature" ColumnName="Signature" />
+                <ScalarProperty Name="PaytmUrl" ColumnName="PaytmUrl" />
+                <ScalarProperty Name="Token" ColumnName="Token" />
+                <ScalarProperty Name="PaymentUrl" ColumnName="PaymentUrl" />
+                <ScalarProperty Name="Initiated_Time" ColumnName="Initiated_Time" />
+                <ScalarProperty Name="CURRENCY" ColumnName="CURRENCY" />
+                <ScalarProperty Name="GATEWAYNAME" ColumnName="GATEWAYNAME" />
+                <ScalarProperty Name="RESPMSG" ColumnName="RESPMSG" />
+                <ScalarProperty Name="BANKNAME" ColumnName="BANKNAME" />
+                <ScalarProperty Name="PAYMENTMODE" ColumnName="PAYMENTMODE" />
+                <ScalarProperty Name="RESPCODE" ColumnName="RESPCODE" />
+                <ScalarProperty Name="TXNID" ColumnName="TXNID" />
+                <ScalarProperty Name="TXNAMOUNT" ColumnName="TXNAMOUNT" />
+                <ScalarProperty Name="TXN_STATUS" ColumnName="TXN_STATUS" />
+                <ScalarProperty Name="BANKTXNID" ColumnName="BANKTXNID" />
+                <ScalarProperty Name="TXNDATE" ColumnName="TXNDATE" />
+                <ScalarProperty Name="CHECKSUMHASH" ColumnName="CHECKSUMHASH" />
+                <ScalarProperty Name="ValidateCheckSum" ColumnName="ValidateCheckSum" />
+                <ScalarProperty Name="ResponseTimeStamp" ColumnName="ResponseTimeStamp" />
+                <ScalarProperty Name="Version" ColumnName="Version" />
+                <ScalarProperty Name="TXNTYPE" ColumnName="TXNTYPE" />
+                <ScalarProperty Name="Status_Flag" ColumnName="Status_Flag" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="T_Razorpay_Transaction">
+            <EntityTypeMapping TypeName="SaiAram_EchallanPGIModel.T_Razorpay_Transaction">
+              <MappingFragment StoreEntitySet="T_Razorpay_Transaction">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="EChallan_Id" ColumnName="EChallan_Id" />
+                <ScalarProperty Name="Fee_Type" ColumnName="Fee_Type" />
+                <ScalarProperty Name="OrderId" ColumnName="OrderId" />
+                <ScalarProperty Name="PaymentAmt" ColumnName="PaymentAmt" />
+                <ScalarProperty Name="MID" ColumnName="MID" />
+                <ScalarProperty Name="MKEY" ColumnName="MKEY" />
+                <ScalarProperty Name="OrderIdParams" ColumnName="OrderIdParams" />
+                <ScalarProperty Name="RPayParams" ColumnName="RPayParams" />
+                <ScalarProperty Name="RPayOrderId" ColumnName="RPayOrderId" />
+                <ScalarProperty Name="Initiated_Time" ColumnName="Initiated_Time" />
+                <ScalarProperty Name="CURRENCY" ColumnName="CURRENCY" />
+                <ScalarProperty Name="GATEWAYNAME" ColumnName="GATEWAYNAME" />
+                <ScalarProperty Name="RESPMSG" ColumnName="RESPMSG" />
+                <ScalarProperty Name="RPayPaymentId" ColumnName="RPayPaymentId" />
+                <ScalarProperty Name="RpaySignature" ColumnName="RpaySignature" />
+                <ScalarProperty Name="ValidateSignature" ColumnName="ValidateSignature" />
+                <ScalarProperty Name="TXN_STATUS" ColumnName="TXN_STATUS" />
+                <ScalarProperty Name="TXNDATE" ColumnName="TXNDATE" />
+                <ScalarProperty Name="BANKNAME" ColumnName="BANKNAME" />
+                <ScalarProperty Name="PAYMENTMODE" ColumnName="PAYMENTMODE" />
+                <ScalarProperty Name="RESPCODE" ColumnName="RESPCODE" />
+                <ScalarProperty Name="TXNID" ColumnName="TXNID" />
+                <ScalarProperty Name="TXNAMOUNT" ColumnName="TXNAMOUNT" />
+                <ScalarProperty Name="TXNCHARGE" ColumnName="TXNCHARGE" />
+                <ScalarProperty Name="BANKTXNID" ColumnName="BANKTXNID" />
+                <ScalarProperty Name="CHECKSUMHASH" ColumnName="CHECKSUMHASH" />
+                <ScalarProperty Name="ValidateCheckSum" ColumnName="ValidateCheckSum" />
+                <ScalarProperty Name="ResponseTimeStamp" ColumnName="ResponseTimeStamp" />
+                <ScalarProperty Name="Version" ColumnName="Version" />
+                <ScalarProperty Name="TXNTYPE" ColumnName="TXNTYPE" />
+                <ScalarProperty Name="Status_Flag" ColumnName="Status_Flag" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="T_State">
+            <EntityTypeMapping TypeName="SaiAram_EchallanPGIModel.T_State">
+              <MappingFragment StoreEntitySet="T_State">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Country_Id" ColumnName="Country_Id" />
+                <ScalarProperty Name="State_Name" ColumnName="State_Name" />
+                <ScalarProperty Name="Is_Active" ColumnName="Is_Active" />
+                <ScalarProperty Name="Created_By" ColumnName="Created_By" />
+                <ScalarProperty Name="Created_Date" ColumnName="Created_Date" />
+                <ScalarProperty Name="Is_Deleted" ColumnName="Is_Deleted" />
+                <ScalarProperty Name="Modified_By" ColumnName="Modified_By" />
+                <ScalarProperty Name="Modified_Date" ColumnName="Modified_Date" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="T_USER">
+            <EntityTypeMapping TypeName="SaiAram_EchallanPGIModel.T_USER">
+              <MappingFragment StoreEntitySet="T_USER">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="User_Type" ColumnName="User_Type" />
+                <ScalarProperty Name="User_Name" ColumnName="User_Name" />
+                <ScalarProperty Name="Password" ColumnName="Password" />
+                <ScalarProperty Name="Mobile_Number" ColumnName="Mobile_Number" />
+                <ScalarProperty Name="Location" ColumnName="Location" />
+                <ScalarProperty Name="E_Mail" ColumnName="E_Mail" />
+                <ScalarProperty Name="Is_Active" ColumnName="Is_Active" />
+                <ScalarProperty Name="Created_By" ColumnName="Created_By" />
+                <ScalarProperty Name="Created_Date" ColumnName="Created_Date" />
+                <ScalarProperty Name="Is_Deleted" ColumnName="Is_Deleted" />
+                <ScalarProperty Name="Modified_By" ColumnName="Modified_By" />
+                <ScalarProperty Name="Modified_Date" ColumnName="Modified_Date" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="T_User_Activites">
+            <EntityTypeMapping TypeName="SaiAram_EchallanPGIModel.T_User_Activites">
+              <MappingFragment StoreEntitySet="T_User_Activites">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="EChallan_Id" ColumnName="EChallan_Id" />
+                <ScalarProperty Name="Type" ColumnName="Type" />
+                <ScalarProperty Name="Done_By" ColumnName="Done_By" />
+                <ScalarProperty Name="CurrentDate" ColumnName="CurrentDate" />
+                <ScalarProperty Name="CurrentTime" ColumnName="CurrentTime" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="All_PGI_Data638">
+            <EntityTypeMapping TypeName="SaiAram_EchallanPGIModel.All_PGI_Data638">
+              <MappingFragment StoreEntitySet="All-PGI-Data638">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Receipt_Number" ColumnName="Receipt_Number" />
+                <ScalarProperty Name="Donation_Type" ColumnName="Donation Type" />
+                <ScalarProperty Name="Account_Number" ColumnName="Account_Number" />
+                <ScalarProperty Name="Name_Of_Donor" ColumnName="Name_Of_Donor" />
+                <ScalarProperty Name="Address" ColumnName="Address" />
+                <ScalarProperty Name="State_Id" ColumnName="State_Id" />
+                <ScalarProperty Name="State_Name" ColumnName="State_Name" />
+                <ScalarProperty Name="Country_Id" ColumnName="Country_Id" />
+                <ScalarProperty Name="Country_Name" ColumnName="Country_Name" />
+                <ScalarProperty Name="City" ColumnName="City" />
+                <ScalarProperty Name="Pincode" ColumnName="Pincode" />
+                <ScalarProperty Name="Telephone_Number" ColumnName="Telephone_Number" />
+                <ScalarProperty Name="Mobile_Number" ColumnName="Mobile_Number" />
+                <ScalarProperty Name="Email_Id" ColumnName="Email_Id" />
+                <ScalarProperty Name="Payment_Mode" ColumnName="Payment_Mode" />
+                <ScalarProperty Name="Amount" ColumnName="Amount" />
+                <ScalarProperty Name="Amount_In_Words" ColumnName="Amount_In_Words" />
+                <ScalarProperty Name="DD_OR_Cheque_Number" ColumnName="DD_OR_Cheque_Number" />
+                <ScalarProperty Name="DD_OR_Cheque_Date" ColumnName="DD_OR_Cheque_Date" />
+                <ScalarProperty Name="DD_OR_Cheque_BankName" ColumnName="DD_OR_Cheque_BankName" />
+                <ScalarProperty Name="DD_OR_Cheque_Branch" ColumnName="DD_OR_Cheque_Branch" />
+                <ScalarProperty Name="PANcard_Number" ColumnName="PANcard_Number" />
+                <ScalarProperty Name="Location" ColumnName="Location" />
+                <ScalarProperty Name="Receipt_Date" ColumnName="Receipt_Date" />
+                <ScalarProperty Name="Is_Active" ColumnName="Is_Active" />
+                <ScalarProperty Name="Created_by" ColumnName="Created_by" />
+                <ScalarProperty Name="Created_Date" ColumnName="Created_Date" />
+                <ScalarProperty Name="Type" ColumnName="Type" />
+                <ScalarProperty Name="Transaction_Reference_PGI_Number" ColumnName="Transaction_Reference_PGI_Number" />
+                <ScalarProperty Name="Bank_Reference_Number" ColumnName="Bank_Reference_Number" />
+                <ScalarProperty Name="Transaction_Amount" ColumnName="Transaction_Amount" />
+                <ScalarProperty Name="Bank_Id" ColumnName="Bank_Id" />
+                <ScalarProperty Name="Bank_Merchant_Id" ColumnName="Bank_Merchant_Id" />
+                <ScalarProperty Name="Transaction_Type" ColumnName="Transaction_Type" />
+                <ScalarProperty Name="Auth_Status" ColumnName="Auth_Status" />
+                <ScalarProperty Name="Transaction_Date" ColumnName="Transaction_Date" />
+                <ScalarProperty Name="Auth_Status_Message" ColumnName="Auth_Status_Message" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <FunctionImportMapping FunctionName="SaiAram_EchallanPGIModel.Store.SplitString" FunctionImportName="SplitString">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="SaiAram_EchallanPGIModel.SplitString_Result">
+                <ScalarProperty Name="zeroBasedOccurance" ColumnName="zeroBasedOccurance" />
+                <ScalarProperty Name="s" ColumnName="s" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="FundCollectionMonthwiseWithParameters" FunctionName="SaiAram_EchallanPGIModel.Store.FundCollectionMonthwiseWithParameters">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="SaiAram_EchallanPGIModel.FundCollectionMonthwiseWithParameters_Result">
+                <ScalarProperty Name="DonorTypeId" ColumnName="DonorTypeId" />
+                <ScalarProperty Name="Donor_Types" ColumnName="Donor_Types" />
+                <ScalarProperty Name="Payment_Mode" ColumnName="Payment_Mode" />
+                <ScalarProperty Name="Amount" ColumnName="Amount" />
+                <ScalarProperty Name="MonthYear" ColumnName="MonthYear" />
+                <ScalarProperty Name="Months" ColumnName="Months" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="sp_FundCollection_Below" FunctionName="SaiAram_EchallanPGIModel.Store.sp_FundCollection_Below">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="SaiAram_EchallanPGIModel.sp_FundCollection_Below_Result">
+                <ScalarProperty Name="Donor_Types" ColumnName="Donor_Types" />
+                <ScalarProperty Name="Amount" ColumnName="Amount" />
+                <ScalarProperty Name="Receipt_Date" ColumnName="Receipt_Date" />
+                <ScalarProperty Name="Receipt_Number" ColumnName="Receipt_Number" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="sp_FundCollection_DateOnly" FunctionName="SaiAram_EchallanPGIModel.Store.sp_FundCollection_DateOnly">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="SaiAram_EchallanPGIModel.sp_FundCollection_DateOnly_Result">
+                <ScalarProperty Name="Receipt_Date" ColumnName="Receipt_Date" />
+                <ScalarProperty Name="TempDate" ColumnName="TempDate" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="sp_FundCollectionMonthwise" FunctionName="SaiAram_EchallanPGIModel.Store.sp_FundCollectionMonthwise">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="SaiAram_EchallanPGIModel.sp_FundCollectionMonthwise_Result">
+                <ScalarProperty Name="DonorTypeId" ColumnName="DonorTypeId" />
+                <ScalarProperty Name="Donor_Types" ColumnName="Donor_Types" />
+                <ScalarProperty Name="Payment_Mode" ColumnName="Payment_Mode" />
+                <ScalarProperty Name="Amount" ColumnName="Amount" />
+                <ScalarProperty Name="MonthYear" ColumnName="MonthYear" />
+                <ScalarProperty Name="Months" ColumnName="Months" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="sp_GetCashDatewise" FunctionName="SaiAram_EchallanPGIModel.Store.sp_GetCashDatewise" />
+          <FunctionImportMapping FunctionImportName="sp_GetCashFunds" FunctionName="SaiAram_EchallanPGIModel.Store.sp_GetCashFunds" />
+          <FunctionImportMapping FunctionImportName="sp_GetDDChequeDatewise" FunctionName="SaiAram_EchallanPGIModel.Store.sp_GetDDChequeDatewise" />
+          <FunctionImportMapping FunctionImportName="sp_GetDDChequeFunds" FunctionName="SaiAram_EchallanPGIModel.Store.sp_GetDDChequeFunds" />
+          <FunctionImportMapping FunctionImportName="sp_GetFundCollectionReport" FunctionName="SaiAram_EchallanPGIModel.Store.sp_GetFundCollectionReport">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="SaiAram_EchallanPGIModel.sp_GetFundCollectionReport_Result">
+                <ScalarProperty Name="Donor_Types" ColumnName="Donor_Types" />
+                <ScalarProperty Name="Amount" ColumnName="Amount" />
+                <ScalarProperty Name="Receipt_Date" ColumnName="Receipt_Date" />
+                <ScalarProperty Name="Receipt_Number" ColumnName="Receipt_Number" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="sp_GetLogHistory" FunctionName="SaiAram_EchallanPGIModel.Store.sp_GetLogHistory">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="SaiAram_EchallanPGIModel.sp_GetLogHistory_Result">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Receipt_Number" ColumnName="Receipt_Number" />
+                <ScalarProperty Name="CurrentDate" ColumnName="CurrentDate" />
+                <ScalarProperty Name="CurrentTime" ColumnName="CurrentTime" />
+                <ScalarProperty Name="Type" ColumnName="Type" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="sp_GetReceiptDatewise" FunctionName="SaiAram_EchallanPGIModel.Store.sp_GetReceiptDatewise">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="SaiAram_EchallanPGIModel.sp_GetReceiptDatewise_Result">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Receipt_Number" ColumnName="Receipt_Number" />
+                <ScalarProperty Name="Donor_Types" ColumnName="Donor_Types" />
+                <ScalarProperty Name="Account_Number" ColumnName="Account_Number" />
+                <ScalarProperty Name="Name_Of_Donor" ColumnName="Name_Of_Donor" />
+                <ScalarProperty Name="Address" ColumnName="Address" />
+                <ScalarProperty Name="City" ColumnName="City" />
+                <ScalarProperty Name="Pincode" ColumnName="Pincode" />
+                <ScalarProperty Name="Telephone_Number" ColumnName="Telephone_Number" />
+                <ScalarProperty Name="Mobile_Number" ColumnName="Mobile_Number" />
+                <ScalarProperty Name="Email_Id" ColumnName="Email_Id" />
+                <ScalarProperty Name="Payment_Mode" ColumnName="Payment_Mode" />
+                <ScalarProperty Name="Amount" ColumnName="Amount" />
+                <ScalarProperty Name="Amount_In_Words" ColumnName="Amount_In_Words" />
+                <ScalarProperty Name="DD_OR_Cheque_Number" ColumnName="DD_OR_Cheque_Number" />
+                <ScalarProperty Name="DD_OR_Cheque_Date" ColumnName="DD_OR_Cheque_Date" />
+                <ScalarProperty Name="PANcard_Number" ColumnName="PANcard_Number" />
+                <ScalarProperty Name="Receipt_Date" ColumnName="Receipt_Date" />
+                <ScalarProperty Name="Is_Active" ColumnName="Is_Active" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="sp_GetReceiptDt" FunctionName="SaiAram_EchallanPGIModel.Store.sp_GetReceiptDt">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="SaiAram_EchallanPGIModel.sp_GetReceiptDt_Result">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Receipt_Number" ColumnName="Receipt_Number" />
+                <ScalarProperty Name="Donor_Types" ColumnName="Donor_Types" />
+                <ScalarProperty Name="Account_Number" ColumnName="Account_Number" />
+                <ScalarProperty Name="Name_Of_Donor" ColumnName="Name_Of_Donor" />
+                <ScalarProperty Name="Address" ColumnName="Address" />
+                <ScalarProperty Name="City" ColumnName="City" />
+                <ScalarProperty Name="Pincode" ColumnName="Pincode" />
+                <ScalarProperty Name="Telephone_Number" ColumnName="Telephone_Number" />
+                <ScalarProperty Name="Mobile_Number" ColumnName="Mobile_Number" />
+                <ScalarProperty Name="Email_Id" ColumnName="Email_Id" />
+                <ScalarProperty Name="Payment_Mode" ColumnName="Payment_Mode" />
+                <ScalarProperty Name="Amount" ColumnName="Amount" />
+                <ScalarProperty Name="Amount_In_Words" ColumnName="Amount_In_Words" />
+                <ScalarProperty Name="DD_OR_Cheque_Number" ColumnName="DD_OR_Cheque_Number" />
+                <ScalarProperty Name="DD_OR_Cheque_Date" ColumnName="DD_OR_Cheque_Date" />
+                <ScalarProperty Name="PANcard_Number" ColumnName="PANcard_Number" />
+                <ScalarProperty Name="Receipt_Date" ColumnName="Receipt_Date" />
+                <ScalarProperty Name="Is_Active" ColumnName="Is_Active" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="sp_GetReceiptDt_By_ID" FunctionName="SaiAram_EchallanPGIModel.Store.sp_GetReceiptDt_By_ID">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="SaiAram_EchallanPGIModel.sp_GetReceiptDt_By_ID_Result">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="Receipt_Number" ColumnName="Receipt_Number" />
+                <ScalarProperty Name="Donor_Types" ColumnName="Donor_Types" />
+                <ScalarProperty Name="Account_Number" ColumnName="Account_Number" />
+                <ScalarProperty Name="Name_Of_Donor" ColumnName="Name_Of_Donor" />
+                <ScalarProperty Name="Address" ColumnName="Address" />
+                <ScalarProperty Name="CityPincode" ColumnName="CityPincode" />
+                <ScalarProperty Name="StateCountry" ColumnName="StateCountry" />
+                <ScalarProperty Name="Telephone_Number" ColumnName="Telephone_Number" />
+                <ScalarProperty Name="Mobile_Number" ColumnName="Mobile_Number" />
+                <ScalarProperty Name="Email_Id" ColumnName="Email_Id" />
+                <ScalarProperty Name="Payment_Mode" ColumnName="Payment_Mode" />
+                <ScalarProperty Name="Amount" ColumnName="Amount" />
+                <ScalarProperty Name="AmountInWords" ColumnName="AmountInWords" />
+                <ScalarProperty Name="DD_OR_Cheque_Number" ColumnName="DD_OR_Cheque_Number" />
+                <ScalarProperty Name="DDChequetDate" ColumnName="DDChequetDate" />
+                <ScalarProperty Name="DD_OR_Cheque_BankName" ColumnName="DD_OR_Cheque_BankName" />
+                <ScalarProperty Name="DD_OR_Cheque_Branch" ColumnName="DD_OR_Cheque_Branch" />
+                <ScalarProperty Name="PANcard_Number" ColumnName="PANcard_Number" />
+                <ScalarProperty Name="Receipt_Date" ColumnName="Receipt_Date" />
+                <ScalarProperty Name="ReceiptDate" ColumnName="ReceiptDate" />
+                <ScalarProperty Name="Is_Active" ColumnName="Is_Active" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="sp_GetReceiptDt_By_Online" FunctionName="SaiAram_EchallanPGIModel.Store.sp_GetReceiptDt_By_Online">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="SaiAram_EchallanPGIModel.sp_GetReceiptDt_By_Online_Result">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Receipt_Number" ColumnName="Receipt_Number" />
+                <ScalarProperty Name="Donor_Types" ColumnName="Donor_Types" />
+                <ScalarProperty Name="Account_Number" ColumnName="Account_Number" />
+                <ScalarProperty Name="Name_Of_Donor" ColumnName="Name_Of_Donor" />
+                <ScalarProperty Name="Address" ColumnName="Address" />
+                <ScalarProperty Name="CityPincode" ColumnName="CityPincode" />
+                <ScalarProperty Name="StateCountry" ColumnName="StateCountry" />
+                <ScalarProperty Name="Telephone_Number" ColumnName="Telephone_Number" />
+                <ScalarProperty Name="Mobile_Number" ColumnName="Mobile_Number" />
+                <ScalarProperty Name="Email_Id" ColumnName="Email_Id" />
+                <ScalarProperty Name="Payment_Mode" ColumnName="Payment_Mode" />
+                <ScalarProperty Name="Amount" ColumnName="Amount" />
+                <ScalarProperty Name="AmountInWords" ColumnName="AmountInWords" />
+                <ScalarProperty Name="DD_OR_Cheque_Number" ColumnName="DD_OR_Cheque_Number" />
+                <ScalarProperty Name="DD_OR_Cheque_Date" ColumnName="DD_OR_Cheque_Date" />
+                <ScalarProperty Name="PANcard_Number" ColumnName="PANcard_Number" />
+                <ScalarProperty Name="Receipt_Date" ColumnName="Receipt_Date" />
+                <ScalarProperty Name="ReceiptDate" ColumnName="ReceiptDate" />
+                <ScalarProperty Name="Is_Active" ColumnName="Is_Active" />
+                <ScalarProperty Name="Transaction_Amount" ColumnName="Transaction_Amount" />
+                <ScalarProperty Name="TransactionDate" ColumnName="TransactionDate" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="sp_GetSettings" FunctionName="SaiAram_EchallanPGIModel.Store.sp_GetSettings">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="SaiAram_EchallanPGIModel.sp_GetSettings_Result">
+                <ScalarProperty Name="billdeskcallurl" ColumnName="billdeskcallurl" />
+                <ScalarProperty Name="merchantid" ColumnName="merchantid" />
+                <ScalarProperty Name="securityid" ColumnName="securityid" />
+                <ScalarProperty Name="checksumkey" ColumnName="checksumkey" />
+                <ScalarProperty Name="messagecode" ColumnName="messagecode" />
+                <ScalarProperty Name="redirecturl" ColumnName="redirecturl" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="SP_PGI_UsedColumns" FunctionName="SaiAram_EchallanPGIModel.Store.SP_PGI_UsedColumns">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="SaiAram_EchallanPGIModel.SP_PGI_UsedColumns_Result">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Donation_Types" ColumnName="Donation_Types" />
+                <ScalarProperty Name="Name_Of_Donor" ColumnName="Name_Of_Donor" />
+                <ScalarProperty Name="Address" ColumnName="Address" />
+                <ScalarProperty Name="Country_Id" ColumnName="Country_Id" />
+                <ScalarProperty Name="Mobile_Number" ColumnName="Mobile_Number" />
+                <ScalarProperty Name="Email_Id" ColumnName="Email_Id" />
+                <ScalarProperty Name="Amount" ColumnName="Amount" />
+                <ScalarProperty Name="PANcard_Number" ColumnName="PANcard_Number" />
+                <ScalarProperty Name="Is_Active" ColumnName="Is_Active" />
+                <ScalarProperty Name="Created_Date" ColumnName="Created_Date" />
+                <ScalarProperty Name="Type" ColumnName="Type" />
+                <ScalarProperty Name="Receipt_Number" ColumnName="Receipt_Number" />
+                <ScalarProperty Name="Transaction_Reference_PGI_Number" ColumnName="Transaction_Reference_PGI_Number" />
+                <ScalarProperty Name="Receipt_Date" ColumnName="Receipt_Date" />
+                <ScalarProperty Name="Bank_Reference_Number" ColumnName="Bank_Reference_Number" />
+                <ScalarProperty Name="Transaction_Amount" ColumnName="Transaction_Amount" />
+                <ScalarProperty Name="Bank_Id" ColumnName="Bank_Id" />
+                <ScalarProperty Name="Bank_Merchant_Id" ColumnName="Bank_Merchant_Id" />
+                <ScalarProperty Name="Transaction_Type" ColumnName="Transaction_Type" />
+                <ScalarProperty Name="Auth_Status" ColumnName="Auth_Status" />
+                <ScalarProperty Name="Transaction_Date" ColumnName="Transaction_Date" />
+                <ScalarProperty Name="Auth_Status_Message" ColumnName="Auth_Status_Message" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="true" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="true" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="None" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams />
+  </Designer>
+</edmx:Edmx>

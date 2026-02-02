@@ -1,0 +1,270 @@
+﻿@model E_Challan.Models.ClsLogHistory
+
+@section Title {
+    <title>Log History</title>
+}
+
+@{
+    ViewBag.Title = "LogHistory";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section PHbreadcrumb {
+    <li>
+        <i class="icon-home home-icon"></i>
+        @*<a href="@Url.Action("Create","DashBoard")">Home</a>*@
+    </li>
+    <li class="active">Reports</li>
+    <li class="active">Log History</li>
+
+}
+
+<div class="maskBox">
+        <img src="@Url.Content("~/Images/appLoader.gif")" />
+    </div>
+
+<div class="alert alert-block alert-warning" id="Divmess" style="display: none;">
+    <a href="~/Views/PrintReceipt/PrintReceipt.cshtml"></a>
+    <button type="button" class="close" data-dismiss="alert">
+        <i class="icon-remove"></i>
+    </button>
+    <i class="icon-ok green"></i>
+    <span id="divmessup" style="color: #008000; font-weight: bold"></span>
+</div>
+
+@using (Html.BeginForm())
+{
+    @Html.ValidationSummary(true)
+    
+    <div class="page-content">
+        <!-- /.page-header -->
+        <div class="row">
+            <div class="col-md-12">
+                <!-- PAGE CONTENT BEGINS -->
+                <div class="widget-box">
+                    <div class="widget-header widget-header-blue widget-header-flat">
+                        <h4 class="lighter">Log History
+                    <span class="gridTools">
+                        <ul class="ui-pg-button ">
+                            <li><a href="@Url.Action("ExportToExcel", "Dashboard")">
+                                <img alt="" src="@Url.Content("~/Images/excel.ico")" title="Export To Excel" style="width: 20px; height: 20px;" />
+                            </a></li>
+                        </ul>
+                    </span>
+                        </h4>
+                    </div>
+                    <div class="widget-body">
+                        <div class="widget-main">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-horizontal" role="form">
+                                        <div class="col-md-8">
+                                            <div class="form-group">
+                                                <div class="col-md-3" align="right">
+                                                    <label>Search Key<span style="color: red;">*</span> :</label>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    @*@Html.TextBoxFor(model => model.strSearchKey, new { onkeyup = "onTextEvent()", @class = "form-control input-md", maxlength = "50" })*@
+                                                    @Html.TextBoxFor(model => model.strSearchKey, new { @class = "form-control input-md", maxlength = "50" })
+                                                    <span style="font-weight:bold">(Search by either Receipt Number or Done By)</span>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <span style="font-weight:bold">(Press tab after searching)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+
+                        @(Html.Kendo().Grid<E_Challan.Models.ClsLogHistory>()
+                            .Name("LogHistoryGrid")
+                            .Columns(columns =>
+                            {
+                                columns.Bound(p => p.Id).HeaderTemplate("ID").Visible(false);
+                                //columns.Bound(p => p.Id).ClientTemplate("<input type='checkbox' #= IsCheck ? checked='checked':'' # class='chkbx' name='check' value='#= Id #'/>").Width(15)
+                               //.HeaderTemplate("<input type='checkbox' id='masterCheckBox' onclick='checkAll(this)'/>").Filterable(false);
+                                columns.Bound(p => p.Date).Width(75).Title("Date");
+                                columns.Bound(p => p.Time).Width(75).Title("Time");
+                                columns.Bound(p => p.Type).Width(75).Title("Type");
+                                columns.Bound(p => p.ReceiptNumber).Width(75).Title("Receipt Number");
+                                columns.Bound(p => p.Name).Width(75).Title("Done By");
+                            })
+                            .Selectable(selectable => selectable
+                                        .Mode(GridSelectionMode.Multiple))
+                                      // .Pageable(pager => { pager.PageSizes(true); })
+                                        .Scrollable()
+                            .HtmlAttributes(new { style = "height:300px;" })
+                            .DataSource(dataSource => dataSource
+                                .Ajax()
+                             )
+                        )
+                    </div>
+                    <!-- /widget-main -->
+                </div>
+                <!-- /widget-body -->
+            </div>
+        </div>
+        <!-- /.col -->
+    </div>
+   
+}
+
+<script type="text/javascript">
+
+    $(function () {
+        $('#LogHistoryGrid').on('click', '.chkbx', function () {
+            var checked = $(this).is(':checked');
+            var grid = $('#LogHistoryGrid').data().kendoGrid;
+            var dataItem = grid.dataItem($(this).closest('tr'));
+            dataItem.set('IsCheck', checked);
+        })
+    })
+
+    function checkAll(ele) {
+        var state = $(ele).is(':checked');
+        var grid = $('#LogHistoryGrid').data().kendoGrid;
+        $.each(grid.dataSource.view(), function () {
+            if (this['IsCheck'] != state)
+                this.dirty = true;
+            this['IsCheck'] = state;
+        });
+        grid.refresh();
+    }
+
+
+    function Search() {
+
+        var text = $('#strSearchKey').val();
+        if ($('.maskBox').length) {
+            $('.maskBox').height($(window).height()).fadeIn(500);
+        }
+        $.ajax(
+                {
+                    type: "POST",
+                    url: '@Url.Content("~/")' + "Dashboard/CheckLogHistory",
+                    dataType: "json",
+                    data: "SearchKey=" + text,
+
+                    success: function (data) {
+                        //var updatemsg = data.strStatusMsg;                                                               
+                        var d = $("#LogHistoryGrid").data("kendoGrid");
+                        d.dataSource.data(data.lstLogHistory);
+                        $('.maskBox').height($(window).height()).fadeOut(500);
+                        clearvalidatemess();
+                    },
+                    error: function (req, status, error) {
+                        $("#UpdateError").modal('show');
+                    }
+                });
+    }
+
+
+    function onTextEvent() {
+
+        Search();
+            }
+
+            $(document).ready(function () {
+
+                $('input.myClass').prettyCheckable();
+
+                var selection = new Array();
+
+                $("#btnSubmint").click(function () {
+
+                    var items = $("#LogHistoryGrid").data("kendoGrid").dataSource.data();
+                    var selection = [];
+                    for (var i = 0; i < items.length; i++) {
+                        var item = items[i];
+                        if (item.IsCheck) {
+                            selection.push(item.Id);
+                        }
+                    }
+
+                    if (selection.length == '0') {
+                        $(".ModalHeading").html("Print Receipt");
+                        $('#selectitem').modal('show')
+                        return false;
+                    }
+
+
+                    $.ajax(
+                                                {
+                                                    type: "POST",
+                                                    url: '@Url.Content("~/")' + "PrintReceipt/Checkreport",
+                                                    data: "strId=" + selection,
+                                                    dataType: "json",
+
+                                                    success: function (data) {
+                                                        var updatemsg = data;
+
+                                                        if (updatemsg == "Success") {
+                                                            window.location = '@Url.Content("~/")' + "PrintReceipt/Report?strId=" + selection;
+                                                        }
+                                                        else if (updatemsg == "Error") {
+                                                            $("#Divmess").fadeIn('slow');
+                                                            $("#Divmess").delay(4000).fadeOut('slow');
+                                                            $('#divmessup').html("No Receipt found..!");
+                                                            $('#masterCheckBox').prop('checked', false);
+                                                            // alert($('#divmessup').val());
+
+                                                        }
+
+                                                    },
+                                                    error: function (req, status, error) {
+
+                                                    }
+                                                });//.done(function () { $('#Div1').fadeIn('slow'); $("#Div1").delay(2000).fadeOut('slow'); });
+
+
+                    $('#myModal').modal('hide')
+                });
+
+
+                $('#strSearchKey').change(function () {
+
+                   
+                    Search();
+
+
+                });
+
+
+            });
+
+                                        function OnGetReport(a) {
+
+
+                                            $.ajax(
+                                                    {
+
+                                                        type: "POST",
+                                                        url: '@Url.Content("~/")' + "PrintReceipt/Checkreport",
+                                                        data: "Id=" + a,
+                                                        dataType: "json",
+
+                                                        success: function (data) {
+                                                            var updatemsg = strStatusMsg;
+
+                                                            if (updatemsg == "Error") {
+                                                                $("#Divmess").fadeIn('slow');
+                                                                $("#Divmess").delay(4000).fadeOut('slow');
+                                                                $('#divmessup').html("<span style='color:red'>Opps..! No record found.<span>");
+                                                            }
+                                                            else if (updatemsg == "Success") {
+                                                            }
+                                                        },
+                                                        error: function (req, status, error) {
+                                                            $("#UpdateError").modal('show');
+                                                        }
+                                                    });
+                                                }
+
+</script>
+@Scripts.Render("~/bundles/jqueryval")
+

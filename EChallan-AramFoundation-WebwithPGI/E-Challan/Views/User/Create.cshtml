@@ -1,0 +1,678 @@
+﻿@model E_Challan.Models.ClsUser
+
+@section Title {
+    <title>User Creation</title>
+}
+@section PHbreadcrumb {
+    <li>
+        <i class="icon-home home-icon"></i>
+        @*<a href="@Url.Action("Create","DashBoard")">Home</a>*@
+    </li>
+    <li class="active">Administration</li>
+    <li class="active">User Creation</li>
+
+}
+
+@using (Html.BeginForm())
+{
+    @Html.ValidationSummary(true)
+
+    <div class="page-content">
+        <!-- /.page-header -->
+        <div class="row">
+            <div class="col-md-12">
+                <!-- PAGE CONTENT BEGINS -->
+                <div class="widget-box">
+                    <div class="widget-header widget-header-blue widget-header-flat">
+                        <h4 class="lighter">User Creation
+                    <span class="gridTools">
+                        <ul class="ui-pg-button ">
+                            <li class="refresher"><span class="icon "></span></li>
+                            <li></li>
+                            <li><span class="icon-plus-sign bigger-110 purple my-tooltip-link" id='btnGridAdd' rel='tooltip' title='Add User'></span></li>
+                            <li><span class="icon-trash bigger-110 red my-tooltip-link" id='btnDelete1' rel='tooltip' title='Delete User'></span></li>
+                            <li><span class="icon-refresh bigger-110 green my-tooltip-link" id='btnGridRefresh' rel='tooltip' title='Refresh Data'></span></li>
+                            <li><span class="icon-chevron-down bigger-110 green my-tooltip-link" id='btnToggleBox' rel='tooltip' title='Toggle Box'></span></li>
+                        </ul>
+                    </span>
+                        </h4>
+                    </div>
+
+                    <div class="widget-body">
+                        <div class="widget-main editBox">
+
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <br />
+                                    <div class="form-group">
+                                        <div class="alert alert-block alert-success" id="divSuccessMsgStatus" style="display: none">
+                                            <button type="button" class="close" data-dismiss="alert">
+                                                <i class="icon-remove"></i>
+                                            </button>
+                                            <i class="icon-ok green"></i>
+                                            <strong class="green">
+                                                <span id="spanSuccessMsg" style="color: #008000; font-weight: bold; font-size: small;"></span>
+                                            </strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+
+                                    <div class="form-horizontal" role="form">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <div class="col-md-4" align="right">
+                                                    <label>Name<span style="color: red;">*</span> :</label>
+                                                </div>
+                                                <div class="col-md-7">
+                                                    @Html.TextBoxFor(model => model.strName, new { onkeypress = "return validateAlphaNumeric(event)", @class = "form-control input-md", maxlength = "30", tabindex = 1 })
+                                                    @Html.ValidationMessageFor(model => model.strName)
+                                                </div>
+                                            </div>
+
+
+                                            <div class="form-group">
+                                                <div class="col-md-4" align="right">
+                                                    <label>User Name<span style="color: red;">*</span> :</label>
+                                                </div>
+                                                <div class="col-md-7">
+                                                    @Html.TextBoxFor(model => model.strUserName, new { onkeypress = "return validateAlphaNumeric(event)", @class = "form-control input-md", maxlength = "20", tabindex = 3 })
+                                                    @Html.ValidationMessageFor(model => model.strUserName)
+                                                </div>
+                                            </div>
+
+                                           @* <div class="form-group" id="divLocation">
+                                                <div class="col-md-4" align="right">
+                                                    <label>Location<span style="color: red;">*</span> :</label>
+                                                </div>
+                                                <div class="col-md-7">
+
+                                                   
+                                                    @Html.DropDownListFor(model => model.strLocation, new List<SelectListItem>
+                                                     {
+                                                         new SelectListItem{ Text="--Select--", Value = "" },
+                                                         new SelectListItem{ Text="Tambaram", Value = "Tambaram"},
+                                                        new SelectListItem{ Text="Tnagar", Value = "Tnagar" },                                                         
+                                                        
+                                                     }, new { style = "width: 100%;", tabindex = 5 })
+                                                    @Html.ValidationMessageFor(model => model.strLocation)
+                                                </div>
+                                            </div>*@
+
+
+                                            <div class="form-group">
+                                                <div class="col-md-4" align="right">
+                                                    <label>Mobile Number<span style="color: red;">*</span> :</label>
+                                                </div>
+                                                <div class="col-md-7">
+                                                    <input type="text" value="+91" style="width: 17%; padding-bottom: 11px" readonly="readonly" name="symbol" />
+                                                    @Html.TextBoxFor(model => model.strMobile, new { onkeypress = "return validateNumeric(event)", @style = "width:81%;padding-bottom:11px", maxlength = "10", tabindex = 7 })
+                                                    @Html.ValidationMessageFor(model => model.strMobile)
+                                                </div>
+                                            </div>
+
+
+
+                                            <div class="form-group">
+                                                <div class="col-md-4" align="right">
+                                                </div>
+
+                                                <div class="col-md-7">
+
+                                                    <input type="hidden" id="hideid" />
+
+                                                    <input type="button" id="btnsubmit" value="Save" name="Create" class="btn btn-success" />
+
+                                                    <input type="button" id="btnmodify" value="Update " style="display: none" class="btn btn-success" />
+
+                                                    <input type="button" id="btnclear" value="Clear " class="btn btn-success" />
+
+
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+
+                                        <div class="col-md-6">
+
+                                            <div class="form-group">
+                                                <div class="col-md-3" align="right">
+                                                    <label>User Type<span style="color: red;">*</span> :</label>
+                                                </div>
+                                                <div class="col-md-7">
+
+                                                    @Html.DropDownListFor(model => model.strUserType, new List<SelectListItem>
+                                                     {
+                                                         new SelectListItem{ Text="--Select--", Value = "" },
+                                                         new SelectListItem{ Text="Admin", Value = "Admin" }, 
+                                                         new SelectListItem{ Text="Standard User", Value = "Standard User"},
+                                                         new SelectListItem{ Text="Super Admin", Value = "Super Admin" },      
+                                                     }, new { style = "width: 100%;", tabindex = 2 })
+                                                    @Html.ValidationMessageFor(model => model.strUserType)
+                                                </div>
+                                            </div>
+
+
+
+                                            <div class="form-group">
+                                                <div class="col-md-3" align="right">
+                                                    <label>Password<span style="color: red;">*</span> :</label>
+                                                </div>
+                                                <div class="col-md-7">
+                                                    @Html.PasswordFor(model => model.strPassword, new { @class = "form-control input-md", maxlength = "20", tabindex = 4 })
+                                                    @Html.ValidationMessageFor(model => model.strPassword)
+                                                </div>
+                                            </div>
+
+
+                                            <div class="form-group">
+                                                <div class="col-md-3" align="right">
+                                                    <label>E-Mail<span style="color: red;">*</span> :</label>
+                                                </div>
+                                                <div class="col-md-7">
+                                                    @Html.TextBoxFor(model => model.strEmail, new { @class = "form-control input-md", maxlength = "100", tabindex = 6 })
+                                                    @Html.ValidationMessageFor(model => model.strEmail)
+                                                </div>
+                                            </div>
+
+
+                                        </div>
+
+
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="form-group" id="testunchk">
+                        @(Html.Kendo().Grid<E_Challan.Models.ClsUser>()
+                                        .Name("UserGrid")
+                                        .Pageable()
+                                        .Events(e=>e.DataBound("Uncheck"))
+                                        .Columns(columns =>
+                                        {
+
+                                            columns.Bound(p => p.intId).HeaderTemplate("ID").Visible(false);
+                                            columns.Bound(p => p.intId).ClientTemplate("<input type='checkbox' #= IsCheck ? checked='checked':'' # class='chkbx' name='check' value='#= intId #'/>").Width(20)//.HeaderTemplate(" ").Filterable(false);
+                                           .HeaderTemplate("<input type='checkbox' id='masterCheckBox' onclick='checkAll(this)'/>").Filterable(false);
+                                            columns.Bound(p => p.intId).ClientTemplate("<div id='#= intId #' class='icon-pencil bigger-130 blue cursorPointer'  onclick='ProCatEdit(this.id)' rel='tooltip' title='Edit selected row'/>").Width(20).Title("Edit").Filterable(false);
+                                            columns.Bound(p => p.strName).HeaderTemplate("Name").Filterable(false).Width(100);
+                                            columns.Bound(p => p.strUserName).HeaderTemplate("User Name").Filterable(false).Width(100);
+                                            columns.Bound(p => p.strUserType).HeaderTemplate("User Type").Filterable(false).Width(100);
+                                           // columns.Bound(p => p.strLocation).HeaderTemplate("Location").Filterable(false).Width(100);
+                                            columns.Bound(p => p.strMobile).HeaderTemplate("Mobile").Filterable(false).Width(100);
+                                            columns.Bound(p => p.strEmail).HeaderTemplate("E-Mail").Filterable(false).Width(100);
+
+                                            //columns.Bound(p => p.Id).ClientTemplate("<input id='#= Id #' type='button' class='btn btn-default' value='Edit' onclick='editOption(this.id)'>").Title("Edit").Width(50).Filterable(false);
+                                            //columns.Bound(p => p.Id).ClientTemplate("<a  href='" + Url.Action("Delete", "State") + "/#= Id #'" + "onclick = javascript:return&nbsp;confirm('Are&nbsp;you&nbsp;sure&nbsp;do&nbsp;you&nbsp;want&nbsp;to&nbsp;delete&nbsp;it?')" + ">Delete</a>").Title("Delete").Width(50).Filterable(false);
+
+                                        })
+                                        
+                                       .Selectable(selectable => selectable
+                                        .Mode(GridSelectionMode.Multiple))
+                                       .Pageable(pager => { pager.PageSizes(true); })
+                                        .Scrollable()
+                                        .Filterable()
+        //.ClientDetailTemplateId("InnerGrid")
+                                        .HtmlAttributes(new { style = "height:300px;" })
+                                        
+                                        .DataSource(dataSource => dataSource
+                                            .Ajax()
+                                            .Read(read => read.Action("GetUser", "User"))
+                                                )
+
+                            )
+
+                    </div>
+                    <!-- /widget-main -->
+                </div>
+                <!-- /widget-body -->
+            </div>
+        </div>
+        <!-- /.col -->
+    </div>
+
+
+}
+
+
+@section Scripts {
+
+    <script>
+        function rot(ele, angle) {
+            $('.refresher').fadeIn(0).delay(1000).fadeOut(300);
+        }
+        function clearvalidatemess() {
+            $(".field-validation-error span").remove();
+        }
+        function Uncheck() {
+            var a = "@ViewData["UserID"]";
+           
+            $("#testunchk input[name=check][value="+a+"]").prop('disabled', true);
+
+        }
+        $(document).ready(function () {
+            
+            //$('#testunchk').find('input[type="checkbox"]').prop("disabled", true);
+            
+           // $(".chkbx input[type=checkbox]").prop('checked',true);
+            // setTimeout($('.my-tooltip-link').tooltip({ placement: 'top' }));
+            $("#btnGridAdd,#btnToggleBox").on("click", function (e) {
+                $('#strPassword').prop('disabled', false);
+                $("input[type=text]").val("");
+                $("select").val("");
+                $("input[type=password]").val("");
+                $("#divLocation").show();
+                $("input[type=number]").val("");
+                $("input[name=symbol]").val("+91");
+                $("#strUserType").val("");
+                $("#btnclear").show();
+                $('#btnmodify').hide();
+                $('#btnsubmit').show();
+                clearvalidatemess();
+                if ($("#btnGridAdd").hasClass("open")) {
+                    if (e.target.id == "btnToggleBox") {
+                        rot("#btnGridRefresh", -180);
+                        $('.editBox').slideUp('slow', function () {
+                            $("#btnGridAdd").removeClass("open");
+                            $("#btnToggleBox").removeClass("icon-chevron-up");
+                            $("#btnToggleBox").addClass("icon-chevron-down");
+
+
+
+                        });
+                    }
+                }
+                else {
+                    if (e.target.id == "btnGridAdd") {
+                        rot("#btnGridRefresh", 360);
+                        $('.editBox').slideDown('slow', function () {
+                            $("#btnGridAdd").addClass("open");
+                            $("#btnToggleBox").removeClass("icon-chevron-down");
+                            $("#btnToggleBox").addClass("icon-chevron-up");
+
+
+                        });
+
+                    }
+                }
+
+            })
+
+            $("#btnGridRefresh").click(function () {
+                // 
+                rot("#btnGridRefresh", 180);
+                var grid = $("#UserGrid").data("kendoGrid");
+                grid.dataSource.read();
+                grid.refresh();
+
+
+            });
+        })
+
+        function onChange(arg) {
+            var selected = $.map(this.select(), function (item) {
+                return $(item).text();
+            });
+
+            kendoConsole.log("Selected: " + selected.length + " item(s), [" + selected.join(", ") + "]");
+        }
+
+        function whileDataBound(arg) {
+            $('.my-tooltip-link').tooltip({ placement: 'top' })
+            addStyleSelectedGrid();
+        }
+
+
+
+        $(document).ready(function () {
+
+            $('#btnsubmit').click(function () {
+                var form1 = $("form:eq(1)");
+                form1.validate();
+                var result = form1.valid();
+                if (!result) {
+                    return false;
+                }
+
+                var form = $('form:eq(1)').serialize();
+                $.ajax(
+                {
+
+                    type: "POST",
+                    url: '@Url.Content("~/")' + "User/Create",
+                   dataType: "json",
+                   data: form,
+
+                   success: function (data) {
+                       var d = $("#UserGrid").data("kendoGrid");
+                       d.dataSource.pageSize(10);
+                       d.dataSource.data(data.lstUser);
+
+                       var updatemsg = data.strStatusMsg;
+                       if (updatemsg == "Created") {
+                           $("#Div2").fadeIn('slow');
+                           $("#Div2").delay(4000).fadeOut('slow');
+                           $('#UpdateSP').html("Saved Successfully...");
+
+
+                       }
+                       $('.editBox').slideUp('slow');
+                       $("#btnGridAdd").removeClass("open");
+                       $('#chkStatus').prop('checked', false);
+                       $("#divLocation").show();
+                       $("input[type=text]").val("");
+                       $("input[type=number]").val("");
+                       $("select").val("");
+                       clearvalidatemess();
+                       $("input[name=symbol]").val("+91");
+                       $('#btnmodify').hide();
+                       $('#btnsubmit').show();
+                   },
+                   error: function (req, status, error) {
+                       $("#UpdateError").modal('show');
+                   }
+               });
+           });
+
+           $("#strUserType").change(function () {
+               var usertype = $("#strUserType").val();
+               if (usertype == "Admin") {
+                   $("#divLocation").hide();
+                   $("#strLocation").val("");
+               }
+               else {
+                   $("#divLocation").show();
+               }
+
+           });
+       });
+
+
+
+       $(function () {
+           $('#UserGrid').on('click', '.chkbx', function () {
+               var checked = $(this).is(':checked');
+               var grid = $('#UserGrid').data().kendoGrid;
+               var dataItem = grid.dataItem($(this).closest('tr'));
+               dataItem.set('IsCheck', checked);
+           })
+       })
+
+       function chkfalse() {
+           var a = "@ViewData["UserID"]";
+
+           $("#testunchk input[name=check][value=" + a + "]").prop('disabled', true).attr('checked',false);
+          // $("#testunchk").find('input[name=check]:disabled').prop('checked', false);
+       }
+
+        
+
+       function checkAll(ele) {
+
+           var state = $(ele).is(':checked');
+           var grid = $('#UserGrid').data().kendoGrid;
+           $.each(grid.dataSource.view(), function () {
+               if (this['IsCheck'] != state)
+                   this.dirty = true;
+               this['IsCheck'] = state;
+           })
+              
+           
+           
+           grid.refresh();
+           chkfalse();
+       }
+
+      
+
+
+       $(document).ready(function () {
+           $('input.myClass').prettyCheckable();
+
+           var selection = new Array();
+
+
+
+           $("#btnDelete1").click(function () {
+
+
+               var items = $("#UserGrid").data("kendoGrid").dataSource.data();
+               var selection = [];
+               for (var i = 0; i < items.length; i++) {
+                   var item = items[i];
+                   if (item.IsCheck) {
+                       selection.push(item.intId);
+                   }
+               }
+
+               if (selection.length == '0') {
+                   $(".ModalHeading").html("User Creation");
+                   $('#selectitem').modal('show')
+                   event.preventDefault();
+               }
+
+               $(".ModalHeading").html("User Creation");
+               $('#myModal').modal('show')
+
+           });
+
+           //update to db
+           $("#btnok").click(function () {
+
+               var items = $("#UserGrid").data("kendoGrid").dataSource.data();
+               var selection = [];
+               for (var i = 0; i < items.length; i++) {
+                   var item = items[i];
+                   if (item.IsCheck) {
+                       selection.push(item.intId);
+                   }
+               }
+
+
+               $.ajax(
+                                           {
+                                               type: "GET",
+                                               url: '@Url.Content("~/")' + "User/Delete",
+                                                data: "id=" + selection,
+                                                dataType: "json",
+
+                                                success: function (data) {
+                                                    var d = $("#UserGrid").data("kendoGrid");
+                                                    d.dataSource.read();
+                                                    // d.dataSource.data(data.lstUser);
+
+                                                    var updatemsg = data;
+                                                    if (updatemsg == "Deleted") {
+                                                        $("#Div2").fadeIn('slow');
+                                                        $("#Div2").delay(4000).fadeOut('slow');
+                                                        $('#UpdateSP').html("Deleted Successfully...");
+                                                        $('#masterCheckBox').prop('checked', false);
+                                                        // alert($('#UpdateSP').val());
+
+                                                    }
+                                                    
+
+                                                },
+                                                error: function (req, status, error) {
+
+                                                }
+                                            });//.done(function () { $('#Div1').fadeIn('slow'); $("#Div1").delay(2000).fadeOut('slow'); });
+
+
+                $('#myModal').modal('hide')
+            });
+        });
+
+
+
+
+
+
+
+                                    function ProCatEdit(a) {
+                                        clearvalidatemess();
+                                        var tempid = a;
+                                        var locDiv = "";
+                                        $.ajax(
+                                          {
+                                              type: "GET",
+                                              url: '@Url.Content("~/")' + "User/Edit",
+                      dataType: "json",
+                      data: "id=" + tempid,
+
+                      success: function (data) {
+
+                          $('#hideid').val(data[0].intId);
+                          $('#strName').val(data[0].strName);
+                          $('#strUserName').val(data[0].strUserName);
+                          $('#strPassword').val(data[0].strPassword).prop('disabled', true);
+                          $('#strMobile').val(data[0].strMobile);
+                          $('#strUserType').val(data[0].strUserType);
+
+                          locDiv = data[0].strUserType;
+                          $('#strLocation').val(data[0].strLocation);
+
+                          $('#strEmail').val(data[0].strEmail);
+                          $('#btnsubmit').hide();
+                          $('#btnmodify').show();
+                          $("#btnclear").hide();
+                          $("#divLocation").show();
+                          $("input[name=symbol]").val("+91");
+                      },
+
+
+                  }).done(function () {
+                      $('.editBox').slideDown('slow');
+                      $("#btnGridAdd").removeClass("open");
+                      $("#btnToggleBox").removeClass("icon-chevron-down");
+                      $("#btnToggleBox").addClass("icon-chevron-up");
+
+
+
+                      if (locDiv == "Admin") {
+                          $("#divLocation").hide();
+                          $('#strLocation').val("");
+                      }
+
+                      else {
+                          $("#divLocation").show();
+
+                      }
+                  });
+              };
+
+
+
+
+              $(document).ready(function () {
+
+                  $('#btnmodify').click(function () {
+
+                      var form1 = $("form:eq(1)");
+                      form1.validate();
+                      var result = form1.valid();
+                      if (!result) {
+                          return false;
+                      }
+
+                      $('#strPassword').prop('disabled', false);
+                      var tempid = $('#hideid').val();
+                      var form = $('form:eq(1)').serialize();
+                      $.ajax(
+                      {
+
+                          type: "POST",
+                          url: '@Url.Content("~/")' + "User/Edit",
+                    dataType: "json",
+                    data: "id=" + tempid + "&" + form,
+
+                    success: function (data) {
+                        var d = $("#UserGrid").data("kendoGrid");
+                        d.dataSource.pageSize(10);
+                        d.dataSource.data(data.lstUser);
+
+                        var updatemsg = data.strStatusMsg;
+                        if (updatemsg == "Updated") {
+                            $("#Div2").fadeIn('slow');
+                            $("#Div2").delay(4000).fadeOut('slow');
+                            $('#UpdateSP').html("Updated Successfully...");
+
+
+                        }
+                        $('.editBox').slideUp('slow');
+                        $("#btnGridAdd").removeClass("open");
+
+                        $("input[type=text]").val("");
+                        $("input[type=number]").val("");
+                        $("select").val("");
+                        $("textarea").val("");
+                        $('#btnmodify').hide();
+                        $('#btnsubmit').show();
+                    },
+                    error: function (req, status, error) {
+                        $("#UpdateError").modal('show');
+                    }
+                });
+            });
+        });
+
+        $(document).ready(function () {
+            $("#btnclear").click(function () {
+                $("input[type=text]").val("");
+                $("select").val("");
+                $("input[type=number]").val("");
+                $("#strUserType").val("");
+                $("input[type=password]").val("");
+                clearvalidatemess();
+                $("input[name=symbol]").val("+91");
+                $('#btnsubmit').show();
+                $('#btnmodify').hide();
+                return false;
+            });
+
+            $("input[type=text]").val("");
+            $("input[type=number]").val("");
+
+            clearvalidatemess();
+
+
+        });
+
+
+
+        //---------------------------------------------------------------------
+
+        function NumberValidatetext(evt) {
+            var charCode = (evt.which) ? evt.which : event.keyCode
+            //Alpha:63 to 90
+            //Number: 48 to 57
+            //Enter :13
+            // Tab:9
+            //Back:8
+            //End:35
+            if ((charCode > 64 && charCode <= 90) || (charCode > 96 && charCode <= 122) || (charCode == 13) || (charCode == 8) || (charCode == 9) || (charCode == 32) || (charCode == 46) || (charCode == 44)) {
+                return true;
+            }
+
+            else {
+
+                //alert("Enter only Letters");
+                return false;
+            }
+        }
+
+
+
+    </script>
+
+
+
+    @Scripts.Render("~/bundles/jqueryval")
+}

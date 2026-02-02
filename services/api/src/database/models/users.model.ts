@@ -1,19 +1,6 @@
-import { sql } from 'drizzle-orm';
-import { int, nvarchar, datetime2, mssqlTable } from 'drizzle-orm/mssql-core';
-
 /**
- * Admin portal users (auth). role_id → user_roles.
- * After running db:pull, merge any differences from the introspected schema.
+ * DEPRECATED: 'users' table is NOT created. Auth and user identity use T_USER.
+ * See t-user.model.ts. This file is kept only for reference; use tUser / T_USER for all user operations.
+ * Tables that need a "user" FK (audit_log, refund_requests, etc.) reference T_USER(Id).
  */
-export const users = mssqlTable('users', {
-  id: int('id').primaryKey(),
-  email: nvarchar('email', { length: 255 }).notNull().unique(),
-  password: nvarchar('password', { length: 255 }).notNull(),
-  name: nvarchar('name', { length: 255 }),
-  roleId: int('role_id'),
-  createdAt: datetime2('created_at', { precision: 3 }).default(sql`GETDATE()`),
-  updatedAt: datetime2('updated_at', { precision: 3 }),
-});
-
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
+export { tUser as users, type TUser as User, type NewTUser as NewUser } from './t-user.model';
