@@ -1,0 +1,920 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get Hello",
+        "tags": [
+          "aram"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Login user",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Register user",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/profile": {
+      "get": {
+        "operationId": "AuthController_getProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get user profile",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/config/donation-form": {
+      "get": {
+        "operationId": "ConfigController_getDonationFormConfig",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Donation form and feature config",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetFeatureConfigResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "/config/donation-form/flat": {
+      "get": {
+        "operationId": "ConfigController_getDonationFormConfigFlat",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Flattened donation form config"
+          }
+        },
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "/donors": {
+      "get": {
+        "operationId": "DonorsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "donors"
+        ]
+      }
+    },
+    "/donors/{id}": {
+      "get": {
+        "operationId": "DonorsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "donors"
+        ]
+      }
+    },
+    "/donation-categories": {
+      "get": {
+        "operationId": "DonationCategoriesController_findAll",
+        "parameters": [
+          {
+            "name": "includeDeleted",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "donation-categories"
+        ]
+      }
+    },
+    "/donation-categories/{id}": {
+      "get": {
+        "operationId": "DonationCategoriesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "donation-categories"
+        ]
+      }
+    },
+    "/transactions": {
+      "get": {
+        "operationId": "TransactionsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "transactions"
+        ]
+      }
+    },
+    "/transactions/{id}": {
+      "get": {
+        "operationId": "TransactionsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "transactions"
+        ]
+      }
+    },
+    "/receipts": {
+      "get": {
+        "operationId": "ReceiptsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "receipts"
+        ]
+      }
+    },
+    "/receipts/{id}": {
+      "get": {
+        "operationId": "ReceiptsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "receipts"
+        ]
+      }
+    },
+    "/refunds": {
+      "get": {
+        "operationId": "RefundsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "refunds"
+        ]
+      }
+    },
+    "/refunds/{id}": {
+      "get": {
+        "operationId": "RefundsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "refunds"
+        ]
+      }
+    },
+    "/enquiries": {
+      "get": {
+        "operationId": "EnquiriesController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "enquiries"
+        ]
+      }
+    },
+    "/enquiries/{id}": {
+      "get": {
+        "operationId": "EnquiriesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "enquiries"
+        ]
+      }
+    },
+    "/communication-templates": {
+      "get": {
+        "operationId": "CommunicationTemplatesController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "communication-templates"
+        ]
+      }
+    },
+    "/communication-templates/{id}": {
+      "get": {
+        "operationId": "CommunicationTemplatesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "communication-templates"
+        ]
+      }
+    },
+    "/e-challans": {
+      "get": {
+        "operationId": "EChallansController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "e-challans"
+        ]
+      }
+    },
+    "/e-challans/{id}": {
+      "get": {
+        "operationId": "EChallansController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "e-challans"
+        ]
+      }
+    },
+    "/payment-gateway": {
+      "get": {
+        "operationId": "PaymentGatewayController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payment-gateway"
+        ]
+      }
+    },
+    "/payment-gateway/{id}": {
+      "get": {
+        "operationId": "PaymentGatewayController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payment-gateway"
+        ]
+      }
+    },
+    "/reconciliation": {
+      "get": {
+        "operationId": "ReconciliationController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reconciliation"
+        ]
+      }
+    },
+    "/reconciliation/{id}": {
+      "get": {
+        "operationId": "ReconciliationController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reconciliation"
+        ]
+      }
+    },
+    "/campaigns": {
+      "get": {
+        "operationId": "CampaignsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "campaigns"
+        ]
+      }
+    },
+    "/campaigns/{id}": {
+      "get": {
+        "operationId": "CampaignsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "campaigns"
+        ]
+      }
+    },
+    "/audit": {
+      "get": {
+        "operationId": "AuditController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "audit"
+        ]
+      }
+    },
+    "/audit/{id}": {
+      "get": {
+        "operationId": "AuditController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "audit"
+        ]
+      }
+    },
+    "/notifications": {
+      "get": {
+        "operationId": "NotificationsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/{id}": {
+      "get": {
+        "operationId": "NotificationsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/website/content": {
+      "get": {
+        "operationId": "WebsiteContentController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "website-content"
+        ]
+      }
+    },
+    "/website/content/{id}": {
+      "get": {
+        "operationId": "WebsiteContentController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "website-content"
+        ]
+      }
+    },
+    "/website/sponsors": {
+      "get": {
+        "operationId": "SponsorsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "sponsors"
+        ]
+      }
+    },
+    "/website/sponsors/{id}": {
+      "get": {
+        "operationId": "SponsorsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "sponsors"
+        ]
+      }
+    },
+    "/website/gallery": {
+      "get": {
+        "operationId": "GalleryController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "gallery"
+        ]
+      }
+    },
+    "/website/gallery/{id}": {
+      "get": {
+        "operationId": "GalleryController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "gallery"
+        ]
+      }
+    },
+    "/export-log": {
+      "get": {
+        "operationId": "ExportLogController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "export-log"
+        ]
+      }
+    },
+    "/export-log/{id}": {
+      "get": {
+        "operationId": "ExportLogController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "export-log"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Aram API",
+    "description": "The Aram API description",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "aram",
+      "description": ""
+    }
+  ],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "name"
+        ]
+      },
+      "FeatureConfigItemDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "donation_form_enabled"
+          },
+          "value": {
+            "type": "string"
+          },
+          "isEnabled": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "key",
+          "isEnabled"
+        ]
+      },
+      "DonationFormConfigDto": {
+        "type": "object",
+        "properties": {
+          "donationFormEnabled": {
+            "type": "boolean",
+            "description": "Form publicly accessible when true"
+          },
+          "maintenanceMessage": {
+            "type": "string",
+            "description": "Shown when form is disabled"
+          },
+          "testMode": {
+            "type": "boolean",
+            "description": "Test mode – no real transactions"
+          },
+          "multiCountrySupport": {
+            "type": "boolean",
+            "description": "Country dropdown vs default India"
+          },
+          "panRequirement": {
+            "type": "string",
+            "description": "always | threshold | optional_international"
+          },
+          "panThresholdAmount": {
+            "type": "number"
+          },
+          "requireAddress": {
+            "type": "boolean"
+          },
+          "requireMobile": {
+            "type": "boolean"
+          },
+          "mobileOtpVerification": {
+            "type": "boolean"
+          },
+          "presetAmounts": {
+            "example": [
+              500,
+              1000,
+              2500,
+              5000
+            ],
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "minAmount": {
+            "type": "number"
+          },
+          "maxAmount": {
+            "type": "number"
+          },
+          "suggestRecurring": {
+            "type": "boolean",
+            "description": "Show recurring donation option"
+          },
+          "sendReceiptEmail": {
+            "type": "boolean"
+          },
+          "sendReceiptSms": {
+            "type": "boolean"
+          },
+          "send80GEmail": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GetFeatureConfigResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeatureConfigItemDto"
+            }
+          },
+          "donationForm": {
+            "$ref": "#/components/schemas/DonationFormConfigDto"
+          }
+        },
+        "required": [
+          "items",
+          "donationForm"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "aram-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:admin": "pnpm --filter @aram/admin dev",
+    "dev:donor": "pnpm --filter @aram/donor dev",
+    "dev:frontend": "pnpm run dev:admin & pnpm run dev:donor",
+    "dev:api": "pnpm --filter @aram/api start:dev",
+    "dev:backend": "pnpm --filter @aram/api start:dev",
+    "build:admin": "pnpm --filter @aram/admin build",
+    "build:donor": "pnpm --filter @aram/donor build",
+    "build:frontend": "pnpm --filter @aram/admin build && pnpm --filter @aram/donor build",
+    "build:api": "pnpm --filter @aram/api build",
+    "build:backend": "pnpm --filter @aram/api build",
+    "build": "pnpm -r build",
+    "generate:openapi": "pnpm --filter @aram/api generate:openapi",
+    "generate-api": "pnpm --filter @aram/shared generate-api",
+    "generate-all": "pnpm generate:openapi && pnpm generate-api",
+    "start:api": "pnpm --filter @aram/api start:prod",
+    "db:pull": "pnpm --filter @aram/api db:pull"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5"
+  },
+  "pnpm": {
+    "overrides": {
+      "vite": "6.3.5"
+    }
+  }
+}

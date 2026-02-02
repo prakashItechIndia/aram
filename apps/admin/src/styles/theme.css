@@ -1,0 +1,148 @@
+/* Aram Foundation Admin Portal - Design System */
+
+:root {
+  /* Font System */
+  --font-family: 'Barlow', sans-serif;
+  --font-size-base: 16px;
+  --line-height-base: 24px;
+  
+  /* Primary Colors */
+  --primary: #F36A4F;
+  --primary-hover: #D7563D;
+  --primary-lighter: #FF8870;
+  --primary-50: #F9B5A7;
+  --primary-25: #FCD9D3;
+  --primary-10: #FEF1EE;
+  --primary-5: #FEF7F6;
+  
+  /* Neutral Colors */
+  --neutral-100: #0D0D0D;
+  --neutral-80: #3D3D3D;
+  --neutral-60: #6E6E6E;
+  --neutral-40: #9E9E9E;
+  --neutral-20: #CFCFCF;
+  --neutral-15: #DBDBDB;
+  --neutral-10: #E7E7E7;
+  --neutral-5: #F3F3F3;
+  --neutral-0: #FFFFFF;
+  
+  /* Secondary Colors */
+  --secondary: #734F48;
+  --secondary-80: #8F726D;
+  --secondary-60: #AB9591;
+  --secondary-40: #C7B9B6;
+  --secondary-20: #E3DCDA;
+  --secondary-10: #F1EEED;
+  --secondary-5: #F8F6F6;
+  
+  /* Typography Tokens */
+  --text-body: 16px;
+  --text-h1: 28px;
+  --text-h2: 22px;
+  --text-h3: 18px;
+  --text-label: 13px;
+  --text-table: 14px;
+  
+  --line-height-body: 24px;
+  --line-height-h1: 36px;
+  --line-height-h2: 30px;
+  --line-height-h3: 26px;
+  --line-height-label: 18px;
+  --line-height-table: 20px;
+  
+  /* Radius & Borders */
+  --radius-card: 16px;
+  --radius-button: 999px;
+  --radius-input: 16px;
+  --border-width: 1px;
+  
+  /* Spacing Scale */
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+  --spacing-40: 40px;
+  --spacing-48: 48px;
+  
+  /* Layout Dimensions */
+  --sidebar-width: 280px;
+  --header-height: 72px;
+  --sidebar-item-height: 44px;
+  --control-height: 44px;
+  --page-padding: 24px;
+}
+
+@theme inline {
+  /* Map to Tailwind colors */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-lighter: var(--primary-lighter);
+  --color-primary-50: var(--primary-50);
+  --color-primary-25: var(--primary-25);
+  --color-primary-10: var(--primary-10);
+  --color-primary-5: var(--primary-5);
+  
+  --color-neutral-100: var(--neutral-100);
+  --color-neutral-80: var(--neutral-80);
+  --color-neutral-60: var(--neutral-60);
+  --color-neutral-40: var(--neutral-40);
+  --color-neutral-20: var(--neutral-20);
+  --color-neutral-15: var(--neutral-15);
+  --color-neutral-10: var(--neutral-10);
+  --color-neutral-5: var(--neutral-5);
+  --color-neutral-0: var(--neutral-0);
+  
+  --color-secondary: var(--secondary);
+  --color-secondary-80: var(--secondary-80);
+  --color-secondary-60: var(--secondary-60);
+  --color-secondary-40: var(--secondary-40);
+  --color-secondary-20: var(--secondary-20);
+  --color-secondary-10: var(--secondary-10);
+  --color-secondary-5: var(--secondary-5);
+}
+
+@layer base {
+  * {
+    @apply border-neutral-15;
+  }
+  
+  body {
+    @apply bg-neutral-0 text-neutral-80;
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
+    font-weight: 400;
+  }
+  
+  /* Typography System */
+  h1 {
+    font-size: var(--text-h1);
+    line-height: var(--line-height-h1);
+    font-weight: 700;
+    color: var(--neutral-100);
+  }
+  
+  h2 {
+    font-size: var(--text-h2);
+    line-height: var(--line-height-h2);
+    font-weight: 700;
+    color: var(--neutral-100);
+  }
+  
+  h3 {
+    font-size: var(--text-h3);
+    line-height: var(--line-height-h3);
+    font-weight: 600;
+    color: var(--neutral-100);
+  }
+  
+  label {
+    font-size: var(--text-label);
+    line-height: var(--line-height-label);
+    font-weight: 500;
+    color: var(--neutral-60);
+  }
+}

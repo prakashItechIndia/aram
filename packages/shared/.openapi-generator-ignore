@@ -1,0 +1,9 @@
+**/git_push.sh
+**/.gitignore
+**/.npmignore
+**/README.md
+**/package.json
+**/tsconfig.json
+**/.travis.yml
+**/docs/**
+**/.openapi-generator/**
