@@ -27,7 +27,7 @@ export class DonorsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   async processDonation(@Request() req: any, @Body() dto: ProcessDonationDto) {
-    return this.donorsService.processDonation(req.user.sub, dto);
+    return this.donorsService.processDonation(req.user.userId, dto);
   }
 
   /**

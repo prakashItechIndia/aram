@@ -71,7 +71,7 @@ export class DonorsService {
     const row = rows[0];
     if (!row) return null;
 
-    const donorInfo = mapTUserToDonor(row);
+    const donorInfo = { ...mapTUserToDonor(row), pan: null as string | null };
 
     // Try to fetch PAN and Address from donors table if they exist
     try {
@@ -80,7 +80,7 @@ export class DonorsService {
       if (donorDetail) {
         return {
           ...donorInfo,
-          pan: donorDetail.pan,
+          pan: donorDetail.pan || null,
           location: donorDetail.address || donorInfo.location, // Prefer donors table address
         };
       }
