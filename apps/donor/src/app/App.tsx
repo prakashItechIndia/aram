@@ -51,18 +51,18 @@ interface UserData {
 import { ResetPassword } from './components/screens/ResetPassword';
 
 function AppContent() {
-  const { 
-    api, 
-    user: authUser, 
-    isAuthenticated, 
-    login: apiLogin, 
-    register: apiRegister, 
-    logout: apiLogout, 
-    forgotPassword, 
-    resetPassword, 
-    fetchUnreadNotificationsCount, 
+  const {
+    api,
+    user: authUser,
+    isAuthenticated,
+    login: apiLogin,
+    register: apiRegister,
+    logout: apiLogout,
+    forgotPassword,
+    resetPassword,
+    fetchUnreadNotificationsCount,
     refreshNotifications,
-    processDonation 
+    processDonation
   } = useApi();
   const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
     // Check for reset password token in URL
@@ -72,6 +72,7 @@ function AppContent() {
   });
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('processing');
   const [lastDonation, setLastDonation] = useState<any>(null);
+  const [intendedRedirect, setIntendedRedirect] = useState<Screen | null>(null);
   const [user, setUser] = useState<UserData>(() => ({
     id: authUser?.id,
     name: authUser?.name ?? '',
@@ -111,7 +112,7 @@ function AppContent() {
           address: profile?.location ?? prev.address,
           isLoggedIn: true,
         }));
-        
+
         // Refresh notification count via context
         if (profile?.id) {
           refreshNotifications();
@@ -209,7 +210,7 @@ function AppContent() {
       if (success) {
         setPaymentStatus('success');
         toast.success('Payment successful!');
-        
+
         // Trigger real persistence and notification (only for logged-in users)
         // Guest donations are already handled in the guest-donate API call
         if (user.isLoggedIn) {
@@ -221,9 +222,9 @@ function AppContent() {
             pan: donationData.panNumber,
             country: donationData.country,
           }).then((res: { success: boolean }) => {
-             if (res.success) {
-               refreshNotifications();
-             }
+            if (res.success) {
+              refreshNotifications();
+            }
           });
         }
       } else {
@@ -315,21 +316,21 @@ function AppContent() {
       case 'reset-password':
         const urlParams = new URLSearchParams(window.location.search);
         return (
-            <ResetPassword
-                token={urlParams.get('token') || ''}
-                onBack={() => {
-                    // Clear query param
-                    window.history.replaceState({}, '', window.location.pathname);
-                    setCurrentScreen('sign-in');
-                }}
-                onReset={async (pwd) => {
-                    const res = await resetPassword(urlParams.get('token') || '', pwd);
-                    if (res.success) {
-                        refreshNotifications();
-                    }
-                    return res;
-                }}
-            />
+          <ResetPassword
+            token={urlParams.get('token') || ''}
+            onBack={() => {
+              // Clear query param
+              window.history.replaceState({}, '', window.location.pathname);
+              setCurrentScreen('sign-in');
+            }}
+            onReset={async (pwd) => {
+              const res = await resetPassword(urlParams.get('token') || '', pwd);
+              if (res.success) {
+                refreshNotifications();
+              }
+              return res;
+            }}
+          />
         );
 
       case 'donate-guest':
