@@ -10,7 +10,8 @@ import {
  * Dashboard alerts – error, warning, info.
  */
 export const adminNotifications = mssqlTable('admin_notifications', {
-  id: int('id').primaryKey(),
+  id: int('id').primaryKey().identity(),
+  userId: int('user_id'), // Nullable means global/system-wide alert
   type: nvarchar('type', { length: 32 }).notNull(),
   title: nvarchar('title', { length: 255 }).notNull(),
   message: nvarchar('message', { length: 'max' }),

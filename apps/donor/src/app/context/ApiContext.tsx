@@ -47,6 +47,7 @@ type ApiContextValue = {
   setUser: (user: AuthUser) => void;
   forgotPassword: (email: string) => Promise<{ success: boolean; error?: string; message?: string }>;
   resetPassword: (token: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  fetchUnreadNotificationsCount: (userId: number) => Promise<number>;
 };
 
 const ApiContext = createContext<ApiContextValue | null>(null);
@@ -192,6 +193,18 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const fetchUnreadNotificationsCount = useCallback(async (userId: number) => {
+    try {
+        const baseUrl = getApiBaseUrl();
+        const res = await fetch(`${baseUrl}/notifications/unread-count/${userId}`);
+        if (!res.ok) return 0;
+        const count = await res.json();
+        return typeof count === 'number' ? count : 0;
+    } catch {
+        return 0;
+    }
+  }, []);
+
   const value: ApiContextValue = useMemo(
     () => ({
       api,
@@ -203,8 +216,9 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       setUser,
       forgotPassword,
       resetPassword,
+      fetchUnreadNotificationsCount,
     }),
-    [api, user, login, register, logout, setUser, forgotPassword, resetPassword],
+    [api, user, login, register, logout, setUser, forgotPassword, resetPassword, fetchUnreadNotificationsCount],
   );
 
   return <ApiContext.Provider value={value}>{children}</ApiContext.Provider>;

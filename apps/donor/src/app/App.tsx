@@ -48,7 +48,7 @@ interface UserData {
 import { ResetPassword } from './components/screens/ResetPassword';
 
 function AppContent() {
-  const { api, login: apiLogin, register: apiRegister, logout: apiLogout, isAuthenticated, forgotPassword, resetPassword } = useApi();
+  const { api, login: apiLogin, register: apiRegister, logout: apiLogout, isAuthenticated, forgotPassword, resetPassword, fetchUnreadNotificationsCount } = useApi();
   const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
     // Check for reset password token in URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -63,6 +63,7 @@ function AppContent() {
     phone: '',
     isLoggedIn: false,
   });
+  const [notificationCount, setNotificationCount] = useState(0);
 
   // After reload: restore session from token and fetch profile so dashboard shows user name
   useEffect(() => {
@@ -70,18 +71,25 @@ function AppContent() {
     api.authApi
       .authControllerGetProfile()
       .then((profileRes: unknown) => {
-        const profile = (profileRes as { data?: { name?: string; email?: string } })?.data;
+        const profile = (profileRes as { data?: { id?: number; name?: string; email?: string } })?.data;
         setUser({
           name: profile?.name ?? '',
           email: profile?.email ?? '',
           phone: '',
           isLoggedIn: true,
         });
+        
+        // Fetch persistent notification count
+        if (profile?.id) {
+          fetchUnreadNotificationsCount(profile.id).then((count: number) => {
+            setNotificationCount(count);
+          });
+        }
       })
       .catch(() => {
         setUser((prev) => ({ ...prev, isLoggedIn: true }));
       });
-  }, [isAuthenticated, user.isLoggedIn, api.authApi]);
+  }, [isAuthenticated, user.isLoggedIn, api.authApi, fetchUnreadNotificationsCount]);
 
   const handleLoginToDonate = () => {
     setCurrentScreen('sign-in');
@@ -184,6 +192,7 @@ function AppContent() {
 
   const handleUpdatePassword = (data: any) => {
     toast.success('Password updated successfully!');
+    setNotificationCount((prev: number) => prev + 1);
   };
 
   const handleForgotPasswordSubmit = async (email: string) => {
@@ -285,6 +294,7 @@ function AppContent() {
               onNavigate={handleNavigate}
               userName={user.name}
               onLogout={handleLogout}
+              notificationCount={notificationCount}
             />
             <main className="max-w-[1392px] mx-auto p-[24px]">
               <Dashboard onDonateNow={handleDonateNow} userName={user.name} />
@@ -300,6 +310,7 @@ function AppContent() {
               onNavigate={handleNavigate}
               userName={user.name}
               onLogout={handleLogout}
+              notificationCount={notificationCount}
             />
             <main className="max-w-[1392px] mx-auto p-[24px]">
               <DonateLoggedIn
@@ -321,6 +332,7 @@ function AppContent() {
               onNavigate={handleNavigate}
               userName={user.name}
               onLogout={handleLogout}
+              notificationCount={notificationCount}
             />
             <main className="max-w-[1392px] mx-auto p-[24px]">
               <Reports />
@@ -336,6 +348,7 @@ function AppContent() {
               onNavigate={handleNavigate}
               userName={user.name}
               onLogout={handleLogout}
+              notificationCount={notificationCount}
             />
             <main className="max-w-[1392px] mx-auto p-[24px]">
               <Profile

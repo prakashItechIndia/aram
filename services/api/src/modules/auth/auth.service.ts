@@ -15,6 +15,7 @@ import { setResetToken, getAndConsumeResetToken } from './admin-reset-token.stor
 import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';
 import * as schema from '../../database/schema';
 import { EmailService } from '../email/email.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const ADMIN_USER_TYPES = ['Admin', 'Super Admin'] as const;
 
@@ -25,6 +26,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private emailService: EmailService,
+    private notificationsService: NotificationsService,
   ) {}
 
   /** Validate against existing T_USER table (E_Mail, Password; supports bcrypt or legacy plain/base64). */
@@ -127,6 +129,18 @@ export class AuthService {
       .update(tUser)
       .set({ password: hashedPassword })
       .where(eq(tUser.eMail, record.email));
+
+    // Create persistent notification
+    const userRows = await this.db.select().from(tUser).where(eq(tUser.eMail, record.email));
+    if (userRows[0]) {
+      await this.notificationsService.create({
+        userId: userRows[0].id,
+        type: 'info',
+        title: 'Password Reset',
+        message: 'Your password was successfully reset.',
+      });
+    }
+
     return { message: 'Password has been reset. You can sign in with your new password.' };
   }
 

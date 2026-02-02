@@ -3,9 +3,10 @@ import { AuthModule } from '../auth/auth.module';
 import { DonorsController } from './donors.controller';
 import { DonorsService } from './donors.service';
 import { EmailModule } from '../email/email.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [AuthModule, EmailModule],
+  imports: [AuthModule, EmailModule, NotificationsModule],
   controllers: [DonorsController],
   providers: [DonorsService],
   exports: [DonorsService],

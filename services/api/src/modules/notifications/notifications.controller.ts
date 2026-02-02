@@ -16,4 +16,9 @@ export class NotificationsController {
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.service.findById(id);
   }
+
+  @Get('unread-count/:userId')
+  getUnreadCount(@Param('userId', ParseIntPipe) userId: number) {
+    return this.service.findUnreadCount(userId);
+  }
 }
