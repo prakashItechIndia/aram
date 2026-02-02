@@ -49,7 +49,7 @@ export function SignIn({ onSignIn, onCreateAccount, onForgotPassword, onBack }: 
   };
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] flex items-center justify-center p-[24px]">
+    <div className="min-h-screen bg-[#F3F3F3] flex items-center justify-center p-[24px]">
       <AramCard className="w-full max-w-[520px]">
         <div className="flex flex-col gap-[24px]">
           {/* Back Button */}
