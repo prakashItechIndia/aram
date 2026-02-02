@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AramButton } from '@/app/components/aram/AramButton';
 import { AramCard } from '@/app/components/aram/AramCard';
 import { Heart, Download, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateReceiptPDF } from '@/app/utils/pdfGenerator';
+import { useApi } from '@/app/context/ApiContext';
 
 interface DashboardProps {
   onDonateNow: () => void;
@@ -17,26 +18,38 @@ interface DashboardProps {
   };
 }
 
-const mockDonations = [
-  { id: 1, date: '2025-01-15', receiptNo: 'AR2501150001', type: 'Education Fund', amount: 5000, status: 'Success', eligible80G: true },
-  { id: 2, date: '2025-01-10', receiptNo: 'AR2501100002', type: 'Medical Fund', amount: 2500, status: 'Success', eligible80G: true },
-  { id: 3, date: '2024-12-25', receiptNo: 'AR2412250003', type: 'General Fund', amount: 1000, status: 'Success', eligible80G: true },
-];
-
 const mockEvents = [
   { id: 1, title: 'Annual Medical Camp 2025', date: '2025-02-15', description: 'Support our community health initiative' },
-  { id: 2, title: 'Education Scholarship Drive', date: '2025-03-01', description: 'Help students achieve their dreams' },
+  { id: 2, title: 'Education for All Workshop', date: '2025-03-01', description: 'Volunteer training for our education programs' },
 ];
 
-export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
-  const totalDonated = mockDonations.reduce((sum, d) => sum + d.amount, 0);
-  const donationCount = mockDonations.length;
-  const lastDonation = mockDonations[0];
-  const eligible80G = mockDonations.filter(d => d.eligible80G).reduce((sum, d) => sum + d.amount, 0);
+export function Dashboard({ onDonateNow, userName, user: userProp }: DashboardProps) {
+  const { user, refreshNotifications } = useApi();
+  
+  useEffect(() => {
+    refreshNotifications();
+  }, [refreshNotifications]);
+
+  // Real data from API context
+  const donationsList = user?.donations || [];
+  const totalDonatedAmount = Number(user?.totalDonated || 0);
+  const donationCountValue = user?.donationCount || 0;
+  
+  // Calculate specific values
+  const lastDonation = donationsList[0];
+  const eligible80G = donationsList
+    .filter((d: any) => d.is80gEligible)
+    .reduce((sum: number, d: any) => sum + Number(d.amount), 0);
 
   const handleDownloadReceipt = (donation: any) => {
     try {
-      generateReceiptPDF(donation, user);
+      generateReceiptPDF({
+        receiptNo: donation.challanNumber,
+        date: new Date(donation.donationDate).toLocaleDateString(),
+        eligible80G: donation.is80gEligible,
+        type: donation.categoryName,
+        amount: Number(donation.amount)
+      }, userProp);
     } catch (error) {
       console.error('PDF Generation Error:', error);
       toast.error('Failed to generate PDF');
@@ -69,7 +82,7 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
               Total Donated
             </span>
             <span style={{ fontSize: '28px', lineHeight: '36px', fontWeight: 700, color: '#F36A4F' }}>
-              ₹{totalDonated.toLocaleString()}
+              ₹{totalDonatedAmount.toLocaleString()}
             </span>
           </div>
         </AramCard>
@@ -80,7 +93,7 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
               Donations Count
             </span>
             <span style={{ fontSize: '28px', lineHeight: '36px', fontWeight: 700, color: '#0D0D0D' }}>
-              {donationCount}
+              {donationCountValue}
             </span>
           </div>
         </AramCard>
@@ -91,7 +104,7 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
               Last Donation Date
             </span>
             <span style={{ fontSize: '18px', lineHeight: '26px', fontWeight: 600, color: '#0D0D0D' }}>
-              {lastDonation.date}
+              {lastDonation ? new Date(lastDonation.donationDate).toLocaleDateString() : 'N/A'}
             </span>
           </div>
         </AramCard>
@@ -126,22 +139,26 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
               </tr>
             </thead>
             <tbody>
-              {mockDonations.map((donation) => (
+              {donationsList.map((donation: any) => (
                 <tr key={donation.id} style={{ height: '52px', borderBottom: '1px solid #DBDBDB' }}>
-                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.date}</td>
-                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.receiptNo}</td>
-                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.type}</td>
-                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>₹{donation.amount.toLocaleString()}</td>
+                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>
+                    {new Date(donation.donationDate).toLocaleDateString()}
+                  </td>
+                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.challanNumber}</td>
+                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.categoryName}</td>
+                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>
+                    ₹{Number(donation.amount).toLocaleString()}
+                  </td>
                   <td style={{ padding: '12px 16px' }}>
-                    <span style={{
-                      backgroundColor: '#FEF1EE',
-                      color: '#F36A4F',
-                      padding: '4px 12px',
+                    <span style={{ 
+                      backgroundColor: '#FEF1EE', 
+                      color: '#F36A4F', 
+                      padding: '4px 12px', 
                       borderRadius: '999px',
                       fontSize: '13px',
                       fontWeight: 500
                     }}>
-                      {donation.status}
+                      Success
                     </span>
                   </td>
                   <td style={{ padding: '12px 16px' }}>
@@ -159,7 +176,7 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
             </tbody>
           </table>
         </div>
-        {mockDonations.length === 0 && (
+        {donationsList.length === 0 && (
           <div className="p-[48px] text-center">
             <p style={{ fontSize: '16px', color: '#6E6E6E' }}>No donations yet</p>
             <AramButton onClick={onDonateNow} variant="primary" className="mt-[16px]">
