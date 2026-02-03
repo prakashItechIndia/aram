@@ -19,6 +19,9 @@ import * as schema from '../../database/schema';
 import { EmailService } from '../email/email.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { generateStrongPassword } from '../../common/utils/password.util';
+import { donors } from '../../database/models/donors.model';
+import { eChallans } from '../../database/models/e-challans.model';
+import { donationCategories } from '../../database/models/donation-categories.model';
 
 const ADMIN_USER_TYPES = ['Admin', 'Super Admin'] as const;
 
@@ -76,8 +79,8 @@ export class AuthService {
     // Fetch latest donation from donors table
     const donorRows = await this.db
       .select()
-      .from(schema.donors)
-      .where(eq(schema.donors.email, user.eMail.trim().toLowerCase()));
+      .from(donors)
+      .where(eq(donors.email, user.eMail.trim().toLowerCase()));
     
     let donationAmount = null;
     let donationType = null;
@@ -85,16 +88,16 @@ export class AuthService {
     if (donorRows[0]) {
       const lastDonation = await this.db
         .select({
-          amount: schema.eChallans.amount,
-          typeCode: schema.donationCategories.categoryCode,
+          amount: eChallans.amount,
+          typeCode: donationCategories.categoryCode,
         })
-        .from(schema.eChallans)
+        .from(eChallans)
         .leftJoin(
-          schema.donationCategories,
-          eq(schema.eChallans.categoryId, schema.donationCategories.id),
+          donationCategories,
+          eq(eChallans.categoryId, donationCategories.id),
         )
-        .where(eq(schema.eChallans.donorId, donorRows[0].id))
-        .orderBy(desc(schema.eChallans.id));
+        .where(eq(eChallans.donorId, donorRows[0].id))
+        .orderBy(desc(eChallans.id));
 
       const last = lastDonation[0];
       if (last) {
