@@ -192,62 +192,7 @@ export class UpdateReceiptSettingsDto {
   @IsBoolean()
   smsShortLink?: boolean;
 
-  // Storage & Access
-  @IsOptional()
-  @IsString()
-  @IsIn(['local', 's3'])
-  storageMode?: string;
-
-  @IsOptional()
-  @IsString()
-  @IsIn(['public', 'token'])
-  linkSecurity?: string;
-
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  linkExpiryDays?: number;
-
-  @IsOptional()
-  @IsBoolean()
-  allowRegenerationTemplate?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  allowRegenerationAnytime?: boolean;
-
-  // Bulk Operations
-  @IsOptional()
-  @IsBoolean()
-  bulkGenerationAllowed?: boolean;
-
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(10000)
-  maxBatchSize?: number;
-
-  @IsOptional()
-  @IsString()
-  zipFilenameFormat?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  includeIndexCsv?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  runInBackground?: boolean;
-
-  // Status Workflow & Reprint/Reissue
-  @IsOptional()
-  @IsBoolean()
-  allowMarkReissued?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  autoMarkDelivered?: boolean;
-
+  // Reprint & Reissue
   @IsOptional()
   @IsBoolean()
   allowReprint?: boolean;
@@ -279,41 +224,6 @@ export class UpdateReceiptSettingsDto {
   @IsOptional()
   @IsBoolean()
   requireReasonCancel?: boolean;
-
-  // Audit & Compliance
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  retentionYears?: number;
-
-  // Search Defaults
-  @IsOptional()
-  @IsString()
-  @IsIn(['today', 'this_week', 'this_month', 'this_quarter', 'this_year', 'all'])
-  defaultDateFilter?: string;
-
-  @IsOptional()
-  @IsInt()
-  @Min(10)
-  @Max(1000)
-  defaultPageSize?: number;
-
-  @IsOptional()
-  @IsBoolean()
-  exportFormatsCsv?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  exportFormatsExcel?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  exportFormatsPdf?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  maskPii?: boolean;
 
   @IsOptional()
   @IsString()

@@ -41,8 +41,8 @@ type ApiContextValue = {
   api: AramApiClient;
   user: AuthUser;
   isAuthenticated: boolean;
-  /** Authenticated fetch for API mutate (POST, PATCH, DELETE). Uses Bearer token from context. */
-  apiFetch: (path: string, options?: { method?: string; body?: string }) => Promise<Response>;
+  /** Authenticated fetch for API mutate (POST, PATCH, DELETE). Uses Bearer token from context. Pass body as FormData for file uploads (Content-Type omitted). */
+  apiFetch: (path: string, options?: { method?: string; body?: string | FormData }) => Promise<Response>;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   forgotPassword: (email: string) => Promise<{ success: boolean; error?: string; resetLink?: string }>;
   resetPassword: (token: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
@@ -88,14 +88,16 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
   }, [httpClientMinState]);
 
   const apiFetch = useCallback(
-    (path: string, options?: { method?: string; body?: string }) => {
+    (path: string, options?: { method?: string; body?: string | FormData }) => {
       const basePath = getApiBaseUrl();
       const url = path.startsWith('http') ? path : `${basePath}${path.startsWith('/') ? path : `/${path}`}`;
       const token = userRef.current?.accessToken;
       const headers: Record<string, string> = {
-        ...(options?.body ? { 'Content-Type': 'application/json' } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
+      if (options?.body && typeof options.body === 'string') {
+        headers['Content-Type'] = 'application/json';
+      }
       return fetch(url, { method: options?.method ?? 'GET', headers, body: options?.body });
     },
     [],
