@@ -7,8 +7,10 @@ import { RegisterDto } from './dto/register.dto';
 import { AdminLoginDto } from './dto/admin-login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { CheckMobileDto } from './dto/check-mobile.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AdminGuard } from './guards/admin.guard';
@@ -25,6 +27,24 @@ export class AuthController {
   @ApiOperation({ summary: 'Login user (donor portal)' })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
+  }
+
+  @Post('check-mobile')
+  @ApiOperation({ summary: 'Check if mobile number is registered' })
+  async checkMobile(@Body() dto: CheckMobileDto) {
+    return this.authService.checkMobile(dto.mobileNumber);
+  }
+
+  @Post('send-otp')
+  @ApiOperation({ summary: 'Send OTP to mobile number' })
+  async sendOtp(@Body() dto: CheckMobileDto) {
+    return this.authService.sendOtp(dto.mobileNumber);
+  }
+
+  @Post('verify-otp')
+  @ApiOperation({ summary: 'Verify OTP and sign in' })
+  async verifyOtp(@Body() dto: VerifyOtpDto) {
+    return this.authService.verifyOtp(dto.mobileNumber, dto.otpCode);
   }
 
   @Post('register')
