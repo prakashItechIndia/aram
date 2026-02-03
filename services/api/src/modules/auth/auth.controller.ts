@@ -8,6 +8,7 @@ import { AdminLoginDto } from './dto/admin-login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AdminGuard } from './guards/admin.guard';
@@ -62,6 +63,14 @@ export class AuthController {
   @ApiOperation({ summary: 'Change password (logged in)' })
   async changePassword(@Request() req, @Body() dto: ChangePasswordDto) {
     return this.authService.changePassword(req.user.userId, dto);
+  }
+
+  @Post('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update user profile (name, mobile)' })
+  async updateProfile(@Request() req, @Body() dto: UpdateProfileDto) {
+    return this.authService.updateProfile(req.user.userId, dto);
   }
 
   @Post('profile/image')

@@ -63,6 +63,7 @@ type ApiContextValue = {
   register: (data: { name: string; email: string; password: string }) => Promise<{ success: boolean; error?: string }>;
   changePassword: (data: any) => Promise<{ success: boolean; error?: string; message?: string }>;
   uploadProfileImage: (file: File) => Promise<{ success: boolean; url?: string; error?: string }>;
+  updateProfile: (data: { name?: string; mobileNumber?: string }) => Promise<{ success: boolean; message?: string; error?: string }>;
   logout: () => void;
   setUser: (user: AuthUser) => void;
   forgotPassword: (email: string) => Promise<{ success: boolean; error?: string; message?: string }>;
@@ -418,6 +419,43 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
+  const updateProfile = useCallback(async (data: { name?: string; mobileNumber?: string }) => {
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/auth/profile`, {
+        method: 'POST', // Matches AuthController.updateProfile which used @Post('profile')
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.accessToken}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to update profile');
+      }
+
+      const resData = await res.json();
+
+      // Update local user state if successful
+      if (user) {
+        const updatedUser = {
+          ...user,
+          name: data.name ?? user.name,
+          phone: data.mobileNumber ?? user.phone
+        };
+        setUserState(updatedUser);
+        userRef.current = updatedUser;
+        setStoredDonorAuth(updatedUser);
+      }
+
+      return { success: true, message: resData.message };
+    } catch (err: unknown) {
+      return { success: false, error: (err as Error).message };
+    }
+  }, [user]);
+
   const value: ApiContextValue = useMemo(
     () => ({
       api,
@@ -427,6 +465,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       register,
       changePassword,
       uploadProfileImage,
+      updateProfile,
       logout,
       setUser,
       forgotPassword,
@@ -447,6 +486,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       register,
       changePassword,
       uploadProfileImage,
+      updateProfile,
       logout,
       setUser,
       forgotPassword,
