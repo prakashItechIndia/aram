@@ -217,7 +217,12 @@ function AppContent() {
       const success = Math.random() > 0.1;
       if (success) {
         setPaymentStatus('success');
-        toast.success('Payment successful!');
+
+        if (user.isLoggedIn) {
+          toast.success('Payment successful!');
+        } else {
+          toast.success('Temporary password sent via mail successfully');
+        }
 
         // Trigger real persistence and notification (only for logged-in users)
         // Guest donations are already handled in the guest-donate API call
