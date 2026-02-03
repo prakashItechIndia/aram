@@ -19,8 +19,8 @@ export class EmailService {
     const secure = this.configService.get<string>('SMTP_SECURE') === 'true';
 
     if (!host || !user || !pass) {
-        this.logger.warn('SMTP configuration missing, email service disabled.');
-        return;
+      this.logger.warn('SMTP configuration missing, email service disabled.');
+      return;
     }
 
     this.transporter = nodemailer.createTransport({
@@ -139,5 +139,58 @@ export class EmailService {
     const html = `<div style="font-family: Arial, sans-serif; color: #333; white-space: pre-wrap;">${body.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`;
     await this.transporter.sendMail({ from, to, subject, html });
     this.logger.log(`Template email sent to ${to}`);
+  }
+
+  async sendDonationReceipt(email: string, name: string, donationDetails: { amount: number; receiptNo: string; date: string; type: string }) {
+    if (!this.transporter) return;
+    const from = this.configService.get<string>('SMTP_FROM') || '"Aram Foundation" <no-reply@aram.org>';
+    const subject = `Donation Receipt - ${donationDetails.receiptNo}`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px;">
+        <h2 style="color: #F36A4F; text-align: center;">Thank You for Your Donation!</h2>
+        <p>Hello ${name},</p>
+        <p>We have successfully received your donation. Your contribution helps us continue our mission. Below are the details of your donation:</p>
+        
+        <div style="background-color: #F9F9F9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Receipt No:</td>
+              <td style="padding: 8px 0; font-weight: bold; text-align: right;">${donationDetails.receiptNo}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Date:</td>
+              <td style="padding: 8px 0; font-weight: bold; text-align: right;">${donationDetails.date}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Amount:</td>
+              <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #F36A4F; font-size: 18px;">₹${donationDetails.amount.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Donation Type:</td>
+              <td style="padding: 8px 0; font-weight: bold; text-align: right;">${donationDetails.type}</td>
+            </tr>
+          </table>
+        </div>
+
+        <p>You can download your official receipt by logging into your portal at any time.</p>
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="${this.configService.get<string>('FRONTEND_URL') || 'https://aram-donor.vercel.app'}" 
+             style="background-color: #F36A4F; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+             Visit Donor Portal
+          </a>
+        </div>
+        
+        <br>
+        <p style="font-size: 12px; color: #999; text-align: center;">
+          This is an automated receipt for your records. If you have any questions, please contact us at support@aram.org
+        </p>
+      </div>
+    `;
+    try {
+      await this.transporter.sendMail({ from, to: email, subject, html });
+      this.logger.log(`Donation receipt email sent to ${email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send donation receipt email to ${email}`, error);
+    }
   }
 }

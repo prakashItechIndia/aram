@@ -14,4 +14,8 @@ export class RegisterDto {
   @ApiProperty()
   @IsNotEmpty()
   name: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  phone: string;
 }

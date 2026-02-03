@@ -103,6 +103,7 @@ function AppContent() {
         email: authUser.email ?? '',
         phone: authUser.phone ?? '',
         address: authUser.address ?? '',
+        pan: authUser.pan,
         profilePicture: authUser.profilePicture,
         isLoggedIn: true,
       });
@@ -115,14 +116,15 @@ function AppContent() {
     api.authApi
       .authControllerGetProfile()
       .then((profileRes: unknown) => {
-        const profile = (profileRes as { data?: { id?: number; name?: string; email?: string; mobileNumber?: string; location?: string; profilePicture?: string } })?.data;
+        const profile = (profileRes as { data?: { id?: number; name?: string; email?: string; mobileNumber?: string; location?: string; profilePicture?: string; pan?: string; address?: string } })?.data;
         setUser((prev: UserData) => ({
           ...prev,
           id: profile?.id,
           name: profile?.name ?? prev.name,
           email: profile?.email ?? prev.email,
           phone: profile?.mobileNumber ?? prev.phone,
-          address: profile?.location ?? prev.address,
+          address: profile?.location ?? profile?.address ?? prev.address,
+          pan: profile?.pan ?? prev.pan,
           profilePicture: profile?.profilePicture ?? prev.profilePicture,
           isLoggedIn: true,
         }));
@@ -155,6 +157,7 @@ function AppContent() {
       name: data.name,
       email: data.email,
       password: data.password ?? '',
+      phone: data.phone ?? '',
     });
     if (result.success) {
       setUser({
@@ -512,6 +515,8 @@ function AppContent() {
                 userName={user.name}
                 userEmail={user.email}
                 userPhone={user.phone}
+                userPan={user.pan}
+                userAddress={user.address}
                 onSaveProfile={handleSaveProfile}
                 onUpdatePassword={handleUpdatePassword}
                 profileImage={user.profilePicture}

@@ -19,6 +19,7 @@ type AuthUser = {
   email?: string;
   phone?: string;
   address?: string;
+  pan?: string;
   profilePicture?: string;
   id?: number;
 } | null;
@@ -63,7 +64,7 @@ type ApiContextValue = {
   checkMobile: (mobileNumber: string) => Promise<{ success: boolean; registered: boolean; error?: string }>;
   sendOtp: (mobileNumber: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   verifyOtp: (mobileNumber: string, otpCode: string) => Promise<{ success: boolean; data?: any; error?: string }>;
-  register: (data: { name: string; email: string; password: string }) => Promise<{ success: boolean; error?: string }>;
+  register: (data: { name: string; email: string; password: string; phone: string }) => Promise<{ success: boolean; error?: string }>;
   changePassword: (data: any) => Promise<{ success: boolean; error?: string; message?: string }>;
   uploadProfileImage: (file: File) => Promise<{ success: boolean; url?: string; error?: string }>;
   updateProfile: (data: { name?: string; mobileNumber?: string }) => Promise<{ success: boolean; message?: string; error?: string }>;
@@ -155,8 +156,9 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
           id: profile?.id,
           name: profile?.name,
           email: profile?.email ?? email,
-          phone: profile?.mobileNumber || profile?.mobile_number, // Handle different casing if any
-          address: profile?.location,
+          phone: profile?.mobileNumber || profile?.mobile_number,
+          address: profile?.location || profile?.address,
+          pan: profile?.pan,
           profilePicture: profile?.profilePicture,
         };
         setUserState(authUser);
@@ -256,6 +258,8 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
             name: data?.user?.name,
             email: data?.user?.email,
             phone: data?.user?.phone,
+            address: data?.user?.location || data?.user?.address,
+            pan: data?.user?.pan,
           };
           setUserState(authUser);
           userRef.current = authUser;
@@ -275,12 +279,14 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       name: string;
       email: string;
       password: string;
+      phone: string;
     }): Promise<{ success: boolean; error?: string }> => {
       try {
         await api.authApi.authControllerRegister({
           name: data.name,
           email: data.email,
           password: data.password,
+          phone: data.phone,
         });
         return { success: true };
       } catch (err: unknown) {
@@ -542,7 +548,9 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
         const updatedUser = {
           ...user,
           name: data.name ?? user.name,
-          phone: data.mobileNumber ?? user.phone
+          phone: data.mobileNumber ?? user.phone,
+          address: resData.address ?? user.address,
+          pan: resData.pan ?? user.pan,
         };
         setUserState(updatedUser);
         userRef.current = updatedUser;

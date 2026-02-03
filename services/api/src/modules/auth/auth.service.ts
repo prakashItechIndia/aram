@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { DRIZZLE } from '../../database/database.module';
 import { tUser } from '../../database/models/t-user.model';
+import { donors } from '../../database/models/donors.model';
 import { and, eq, or, inArray, desc } from 'drizzle-orm';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
@@ -174,33 +175,46 @@ export class AuthService {
     const user = rows[0];
     if (!user) return null;
 
-    // Fetch latest donation from donors table
-    const donorRows = await this.db
-      .select()
-      .from(schema.donors)
-      .where(eq(schema.donors.email, user.eMail.trim().toLowerCase()));
-
     let donationAmount = null;
     let donationType = null;
+    let pan = null;
+    let address = user.location;
 
-    if (donorRows[0]) {
-      const lastDonation = await this.db
-        .select({
-          amount: schema.eChallans.amount,
-          typeCode: schema.donationCategories.categoryCode,
-        })
-        .from(schema.eChallans)
-        .leftJoin(
-          schema.donationCategories,
-          eq(schema.eChallans.categoryId, schema.donationCategories.id),
-        )
-        .where(eq(schema.eChallans.donorId, donorRows[0].id))
-        .orderBy(desc(schema.eChallans.id));
+    // Fetch donor profile to get PAN and Address
+    if (user.eMail) {
+      try {
+        const donorRows = await this.db
+          .select()
+          .from(donors)
+          .where(eq(donors.email, user.eMail.trim().toLowerCase()));
 
-      const last = lastDonation[0];
-      if (last) {
-        donationAmount = last.amount;
-        donationType = last.typeCode;
+        const donor = donorRows[0];
+        if (donor) {
+          pan = donor.pan;
+          address = donor.address || address;
+
+          const lastDonation = await this.db
+            .select({
+              amount: schema.eChallans.amount,
+              typeCode: schema.donationCategories.categoryCode,
+            })
+            .top(1)
+            .from(schema.eChallans)
+            .leftJoin(
+              schema.donationCategories,
+              eq(schema.eChallans.categoryId, schema.donationCategories.id),
+            )
+            .where(eq(schema.eChallans.donorId, donor.id))
+            .orderBy(desc(schema.eChallans.id));
+
+          const last = lastDonation[0];
+          if (last) {
+            donationAmount = last.amount;
+            donationType = last.typeCode;
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to fetch donor details in getProfile:', err);
       }
     }
 
@@ -210,6 +224,8 @@ export class AuthService {
       userId: result.id,
       email: result.eMail,
       mobileNumber: result.mobileNumber,
+      location: address,
+      pan,
       donationAmount,
       donationType,
     };
@@ -238,18 +254,44 @@ export class AuthService {
   /** Register inserts into T_USER (existing table). Password stored as bcrypt. */
   async register(registerDto: RegisterDto) {
     if (!this.db) throw new Error('Database not initialized');
+
+    const normalizedEmail = (registerDto.email || '').trim().toLowerCase();
+    const phone = (registerDto.phone || '').trim();
+
+    // 1. Check if email already exists
+    const existingEmail = await this.db
+      .select()
+      .from(tUser)
+      .where(eq(tUser.eMail, normalizedEmail));
+
+    if (existingEmail.length > 0) {
+      throw new BadRequestException('Email already exists');
+    }
+
+    // 2. Check if phone number already exists
+    const existingPhone = await this.db
+      .select()
+      .from(tUser)
+      .where(eq(tUser.mobileNumber, phone));
+
+    if (existingPhone.length > 0) {
+      throw new BadRequestException('Phone number already exists');
+    }
+
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
     await this.db.insert(tUser).values({
       name: registerDto.name,
       userType: 'Standard User',
-      userName: registerDto.email?.replace(/@.*/, '') || registerDto.name,
+      userName: normalizedEmail.replace(/@.*/, '') || registerDto.name,
       password: hashedPassword,
-      eMail: registerDto.email,
+      eMail: normalizedEmail,
+      mobileNumber: phone,
       isActive: true,
       createdBy: 1,
       createdDate: new Date(),
     });
-    const rows = await this.db.select().top(1).from(tUser).where(eq(tUser.eMail, registerDto.email));
+
+    const rows = await this.db.select().top(1).from(tUser).where(eq(tUser.eMail, normalizedEmail));
     const user = rows[0];
     return user ? { id: user.id, name: user.name, eMail: user.eMail } : null;
   }
@@ -358,15 +400,33 @@ export class AuthService {
     const updateData: any = {};
     if (dto.name) updateData.name = dto.name;
     if (dto.mobileNumber) updateData.mobileNumber = dto.mobileNumber;
+    if (dto.address) updateData.location = dto.address;
 
-    if (Object.keys(updateData).length === 0) {
-      throw new BadRequestException('No fields provided for update');
+    if (Object.keys(updateData).length > 0) {
+      await this.db
+        .update(tUser)
+        .set(updateData)
+        .where(eq(tUser.id, userId));
     }
 
-    await this.db
-      .update(tUser)
-      .set(updateData)
-      .where(eq(tUser.id, userId));
+    // Also update donors table if exists
+    const user = await this.findUserById(userId);
+    if (user?.eMail) {
+      const email = user.eMail.trim().toLowerCase();
+      const donorUpdate: any = {};
+      if (dto.name) donorUpdate.name = dto.name;
+      if (dto.mobileNumber) donorUpdate.mobile = dto.mobileNumber;
+      if (dto.address) donorUpdate.address = dto.address;
+      if (dto.pan) donorUpdate.pan = dto.pan;
+
+      if (Object.keys(donorUpdate).length > 0) {
+        donorUpdate.updatedAt = new Date();
+        await this.db
+          .update(donors)
+          .set(donorUpdate)
+          .where(eq(donors.email, email));
+      }
+    }
 
     return { message: 'Profile updated successfully' };
   }

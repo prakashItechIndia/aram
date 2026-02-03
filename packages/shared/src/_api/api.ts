@@ -548,6 +548,12 @@ export interface RegisterDto {
      * @memberof RegisterDto
      */
     name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof RegisterDto
+     */
+    phone: string;
 }
 /**
  * 
@@ -846,15 +852,15 @@ export const AramApiAxiosParamCreator = function (configuration?: Configuration)
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -868,7 +874,7 @@ export const AramApiAxiosParamCreator = function (configuration?: Configuration)
  * AramApi - functional programming interface
  * @export
  */
-export const AramApiFp = function(configuration?: Configuration) {
+export const AramApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = AramApiAxiosParamCreator(configuration)
     return {
         /**
@@ -943,15 +949,15 @@ export const AuditApiAxiosParamCreator = function (configuration?: Configuration
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -976,15 +982,15 @@ export const AuditApiAxiosParamCreator = function (configuration?: Configuration
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -998,7 +1004,7 @@ export const AuditApiAxiosParamCreator = function (configuration?: Configuration
  * AuditApi - functional programming interface
  * @export
  */
-export const AuditApiFp = function(configuration?: Configuration) {
+export const AuditApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = AuditApiAxiosParamCreator(configuration)
     return {
         /**
@@ -1104,17 +1110,17 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
             localVarRequestOptions.data = serializeDataIfNeeded(adminLoginDto, localVarRequestOptions, configuration)
 
             return {
@@ -1140,17 +1146,17 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
             localVarRequestOptions.data = serializeDataIfNeeded(forgotPasswordDto, localVarRequestOptions, configuration)
 
             return {
@@ -1173,15 +1179,15 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -1203,15 +1209,15 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -1236,17 +1242,17 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
             localVarRequestOptions.data = serializeDataIfNeeded(loginDto, localVarRequestOptions, configuration)
 
             return {
@@ -1272,17 +1278,17 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
             localVarRequestOptions.data = serializeDataIfNeeded(registerDto, localVarRequestOptions, configuration)
 
             return {
@@ -1308,17 +1314,17 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
             localVarRequestOptions.data = serializeDataIfNeeded(resetPasswordDto, localVarRequestOptions, configuration)
 
             return {
@@ -1333,7 +1339,7 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
  * AuthApi - functional programming interface
  * @export
  */
-export const AuthApiFp = function(configuration?: Configuration) {
+export const AuthApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = AuthApiAxiosParamCreator(configuration)
     return {
         /**
@@ -1603,15 +1609,15 @@ export const CampaignsApiAxiosParamCreator = function (configuration?: Configura
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -1636,15 +1642,15 @@ export const CampaignsApiAxiosParamCreator = function (configuration?: Configura
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -1658,7 +1664,7 @@ export const CampaignsApiAxiosParamCreator = function (configuration?: Configura
  * CampaignsApi - functional programming interface
  * @export
  */
-export const CampaignsApiFp = function(configuration?: Configuration) {
+export const CampaignsApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = CampaignsApiAxiosParamCreator(configuration)
     return {
         /**
@@ -1760,15 +1766,15 @@ export const CommunicationTemplatesApiAxiosParamCreator = function (configuratio
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -1793,15 +1799,15 @@ export const CommunicationTemplatesApiAxiosParamCreator = function (configuratio
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -1815,7 +1821,7 @@ export const CommunicationTemplatesApiAxiosParamCreator = function (configuratio
  * CommunicationTemplatesApi - functional programming interface
  * @export
  */
-export const CommunicationTemplatesApiFp = function(configuration?: Configuration) {
+export const CommunicationTemplatesApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = CommunicationTemplatesApiAxiosParamCreator(configuration)
     return {
         /**
@@ -1917,15 +1923,15 @@ export const ConfigApiAxiosParamCreator = function (configuration?: Configuratio
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -1946,15 +1952,15 @@ export const ConfigApiAxiosParamCreator = function (configuration?: Configuratio
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -1968,7 +1974,7 @@ export const ConfigApiAxiosParamCreator = function (configuration?: Configuratio
  * ConfigApi - functional programming interface
  * @export
  */
-export const ConfigApiFp = function(configuration?: Configuration) {
+export const ConfigApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = ConfigApiAxiosParamCreator(configuration)
     return {
         /**
@@ -2070,7 +2076,7 @@ export const DonationCategoriesApiAxiosParamCreator = function (configuration?: 
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -2079,10 +2085,10 @@ export const DonationCategoriesApiAxiosParamCreator = function (configuration?: 
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2107,15 +2113,15 @@ export const DonationCategoriesApiAxiosParamCreator = function (configuration?: 
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2129,7 +2135,7 @@ export const DonationCategoriesApiAxiosParamCreator = function (configuration?: 
  * DonationCategoriesApi - functional programming interface
  * @export
  */
-export const DonationCategoriesApiFp = function(configuration?: Configuration) {
+export const DonationCategoriesApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = DonationCategoriesApiAxiosParamCreator(configuration)
     return {
         /**
@@ -2234,15 +2240,15 @@ export const DonorsApiAxiosParamCreator = function (configuration?: Configuratio
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2267,15 +2273,15 @@ export const DonorsApiAxiosParamCreator = function (configuration?: Configuratio
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2296,15 +2302,15 @@ export const DonorsApiAxiosParamCreator = function (configuration?: Configuratio
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2328,17 +2334,17 @@ export const DonorsApiAxiosParamCreator = function (configuration?: Configuratio
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
             localVarRequestOptions.data = serializeDataIfNeeded(createGuestDonorDto, localVarRequestOptions, configuration)
 
             return {
@@ -2353,7 +2359,7 @@ export const DonorsApiAxiosParamCreator = function (configuration?: Configuratio
  * DonorsApi - functional programming interface
  * @export
  */
-export const DonorsApiFp = function(configuration?: Configuration) {
+export const DonorsApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = DonorsApiAxiosParamCreator(configuration)
     return {
         /**
@@ -2512,15 +2518,15 @@ export const EChallansApiAxiosParamCreator = function (configuration?: Configura
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2545,15 +2551,15 @@ export const EChallansApiAxiosParamCreator = function (configuration?: Configura
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2567,7 +2573,7 @@ export const EChallansApiAxiosParamCreator = function (configuration?: Configura
  * EChallansApi - functional programming interface
  * @export
  */
-export const EChallansApiFp = function(configuration?: Configuration) {
+export const EChallansApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = EChallansApiAxiosParamCreator(configuration)
     return {
         /**
@@ -2669,15 +2675,15 @@ export const EnquiriesApiAxiosParamCreator = function (configuration?: Configura
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2702,15 +2708,15 @@ export const EnquiriesApiAxiosParamCreator = function (configuration?: Configura
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2724,7 +2730,7 @@ export const EnquiriesApiAxiosParamCreator = function (configuration?: Configura
  * EnquiriesApi - functional programming interface
  * @export
  */
-export const EnquiriesApiFp = function(configuration?: Configuration) {
+export const EnquiriesApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = EnquiriesApiAxiosParamCreator(configuration)
     return {
         /**
@@ -2826,15 +2832,15 @@ export const ExportLogApiAxiosParamCreator = function (configuration?: Configura
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2859,15 +2865,15 @@ export const ExportLogApiAxiosParamCreator = function (configuration?: Configura
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2881,7 +2887,7 @@ export const ExportLogApiAxiosParamCreator = function (configuration?: Configura
  * ExportLogApi - functional programming interface
  * @export
  */
-export const ExportLogApiFp = function(configuration?: Configuration) {
+export const ExportLogApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = ExportLogApiAxiosParamCreator(configuration)
     return {
         /**
@@ -2986,17 +2992,17 @@ export const GalleryApiAxiosParamCreator = function (configuration?: Configurati
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
             localVarRequestOptions.data = serializeDataIfNeeded(createGalleryItemDto, localVarRequestOptions, configuration)
 
             return {
@@ -3018,15 +3024,15 @@ export const GalleryApiAxiosParamCreator = function (configuration?: Configurati
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3051,15 +3057,15 @@ export const GalleryApiAxiosParamCreator = function (configuration?: Configurati
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3084,15 +3090,15 @@ export const GalleryApiAxiosParamCreator = function (configuration?: Configurati
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3120,17 +3126,17 @@ export const GalleryApiAxiosParamCreator = function (configuration?: Configurati
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
             localVarRequestOptions.data = serializeDataIfNeeded(updateGalleryItemDto, localVarRequestOptions, configuration)
 
             return {
@@ -3145,7 +3151,7 @@ export const GalleryApiAxiosParamCreator = function (configuration?: Configurati
  * GalleryApi - functional programming interface
  * @export
  */
-export const GalleryApiFp = function(configuration?: Configuration) {
+export const GalleryApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = GalleryApiAxiosParamCreator(configuration)
     return {
         /**
@@ -3343,17 +3349,17 @@ export const GalleryAlbumsApiAxiosParamCreator = function (configuration?: Confi
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
             localVarRequestOptions.data = serializeDataIfNeeded(createGalleryAlbumDto, localVarRequestOptions, configuration)
 
             return {
@@ -3375,15 +3381,15 @@ export const GalleryAlbumsApiAxiosParamCreator = function (configuration?: Confi
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3408,15 +3414,15 @@ export const GalleryAlbumsApiAxiosParamCreator = function (configuration?: Confi
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3441,15 +3447,15 @@ export const GalleryAlbumsApiAxiosParamCreator = function (configuration?: Confi
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3477,17 +3483,17 @@ export const GalleryAlbumsApiAxiosParamCreator = function (configuration?: Confi
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
             localVarRequestOptions.data = serializeDataIfNeeded(updateGalleryAlbumDto, localVarRequestOptions, configuration)
 
             return {
@@ -3502,7 +3508,7 @@ export const GalleryAlbumsApiAxiosParamCreator = function (configuration?: Confi
  * GalleryAlbumsApi - functional programming interface
  * @export
  */
-export const GalleryAlbumsApiFp = function(configuration?: Configuration) {
+export const GalleryAlbumsApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = GalleryAlbumsApiAxiosParamCreator(configuration)
     return {
         /**
@@ -3697,15 +3703,15 @@ export const NotificationsApiAxiosParamCreator = function (configuration?: Confi
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3730,15 +3736,15 @@ export const NotificationsApiAxiosParamCreator = function (configuration?: Confi
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3752,7 +3758,7 @@ export const NotificationsApiAxiosParamCreator = function (configuration?: Confi
  * NotificationsApi - functional programming interface
  * @export
  */
-export const NotificationsApiFp = function(configuration?: Configuration) {
+export const NotificationsApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = NotificationsApiAxiosParamCreator(configuration)
     return {
         /**
@@ -3854,15 +3860,15 @@ export const PaymentGatewayApiAxiosParamCreator = function (configuration?: Conf
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3887,15 +3893,15 @@ export const PaymentGatewayApiAxiosParamCreator = function (configuration?: Conf
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3909,7 +3915,7 @@ export const PaymentGatewayApiAxiosParamCreator = function (configuration?: Conf
  * PaymentGatewayApi - functional programming interface
  * @export
  */
-export const PaymentGatewayApiFp = function(configuration?: Configuration) {
+export const PaymentGatewayApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = PaymentGatewayApiAxiosParamCreator(configuration)
     return {
         /**
@@ -4011,15 +4017,15 @@ export const ReceiptsApiAxiosParamCreator = function (configuration?: Configurat
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -4044,15 +4050,15 @@ export const ReceiptsApiAxiosParamCreator = function (configuration?: Configurat
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -4066,7 +4072,7 @@ export const ReceiptsApiAxiosParamCreator = function (configuration?: Configurat
  * ReceiptsApi - functional programming interface
  * @export
  */
-export const ReceiptsApiFp = function(configuration?: Configuration) {
+export const ReceiptsApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = ReceiptsApiAxiosParamCreator(configuration)
     return {
         /**
@@ -4168,15 +4174,15 @@ export const ReconciliationApiAxiosParamCreator = function (configuration?: Conf
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -4201,15 +4207,15 @@ export const ReconciliationApiAxiosParamCreator = function (configuration?: Conf
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -4223,7 +4229,7 @@ export const ReconciliationApiAxiosParamCreator = function (configuration?: Conf
  * ReconciliationApi - functional programming interface
  * @export
  */
-export const ReconciliationApiFp = function(configuration?: Configuration) {
+export const ReconciliationApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = ReconciliationApiAxiosParamCreator(configuration)
     return {
         /**
@@ -4325,15 +4331,15 @@ export const RefundsApiAxiosParamCreator = function (configuration?: Configurati
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -4358,15 +4364,15 @@ export const RefundsApiAxiosParamCreator = function (configuration?: Configurati
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -4380,7 +4386,7 @@ export const RefundsApiAxiosParamCreator = function (configuration?: Configurati
  * RefundsApi - functional programming interface
  * @export
  */
-export const RefundsApiFp = function(configuration?: Configuration) {
+export const RefundsApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = RefundsApiAxiosParamCreator(configuration)
     return {
         /**
@@ -4485,17 +4491,17 @@ export const SponsorsApiAxiosParamCreator = function (configuration?: Configurat
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
             localVarRequestOptions.data = serializeDataIfNeeded(createSponsorDto, localVarRequestOptions, configuration)
 
             return {
@@ -4517,15 +4523,15 @@ export const SponsorsApiAxiosParamCreator = function (configuration?: Configurat
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -4550,15 +4556,15 @@ export const SponsorsApiAxiosParamCreator = function (configuration?: Configurat
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -4583,15 +4589,15 @@ export const SponsorsApiAxiosParamCreator = function (configuration?: Configurat
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -4619,17 +4625,17 @@ export const SponsorsApiAxiosParamCreator = function (configuration?: Configurat
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
             localVarRequestOptions.data = serializeDataIfNeeded(updateSponsorDto, localVarRequestOptions, configuration)
 
             return {
@@ -4644,7 +4650,7 @@ export const SponsorsApiAxiosParamCreator = function (configuration?: Configurat
  * SponsorsApi - functional programming interface
  * @export
  */
-export const SponsorsApiFp = function(configuration?: Configuration) {
+export const SponsorsApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = SponsorsApiAxiosParamCreator(configuration)
     return {
         /**
@@ -4839,15 +4845,15 @@ export const TransactionsApiAxiosParamCreator = function (configuration?: Config
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -4872,15 +4878,15 @@ export const TransactionsApiAxiosParamCreator = function (configuration?: Config
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -4894,7 +4900,7 @@ export const TransactionsApiAxiosParamCreator = function (configuration?: Config
  * TransactionsApi - functional programming interface
  * @export
  */
-export const TransactionsApiFp = function(configuration?: Configuration) {
+export const TransactionsApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = TransactionsApiAxiosParamCreator(configuration)
     return {
         /**
@@ -4999,17 +5005,17 @@ export const WebsiteContentApiAxiosParamCreator = function (configuration?: Conf
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
             localVarRequestOptions.data = serializeDataIfNeeded(createWebsiteContentDto, localVarRequestOptions, configuration)
 
             return {
@@ -5034,7 +5040,7 @@ export const WebsiteContentApiAxiosParamCreator = function (configuration?: Conf
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -5043,10 +5049,10 @@ export const WebsiteContentApiAxiosParamCreator = function (configuration?: Conf
             }
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -5071,15 +5077,15 @@ export const WebsiteContentApiAxiosParamCreator = function (configuration?: Conf
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -5104,15 +5110,15 @@ export const WebsiteContentApiAxiosParamCreator = function (configuration?: Conf
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -5140,17 +5146,17 @@ export const WebsiteContentApiAxiosParamCreator = function (configuration?: Conf
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
-    
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
             localVarRequestOptions.data = serializeDataIfNeeded(updateWebsiteContentDto, localVarRequestOptions, configuration)
 
             return {
@@ -5165,7 +5171,7 @@ export const WebsiteContentApiAxiosParamCreator = function (configuration?: Conf
  * WebsiteContentApi - functional programming interface
  * @export
  */
-export const WebsiteContentApiFp = function(configuration?: Configuration) {
+export const WebsiteContentApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = WebsiteContentApiAxiosParamCreator(configuration)
     return {
         /**

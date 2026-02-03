@@ -95,7 +95,7 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
           if (donor.name) setDisplayName(donor.name);
           if (donor.email) setDisplayEmail(donor.email);
           if (donor.mobileNumber) setDisplayPhone(donor.mobileNumber);
-          
+
           // Map donation amount from profile
           if (donor.donationAmount) {
             const amount = Number(donor.donationAmount);
@@ -109,7 +109,7 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
               setSelectedPreset(null);
             }
           }
-          
+
           // Map donation type from profile (backend returns categoryCode, map it to frontend value)
           if (donor.donationType) {
             setDonationType(donor.donationType);
@@ -168,7 +168,7 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
     if (validateForm()) {
       // Save donation preferences for next time
       saveLastDonationPrefs(amount, donationType);
-      
+
       onPay({
         amount,
         address,
@@ -219,7 +219,7 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
               label="Full Name"
               value={displayName}
               onChange={setDisplayName}
-              required
+              disabled
               error={errors.displayName}
             />
             <AramInput
@@ -261,11 +261,10 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
                     setSelectedPreset(preset);
                     setCustomAmount('');
                   }}
-                  className={`h-[44px] px-[24px] rounded-[16px] border transition-all ${
-                    selectedPreset === preset
-                      ? 'border-[#F36A4F] bg-[#FEF1EE] text-[#F36A4F] scale-105 shadow-sm'
-                      : 'border-[#DBDBDB] bg-white text-[#3D3D3D] hover:border-[#F36A4F]'
-                  }`}
+                  className={`h-[44px] px-[24px] rounded-[16px] border transition-all ${selectedPreset === preset
+                    ? 'border-[#F36A4F] bg-[#FEF1EE] text-[#F36A4F] scale-105 shadow-sm'
+                    : 'border-[#DBDBDB] bg-white text-[#3D3D3D] hover:border-[#F36A4F]'
+                    }`}
                   style={{ fontSize: '14px', fontWeight: 600 }}
                 >
                   ₹{preset.toLocaleString()}
@@ -313,16 +312,18 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
             label="Address"
             placeholder="Enter your complete address for receipt generation"
             value={address}
-            onChange={setAddress}
+            onChange={(val) => setAddress(val.slice(0, 250))}
             required
             error={errors.address}
             rows={3}
+            maxLength={250}
+            helperText={`${address.length}/250 characters`}
           />
 
           {/* Info Messages */}
           <div className="flex flex-col gap-[8px] p-[16px] bg-[#FEF1EE] rounded-[16px] border border-[#FCD9D3]">
             <p style={{ fontSize: '13px', lineHeight: '18px', color: '#3D3D3D', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span className="w-4 h-4 rounded-full bg-[#F36A4F] text-white flex items-center justify-center text-[10px]">✓</span> 
+              <span className="w-4 h-4 rounded-full bg-[#F36A4F] text-white flex items-center justify-center text-[10px]">✓</span>
               Receipt will be generated after successful payment
             </p>
             <p style={{ fontSize: '13px', lineHeight: '18px', color: '#3D3D3D', display: 'flex', alignItems: 'center', gap: '8px' }}>
