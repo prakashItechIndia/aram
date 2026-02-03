@@ -11,24 +11,26 @@ interface SearchResult {
 interface HeaderProps {
   onSearch?: (query: string) => void;
   onLogout?: () => void;
+  userName?: string;
+  profilePicture?: string;
 }
 
-export function Header({ onSearch, onLogout }: HeaderProps) {
+export function Header({ onSearch, onLogout, userName, profilePicture }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
-  
+
   // Mock search results
   const mockResults: SearchResult[] = searchQuery
     ? [
-        { type: 'donor', id: '1', title: 'Rajesh Kumar', subtitle: 'rajesh@example.com' },
-        { type: 'receipt', id: '2', title: 'ARAM/2025-26/00123', subtitle: '₹5,000 • 15 Jan 2026' },
-        { type: 'transaction', id: '3', title: 'TXN789456', subtitle: '₹10,000 • Success' },
-      ].filter((r) => r.title.toLowerCase().includes(searchQuery.toLowerCase()))
+      { type: 'donor', id: '1', title: 'Rajesh Kumar', subtitle: 'rajesh@example.com' },
+      { type: 'receipt', id: '2', title: 'ARAM/2025-26/00123', subtitle: '₹5,000 • 15 Jan 2026' },
+      { type: 'transaction', id: '3', title: 'TXN789456', subtitle: '₹10,000 • Success' },
+    ].filter((r) => r.title.toLowerCase().includes(searchQuery.toLowerCase()))
     : [];
-  
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -38,11 +40,11 @@ export function Header({ onSearch, onLogout }: HeaderProps) {
         setShowProfileMenu(false);
       }
     };
-    
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-  
+
   return (
     <div className="h-[72px] bg-white border-b border-[#DBDBDB] flex items-center px-[24px] gap-4 fixed top-0 left-[280px] right-0 z-40">
       {/* Global Search */}
@@ -61,7 +63,7 @@ export function Header({ onSearch, onLogout }: HeaderProps) {
             className="w-full h-[44px] pl-[44px] pr-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[999px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
           />
         </div>
-        
+
         {/* Search Results Dropdown */}
         {showResults && mockResults.length > 0 && (
           <div className="absolute top-full mt-2 w-full bg-white border border-[#DBDBDB] rounded-[16px] shadow-lg max-h-[400px] overflow-y-auto">
@@ -94,7 +96,7 @@ export function Header({ onSearch, onLogout }: HeaderProps) {
           </div>
         )}
       </div>
-      
+
       {/* Right Side - Profile and Notifications - Pushed to far right */}
       <div className="flex items-center gap-[12px] ml-auto">
         {/* Notifications */}
@@ -102,21 +104,27 @@ export function Header({ onSearch, onLogout }: HeaderProps) {
           <Bell className="w-[18px] h-[18px] text-[#6E6E6E]" />
           <span className="absolute top-[8px] right-[8px] w-2 h-2 bg-[#F36A4F] rounded-full" />
         </button>
-        
+
         {/* Profile Menu */}
         <div className="relative" ref={profileRef}>
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className="h-[40px] px-[12px] flex items-center gap-2 rounded-[999px] hover:bg-[#F3F3F3] transition-colors"
           >
-            <div className="w-6 h-6 bg-[#F36A4F] rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-xs">SA</span>
+            <div className="w-6 h-6 bg-[#F36A4F] rounded-full flex items-center justify-center overflow-hidden">
+              {profilePicture ? (
+                <img src={profilePicture} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-white font-semibold text-xs">
+                  {userName ? userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'SA'}
+                </span>
+              )}
             </div>
             <span className="text-[14px] leading-[20px] font-medium text-[#0D0D0D]">
-              Super Admin
+              {userName || 'Super Admin'}
             </span>
           </button>
-          
+
           {showProfileMenu && (
             <div className="absolute top-full right-0 mt-2 w-[200px] bg-white border border-[#DBDBDB] rounded-[16px] shadow-lg overflow-hidden">
               <button className="w-full flex items-center gap-3 px-[16px] py-[12px] hover:bg-[#FEF7F6] text-left">

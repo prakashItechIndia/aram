@@ -19,6 +19,7 @@ export const tUser = mssqlTable('T_USER', {
   mobileNumber: nvarchar('Mobile_Number', { length: 15 }),
   location: nvarchar('Location', { length: 300 }),
   eMail: nvarchar('E_Mail', { length: 100 }),
+  profilePicture: nvarchar('Profile_Picture', { length: 500 }),
   isActive: bit('Is_Active'),
   createdBy: int('Created_By'),
   createdDate: datetime2('Created_Date', { precision: 3 }),

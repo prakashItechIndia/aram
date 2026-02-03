@@ -148,9 +148,8 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
           amount,
           donationType,
         });
-        // Show success toast with name
-        toast.success(`Thank you for your donation, ${name.trim()}`);
-        
+        // Success toast removed as per request - will show in final step instead
+
         onPay({
           name,
           email,
