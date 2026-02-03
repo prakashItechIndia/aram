@@ -12,6 +12,7 @@ import { AdminLoginDto } from './dto/admin-login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { setResetToken, getAndConsumeResetToken } from './admin-reset-token.store';
 import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';
 import * as schema from '../../database/schema';
@@ -208,6 +209,23 @@ export class AuthService {
       .set({ profilePicture: url })
       .where(eq(tUser.id, userId));
     return { url };
+  }
+
+  async updateProfile(userId: number, dto: UpdateProfileDto) {
+    const updateData: any = {};
+    if (dto.name) updateData.name = dto.name;
+    if (dto.mobileNumber) updateData.mobileNumber = dto.mobileNumber;
+
+    if (Object.keys(updateData).length === 0) {
+      throw new BadRequestException('No fields provided for update');
+    }
+
+    await this.db
+      .update(tUser)
+      .set(updateData)
+      .where(eq(tUser.id, userId));
+
+    return { message: 'Profile updated successfully' };
   }
 
   private generateTemporaryPassword(length = 10): string {

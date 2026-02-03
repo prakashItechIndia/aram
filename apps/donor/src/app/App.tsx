@@ -67,7 +67,8 @@ function AppContent() {
 
     processDonation,
     changePassword,
-    uploadProfileImage
+    uploadProfileImage,
+    updateProfile
   } = useApi();
   const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
     // Check for reset password token in URL
@@ -253,13 +254,22 @@ function AppContent() {
   };
 
   // Profile Handlers
-  const handleSaveProfile = (data: any) => {
-    setUser({
-      ...user,
+  const handleSaveProfile = async (data: any) => {
+    const res = await updateProfile({
       name: data.name,
-      phone: data.phone,
+      mobileNumber: data.phone,
     });
-    toast.success('Profile updated successfully!');
+
+    if (res.success) {
+      setUser({
+        ...user,
+        name: data.name,
+        phone: data.phone,
+      });
+      toast.success('Profile updated successfully!');
+    } else {
+      toast.error(res.error || 'Failed to update profile');
+    }
   };
 
   const handleUpdatePassword = async (data: any): Promise<{ success: boolean; error?: string }> => {

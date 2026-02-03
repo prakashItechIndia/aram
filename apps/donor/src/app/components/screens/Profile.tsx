@@ -169,14 +169,10 @@ export function Profile({ userName, userEmail, userPhone, profileImage, onSavePr
             <AramInput
               label="Phone"
               value={phone}
-              onChange={(val) => {
-                setPhone(sanitizeInput.mobile(val));
-                setErrors((prev: any) => ({ ...prev, phone: undefined }));
-              }}
+              onChange={() => { }}
               placeholder="Enter phone number"
-              helperText="Verification required for changes"
-              error={errors.phone}
-              required
+              helperText="Phone number cannot be changed"
+              disabled
             />
           </div>
 
