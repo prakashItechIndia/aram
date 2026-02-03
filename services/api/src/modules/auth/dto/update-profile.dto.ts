@@ -12,4 +12,14 @@ export class UpdateProfileDto {
     @IsOptional()
     @IsString()
     mobileNumber?: string;
+
+    @ApiProperty({ example: 'ABCDE1234F', required: false })
+    @IsOptional()
+    @IsString()
+    pan?: string;
+
+    @ApiProperty({ example: '123, Main St, Chennai', required: false })
+    @IsOptional()
+    @IsString()
+    address?: string;
 }

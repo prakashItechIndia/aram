@@ -58,7 +58,8 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
 
         if (!response.ok) throw new Error('Failed to fetch donations');
         const data = await response.json();
-        setDonations(data || []);
+        const sortedData = (data || []).sort((a: Donation, b: Donation) => b.id - a.id);
+        setDonations(sortedData);
       } catch (err) {
         console.error('Failed to fetch donations:', err);
         setError('Failed to load donations');
@@ -195,9 +196,9 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
             </AramButton>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
+          <div className="overflow-x-auto" style={donations.length > 10 ? { maxHeight: '570px', overflowY: 'auto' } : {}}>
+            <table className="w-full border-collapse">
+              <thead className="sticky top-0 z-10 shadow-sm">
                 <tr style={{ height: '48px', backgroundColor: '#F3F3F3' }}>
                   <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Date</th>
                   <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Receipt No</th>
