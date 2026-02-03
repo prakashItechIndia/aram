@@ -20,13 +20,13 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
   const userEmail = user?.email || '';
 
   return (
-    <header 
+    <header
       className="h-[72px] bg-white border-b border-[#DBDBDB] px-[24px] flex items-center justify-between sticky top-0 z-50"
     >
       {/* Logo and Nav */}
       <div className="flex items-center gap-[48px]">
         <div className="flex items-center gap-[12px]">
-          <div 
+          <div
             className="w-[40px] h-[40px] rounded-full flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg, #F36A4F 0%, #FF8870 100%)' }}
           >
@@ -40,11 +40,10 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
             <button
               key={page}
               onClick={() => onNavigate(page.toLowerCase())}
-              className={`transition-colors ${
-                currentPage === page.toLowerCase()
-                  ? 'text-[#F36A4F]'
-                  : 'text-[#6E6E6E] hover:text-[#3D3D3D]'
-              }`}
+              className={`transition-colors ${currentPage === page.toLowerCase()
+                ? 'text-[#F36A4F]'
+                : 'text-[#6E6E6E] hover:text-[#3D3D3D]'
+                }`}
               style={{ fontSize: '14px', fontWeight: 600 }}
             >
               {page}
@@ -69,13 +68,13 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
         </div>
 
         <div className="relative">
-          <button 
+          <button
             onClick={() => setShowNotifications(!showNotifications)}
             className="w-[40px] h-[40px] rounded-full flex items-center justify-center hover:bg-[#F3F3F3] transition-colors relative"
           >
             <Bell size={18} color={showNotifications ? "#F36A4F" : "#6E6E6E"} />
             {notificationCount > 0 && (
-              <span 
+              <span
                 className="absolute top-[4px] right-[4px] min-w-[18px] h-[18px] px-[4px] bg-[#F36A4F] rounded-full flex items-center justify-center text-white"
                 style={{ fontSize: '10px', fontWeight: 700, border: '2px solid white' }}
               >
@@ -86,8 +85,8 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
 
           {showNotifications && (
             <>
-              <div 
-                className="fixed inset-0 z-10" 
+              <div
+                className="fixed inset-0 z-10"
                 onClick={() => setShowNotifications(false)}
               />
               <div className="absolute right-0 top-[48px] w-[360px] bg-white rounded-[20px] border border-[#DBDBDB] shadow-2xl z-20 overflow-hidden animate-in fade-in zoom-in duration-200 origin-top-right">
@@ -99,21 +98,20 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
                     </span>
                   )}
                 </div>
-                
+
                 <div className="max-h-[420px] overflow-y-auto">
                   {notifications.length > 0 ? (
                     <div className="flex flex-col">
                       {notifications.map((notif: Notification) => (
-                        <div 
+                        <div
                           key={notif.id}
                           className={`p-[16px] border-b border-[#F3F3F3] last:border-0 hover:bg-[#F9F9F9] transition-colors relative group ${!notif.readAt ? 'bg-[#FFF9F8]' : ''}`}
                         >
                           <div className="flex gap-[12px]">
-                            <div className={`w-[32px] h-[32px] rounded-full flex-shrink-0 flex items-center justify-center ${
-                              notif.type === 'success' ? 'bg-[#E7F7EF] text-[#0FAF62]' :
+                            <div className={`w-[32px] h-[32px] rounded-full flex-shrink-0 flex items-center justify-center ${notif.type === 'success' ? 'bg-[#E7F7EF] text-[#0FAF62]' :
                               notif.type === 'error' ? 'bg-[#FEECEC] text-[#D72C0D]' :
-                              'bg-[#EEF2FF] text-[#4F46E5]'
-                            }`}>
+                                'bg-[#EEF2FF] text-[#4F46E5]'
+                              }`}>
                               {notif.type === 'success' ? <CheckCircle size={16} /> : <Info size={16} />}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -129,7 +127,7 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
                                 {notif.message}
                               </p>
                               {!notif.readAt && (
-                                <button 
+                                <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     markNotificationAsRead(notif.id);
@@ -142,9 +140,7 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
                               )}
                             </div>
                           </div>
-                          {!notif.readAt && (
-                            <div className="absolute left-[8px] top-1/2 -translate-y-1/2 w-[4px] h-[4px] rounded-full bg-[#F36A4F]" />
-                          )}
+
                         </div>
                       ))}
                     </div>
@@ -155,15 +151,15 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
                       </div>
                       <p style={{ fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>All caught up!</p>
                       <p className="mt-[4px]" style={{ fontSize: '13px', color: '#9E9E9E' }}>
-                        No new notifications for you right now. 
+                        No new notifications for you right now.
                       </p>
                     </div>
                   )}
                 </div>
-                
+
                 {notifications.length > 0 && (
                   <div className="p-[12px] bg-[#FAFAFA] border-t border-[#F3F3F3] text-center">
-                    <button 
+                    <button
                       className="text-[#6E6E6E] hover:text-[#3D3D3D]"
                       style={{ fontSize: '12px', fontWeight: 600 }}
                     >
@@ -192,8 +188,8 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
 
           {showProfileMenu && (
             <>
-              <div 
-                className="fixed inset-0 z-10" 
+              <div
+                className="fixed inset-0 z-10"
                 onClick={() => setShowProfileMenu(false)}
               />
               <div className="absolute right-0 top-[48px] w-[220px] bg-white rounded-[16px] border border-[#DBDBDB] shadow-lg z-20 overflow-hidden">

@@ -15,7 +15,7 @@ export const tUser = mssqlTable('T_USER', {
   name: nvarchar('Name', { length: 100 }),
   userType: nvarchar('User_Type', { length: 30 }),
   userName: nvarchar('User_Name', { length: 100 }),
-  password: nvarchar('Password', { length: 50 }),
+  password: nvarchar('Password', { length: 255 }),
   mobileNumber: nvarchar('Mobile_Number', { length: 15 }),
   location: nvarchar('Location', { length: 300 }),
   eMail: nvarchar('E_Mail', { length: 100 }),
