@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { DRIZZLE } from '../../database/database.module';
 import { tUser } from '../../database/models/t-user.model';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, or, inArray, desc } from 'drizzle-orm';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { LoginDto } from './dto/login.dto';
@@ -30,27 +30,37 @@ export class AuthService {
     private notificationsService: NotificationsService,
   ) { }
 
-  /** Validate against existing T_USER table (E_Mail, Password; supports bcrypt or legacy plain/base64). */
-  async validateUser(email: string, pass: string): Promise<any> {
+  /** Validate against existing T_USER (Email or Mobile, Password). Checks existence first. */
+  async validateUser(identifier: string, pass: string): Promise<any> {
     if (!this.db) return null;
-    const normalizedEmail = (email || '').trim().toLowerCase();
+    const normalizedInput = (identifier || '').trim().toLowerCase();
     const trimmedPass = (pass || '').trim();
-    if (!normalizedEmail) return null;
+    if (!normalizedInput) return null;
 
     const rows = await this.db
       .select()
       .top(1)
       .from(tUser)
-      .where(and(eq(tUser.eMail, normalizedEmail), eq(tUser.isActive, true)));
+      .where(
+        and(
+          or(eq(tUser.eMail, normalizedInput), eq(tUser.mobileNumber, normalizedInput)),
+          eq(tUser.isActive, true) // Ensure active
+        )
+      );
+
     const user = rows[0];
-    if (!user) return null;
+    if (!user) {
+      throw new NotFoundException('User not Registered');
+    }
 
     // Check match against bcrypt, plain text, or base64 (legacy)
     const match =
       (user.password?.startsWith('$2') && (await bcrypt.compare(pass, user.password))) ||
-      pass === user.password ||
+      (pass === user.password) ||
       (user.password && Buffer.from(user.password, 'base64').toString('utf8') === pass);
-    if (!match) return null;
+
+    if (!match) return null; // Let login() handle invalid password
+
     const { password, ...result } = user;
     return { id: result.id, email: result.eMail, name: result.name, userType: result.userType };
   }
@@ -59,12 +69,45 @@ export class AuthService {
     const rows = await this.db.select().from(tUser).where(eq(tUser.id, userId));
     const user = rows[0];
     if (!user) return null;
+
+    // Fetch latest donation from donors table
+    const donorRows = await this.db
+      .select()
+      .from(schema.donors)
+      .where(eq(schema.donors.email, user.eMail.trim().toLowerCase()));
+    
+    let donationAmount = null;
+    let donationType = null;
+
+    if (donorRows[0]) {
+      const lastDonation = await this.db
+        .select({
+          amount: schema.eChallans.amount,
+          typeCode: schema.donationCategories.categoryCode,
+        })
+        .from(schema.eChallans)
+        .leftJoin(
+          schema.donationCategories,
+          eq(schema.eChallans.categoryId, schema.donationCategories.id),
+        )
+        .where(eq(schema.eChallans.donorId, donorRows[0].id))
+        .orderBy(desc(schema.eChallans.id));
+
+      const last = lastDonation[0];
+      if (last) {
+        donationAmount = last.amount;
+        donationType = last.typeCode;
+      }
+    }
+
     const { password, ...result } = user;
     return {
       ...result,
       userId: result.id,
-      email: result.eMail, // Normalize for frontend
+      email: result.eMail,
       mobileNumber: result.mobileNumber,
+      donationAmount,
+      donationType,
     };
   }
 
@@ -80,7 +123,7 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     const user = await this.validateUser(loginDto.email, loginDto.password);
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Invalid email or password');
     }
     const payload = { email: user.email, sub: user.id };
     return {

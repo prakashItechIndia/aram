@@ -352,8 +352,8 @@ export class DonorsService {
 
     const now = new Date();
     // Create new user in T_USER
-    // Generate temp pass
-    const tempPass = generateStrongPassword(10);
+    // Generate temp pass based on PAN
+    const tempPass = `Aram@${normalizedPan}`;
     
     const hashedPassword = Buffer.from(tempPass).toString('base64');
 
