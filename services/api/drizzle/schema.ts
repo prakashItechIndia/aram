@@ -17,7 +17,7 @@ export const adminNotifications = mssqlTable("admin_notifications", {
 
 export const auditLog = mssqlTable("audit_log", {
 	id: int().identity({ seed: 1 ,increment: 1 }),
-	userId: int("user_id").references(() => users.id),
+	userId: int("user_id").references(() => tUSER.id),
 	action: nvarchar({ length: 64 }).notNull(),
 	entityType: nvarchar("entity_type", { length: 64 }),
 	entityId: nvarchar("entity_id", { length: 64 }),
@@ -170,7 +170,7 @@ export const donationFormSettings = mssqlTable("donation_form_settings", {
 export const donorNotes = mssqlTable("donor_notes", {
 	id: int().identity({ seed: 1 ,increment: 1 }),
 	donorId: int("donor_id").notNull().references(() => donors.id),
-	createdByUserId: int("created_by_user_id").references(() => users.id),
+	createdByUserId: int("created_by_user_id").references(() => tUSER.id),
 	noteText: nvarchar("note_text", { length: 'max' }).notNull(),
 	createdAt: datetime2("created_at", { mode: 'string', precision: 3 }).default(sql`getdate()`),
 	updatedAt: datetime2("updated_at", { mode: 'string', precision: 3 }),
@@ -218,7 +218,7 @@ export const eChallans = mssqlTable("e_challans", {
 	donationDate: date("donation_date", { mode: 'string' }).notNull(),
 	receiptId: int("receipt_id").references(() => receipts.id),
 	createdAt: datetime2("created_at", { mode: 'string', precision: 3 }).default(sql`getdate()`),
-	createdByUserId: int("created_by_user_id").references(() => users.id),
+	createdByUserId: int("created_by_user_id").references(() => tUSER.id),
 	cashReceivedBy: nvarchar("cash_received_by", { length: 128 }),
 	bankName: nvarchar("bank_name", { length: 128 }),
 	chequeDate: date("cheque_date", { mode: 'string' }),
@@ -242,7 +242,7 @@ export const enquiries = mssqlTable("enquiries", {
 	subject: nvarchar({ length: 255 }),
 	message: nvarchar({ length: 'max' }),
 	status: nvarchar({ length: 32 }).notNull(),
-	assignedToUserId: int("assigned_to_user_id").references(() => users.id),
+	assignedToUserId: int("assigned_to_user_id").references(() => tUSER.id),
 	createdAt: datetime2("created_at", { mode: 'string', precision: 3 }).default(sql`getdate()`),
 	updatedAt: datetime2("updated_at", { mode: 'string', precision: 3 }),
 	category: nvarchar({ length: 64 }),
@@ -255,7 +255,7 @@ export const enquiries = mssqlTable("enquiries", {
 export const enquiryReplies = mssqlTable("enquiry_replies", {
 	id: int().identity({ seed: 1 ,increment: 1 }),
 	enquiryId: int("enquiry_id").notNull().references(() => enquiries.id),
-	fromUserId: int("from_user_id").references(() => users.id),
+	fromUserId: int("from_user_id").references(() => tUSER.id),
 	body: nvarchar({ length: 'max' }).notNull(),
 	isInternal: bit("is_internal").default(false).notNull(),
 	createdAt: datetime2("created_at", { mode: 'string', precision: 3 }).default(sql`getdate()`),
@@ -278,7 +278,7 @@ export const enquirySettings = mssqlTable("enquiry_settings", {
 
 export const exportLog = mssqlTable("export_log", {
 	id: int().identity({ seed: 1 ,increment: 1 }),
-	userId: int("user_id").references(() => users.id),
+	userId: int("user_id").references(() => tUSER.id),
 	reportType: nvarchar("report_type", { length: 64 }),
 	format: nvarchar({ length: 16 }),
 	ipAddress: nvarchar("ip_address", { length: 45 }),
@@ -482,8 +482,8 @@ export const refundRequests = mssqlTable("refund_requests", {
 	amount: decimal({ precision: 18, scale: 2 }).notNull(),
 	reason: nvarchar({ length: 'max' }).notNull(),
 	status: nvarchar({ length: 32 }).notNull(),
-	requestedByUserId: int("requested_by_user_id").references(() => users.id),
-	approvedByUserId: int("approved_by_user_id").references(() => users.id),
+	requestedByUserId: int("requested_by_user_id").references(() => tUSER.id),
+	approvedByUserId: int("approved_by_user_id").references(() => tUSER.id),
 	createdAt: datetime2("created_at", { mode: 'string', precision: 3 }).default(sql`getdate()`),
 	updatedAt: datetime2("updated_at", { mode: 'string', precision: 3 }),
 }, (table) => [
@@ -758,7 +758,7 @@ export const tUSER = mssqlTable("T_USER", {
 	name: nvarchar("Name", { length: 100 }),
 	userType: nvarchar("User_Type", { length: 30 }),
 	userName: nvarchar("User_Name", { length: 100 }),
-	password: nvarchar("Password", { length: 50 }),
+	password: nvarchar("Password", { length: 255 }),
 	mobileNumber: nvarchar("Mobile_Number", { length: 15 }),
 	location: nvarchar("Location", { length: 300 }),
 	eMail: nvarchar("E_Mail", { length: 100 }),
@@ -768,6 +768,8 @@ export const tUSER = mssqlTable("T_USER", {
 	isDeleted: bit("Is_Deleted"),
 	modifiedBy: int("Modified_By"),
 	modifiedDate: datetime("Modified_Date", { mode: 'string' }),
+	profilePicture: nvarchar("Profile_Picture", { length: 500 }),
+	profileImageUrl: nvarchar("Profile_Image_Url", { length: 512 }),
 }, (table) => [
 	primaryKey({ columns: [table.id], name: "PK_T_USER"}),
 ]);
@@ -809,7 +811,7 @@ export const transactions = mssqlTable("transactions", {
 
 export const userOtp = mssqlTable("user_otp", {
 	id: int().identity({ seed: 1 ,increment: 1 }),
-	userId: int("user_id").references(() => users.id),
+	userId: int("user_id").references(() => tUSER.id),
 	email: nvarchar({ length: 255 }),
 	phone: nvarchar({ length: 20 }),
 	otpCode: nvarchar("otp_code", { length: 10 }).notNull(),

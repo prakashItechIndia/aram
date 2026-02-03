@@ -60,6 +60,9 @@ type ApiContextValue = {
   user: AuthUser;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; data?: any }>;
+  checkMobile: (mobileNumber: string) => Promise<{ success: boolean; registered: boolean; error?: string }>;
+  sendOtp: (mobileNumber: string) => Promise<{ success: boolean; message?: string; error?: string }>;
+  verifyOtp: (mobileNumber: string, otpCode: string) => Promise<{ success: boolean; data?: any; error?: string }>;
   register: (data: { name: string; email: string; password: string }) => Promise<{ success: boolean; error?: string }>;
   changePassword: (data: any) => Promise<{ success: boolean; error?: string; message?: string }>;
   uploadProfileImage: (file: File) => Promise<{ success: boolean; url?: string; error?: string }>;
@@ -169,6 +172,102 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       }
     },
     [api.authApi],
+  );
+
+  const checkMobile = useCallback(
+    async (mobileNumber: string): Promise<{ success: boolean; registered: boolean; error?: string }> => {
+      try {
+        const baseUrl = getApiBaseUrl();
+        const res = await fetch(`${baseUrl}/auth/check-mobile`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ mobileNumber }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.message || 'Verification failed');
+        }
+
+        const data = await res.json();
+        return { success: true, registered: data.registered };
+      } catch (err: unknown) {
+        return { success: false, registered: false, error: (err as Error).message };
+      }
+    },
+    [],
+  );
+
+  const sendOtp = useCallback(
+    async (mobileNumber: string): Promise<{ success: boolean; message?: string; error?: string }> => {
+      try {
+        const baseUrl = getApiBaseUrl();
+        const res = await fetch(`${baseUrl}/auth/send-otp`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ mobileNumber }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.message || 'Failed to send OTP');
+        }
+
+        const data = await res.json();
+        return { success: true, message: data.message };
+      } catch (err: unknown) {
+        return { success: false, error: (err as Error).message };
+      }
+    },
+    [],
+  );
+
+  const verifyOtp = useCallback(
+    async (mobileNumber: string, otpCode: string): Promise<{ success: boolean; data?: any; error?: string }> => {
+      try {
+        const baseUrl = getApiBaseUrl();
+        const res = await fetch(`${baseUrl}/auth/verify-otp`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ mobileNumber, otpCode }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.message || 'Verification failed');
+        }
+
+        const data = await res.json();
+
+        // Handle successful sign-in
+        const accessToken = data?.access_token;
+        if (accessToken) {
+          authTokenVersionRef.current += 1;
+          const authUser: AuthUser = {
+            accessToken,
+            refreshToken: data?.refresh_token ?? '',
+            id: data?.user?.id,
+            name: data?.user?.name,
+            email: data?.user?.email,
+            phone: data?.user?.phone,
+          };
+          setUserState(authUser);
+          userRef.current = authUser;
+          setStoredDonorAuth(authUser);
+        }
+
+        return { success: true, data };
+      } catch (err: unknown) {
+        return { success: false, error: (err as Error).message };
+      }
+    },
+    [],
   );
 
   const register = useCallback(
@@ -462,6 +561,9 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       user,
       isAuthenticated: !!user?.accessToken,
       login,
+      checkMobile,
+      sendOtp,
+      verifyOtp,
       register,
       changePassword,
       uploadProfileImage,

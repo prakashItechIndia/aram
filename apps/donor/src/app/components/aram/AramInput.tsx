@@ -11,6 +11,7 @@ interface AramInputProps {
   className?: string;
   prefix?: React.ReactNode;
   style?: React.CSSProperties;
+  maxLength?: number;
 }
 
 export function AramInput({
@@ -24,7 +25,8 @@ export function AramInput({
   helperText,
   disabled = false,
   className = '',
-  prefix
+  prefix,
+  maxLength
 }: AramInputProps) {
   return (
     <div className={`flex flex-col gap-[6px] ${className}`}>
@@ -48,6 +50,7 @@ export function AramInput({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
+          maxLength={maxLength}
           className={`h-[44px] w-full py-[12px] rounded-[16px] border ${error ? 'border-[#F36A4F]' : 'border-[#DBDBDB]'
             } bg-white focus:outline-none focus:border-[#F36A4F] disabled:bg-[#F3F3F3] disabled:cursor-not-allowed`}
           style={{
