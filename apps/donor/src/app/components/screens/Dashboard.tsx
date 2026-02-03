@@ -3,6 +3,7 @@ import { AramButton } from '@/app/components/aram/AramButton';
 import { AramCard } from '@/app/components/aram/AramCard';
 import { Heart, Download, Calendar } from 'lucide-react';
 import { useApi } from '@/app/context/ApiContext';
+import { generateReceiptPDF } from '@/app/utils/pdfGenerator';
 
 interface DashboardProps {
   onDonateNow: () => void;
@@ -31,8 +32,8 @@ const mockEvents = [
   { id: 2, title: 'Education Scholarship Drive', date: '2025-03-01', description: 'Help students achieve their dreams' },
 ];
 
-export function Dashboard({ onDonateNow, userName }: DashboardProps) {
-  const { user } = useApi();
+export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
+  const { user: apiAuth } = useApi();
   const [donations, setDonations] = useState<Donation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +41,7 @@ export function Dashboard({ onDonateNow, userName }: DashboardProps) {
   // Fetch donations when component mounts
   useEffect(() => {
     const fetchDonations = async () => {
-      if (!user?.accessToken) {
+      if (!apiAuth?.accessToken) {
         setIsLoading(false);
         return;
       }
@@ -51,10 +52,10 @@ export function Dashboard({ onDonateNow, userName }: DashboardProps) {
         const baseUrl = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:3000/api';
         const response = await fetch(`${baseUrl}/donors/me/donations`, {
           headers: {
-            'Authorization': `Bearer ${user.accessToken}`,
+            'Authorization': `Bearer ${apiAuth.accessToken}`,
           },
         });
-        
+
         if (!response.ok) throw new Error('Failed to fetch donations');
         const data = await response.json();
         setDonations(data || []);
@@ -68,7 +69,7 @@ export function Dashboard({ onDonateNow, userName }: DashboardProps) {
     };
 
     fetchDonations();
-  }, [user?.accessToken]);
+  }, [apiAuth?.accessToken]);
 
   // Calculate stats from real donations
   const totalDonated = donations.reduce((sum: number, d: Donation) => sum + d.amount, 0);
@@ -76,7 +77,7 @@ export function Dashboard({ onDonateNow, userName }: DashboardProps) {
   const lastDonation = donations[0];
   const eligible80G = donations.filter((d: Donation) => d.eligible80G).reduce((sum: number, d: Donation) => sum + d.amount, 0);
 
-  const handleDownloadReceipt = (donation: typeof mockDonations[0]) => {
+  const handleDownloadReceipt = (donation: Donation) => {
     generateReceiptPDF(
       {
         receiptNo: donation.receiptNo,
@@ -214,10 +215,10 @@ export function Dashboard({ onDonateNow, userName }: DashboardProps) {
                     <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.type}</td>
                     <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>₹{donation.amount.toLocaleString()}</td>
                     <td style={{ padding: '12px 16px' }}>
-                      <span style={{ 
-                        backgroundColor: '#FEF1EE', 
-                        color: '#F36A4F', 
-                        padding: '4px 12px', 
+                      <span style={{
+                        backgroundColor: '#FEF1EE',
+                        color: '#F36A4F',
+                        padding: '4px 12px',
                         borderRadius: '999px',
                         fontSize: '13px',
                         fontWeight: 500
@@ -226,7 +227,11 @@ export function Dashboard({ onDonateNow, userName }: DashboardProps) {
                       </span>
                     </td>
                     <td style={{ padding: '12px 16px' }}>
-                      <button className="flex items-center gap-[8px]" style={{ color: '#F36A4F' }}>
+                      <button
+                        className="flex items-center gap-[8px]"
+                        style={{ color: '#F36A4F' }}
+                        onClick={() => handleDownloadReceipt(donation)}
+                      >
                         <Download size={16} />
                         <span style={{ fontSize: '14px' }}>Receipt</span>
                       </button>
