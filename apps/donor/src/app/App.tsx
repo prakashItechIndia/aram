@@ -185,7 +185,7 @@ function AppContent() {
         setUser({ name: email.split('@')[0], email, phone: '', isLoggedIn: true });
       }
       toast.success('Signed in successfully!');
-      setCurrentScreen(intendedRedirect || 'dashboard');
+      setCurrentScreen('donate');
       setIntendedRedirect(null);
     } else {
       toast.error(result.error ?? 'Sign in failed');
