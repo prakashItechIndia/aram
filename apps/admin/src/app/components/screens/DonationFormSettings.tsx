@@ -275,7 +275,7 @@ export const DonationFormSettings: React.FC = () => {
               gap: '8px',
             }}
           >
-            🕒 Version History
+             Version History
           </button>
           <button
             onClick={() => setShowPreview(true)}
@@ -291,7 +291,7 @@ export const DonationFormSettings: React.FC = () => {
               gap: '8px',
             }}
           >
-            👁️ Preview Form
+            Preview Form
           </button>
         </div>
       </div>

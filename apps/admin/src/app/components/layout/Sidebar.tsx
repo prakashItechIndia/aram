@@ -33,7 +33,8 @@ const navigation: NavItem[] = [
     priority: 'P0',
     children: [
       { id: 'donation-form', label: 'Donation Form', icon: FileText, path: '/settings/donation-form', priority: 'P0' },
-      { id: 'users-roles', label: 'Users & Roles', icon: Users, path: '/settings/users-roles', priority: 'P0' },
+      { id: 'users-roles', label: 'Roles', icon: Users, path: '/settings/users-roles', priority: 'P0' },
+      { id: 'users', label: 'Users', icon: Users, path: '/settings/users', priority: 'P0' },
     ],
   },
   {

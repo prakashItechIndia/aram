@@ -11,7 +11,7 @@ import {
  * Email / SMS templates – transactional, marketing, operational.
  */
 export const communicationTemplates = mssqlTable('communication_templates', {
-  id: int('id').primaryKey(),
+  id: int('id').identity({ seed: 1, increment: 1 }).primaryKey(),
   name: nvarchar('name', { length: 128 }).notNull(),
   category: nvarchar('category', { length: 32 }),
   type: nvarchar('type', { length: 16 }).notNull(),

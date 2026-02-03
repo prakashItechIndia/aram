@@ -13,6 +13,7 @@ import { Donors } from './components/screens/Donors';
 import { FundCollectionReport } from './components/screens/FundCollectionReport';
 import { DonationFormSettings } from './components/screens/DonationFormSettings';
 import { UsersRoles } from './screens/UsersRoles';
+import { UsersScreen } from './screens/UsersScreen';
 import { Reconciliation } from './screens/Reconciliation';
 import { GatewaySettings } from './screens/GatewaySettings';
 import { ReceiptManagement } from './screens/ReceiptManagement';
@@ -157,6 +158,7 @@ function AppContent() {
         {currentPath === '/donors/all' && <Donors />}
         {currentPath === '/reports/fund-collection' && <FundCollectionReport />}
         {currentPath === '/reports/receipt-register' && <ReceiptRegisterScreen />}
+        {currentPath === '/settings/users' && <UsersScreen />}
         {currentPath === '/settings/users-roles' && <UsersRoles />}
         {currentPath === '/payments/reconciliation' && <Reconciliation />}
         {currentPath === '/payments/gateway-settings' && <GatewaySettings />}
@@ -171,7 +173,7 @@ function AppContent() {
         {currentPath === '/payments/e-challan-entry' && <EChallanEntryScreen />}
         
         {/* Placeholder for other screens */}
-        {!['dashboard', 'settings/donation-form', 'payments/transactions', 'donors/all', 'reports/fund-collection', 'reports/receipt-register', 'settings/users-roles', 'payments/reconciliation', 'payments/gateway-settings', 'receipts/management', 'master-data/donation-categories', 'communications/enquiries', 'communications/templates', 'communications/automation', 'website/content', 'website/sponsors', 'website/gallery', 'payments/e-challan-entry'].some(path => currentPath.includes(path)) && (
+        {!['dashboard', 'settings/donation-form', 'settings/users', 'payments/transactions', 'donors/all', 'reports/fund-collection', 'reports/receipt-register', 'settings/users-roles', 'payments/reconciliation', 'payments/gateway-settings', 'receipts/management', 'master-data/donation-categories', 'communications/enquiries', 'communications/templates', 'communications/automation', 'website/content', 'website/sponsors', 'website/gallery', 'payments/e-challan-entry'].some(path => currentPath.includes(path)) && (
           <div className="min-h-[400px] flex items-center justify-center">
             <div className="text-center">
               <div className="w-16 h-16 bg-[#FEF1EE] rounded-full flex items-center justify-center mx-auto mb-4">

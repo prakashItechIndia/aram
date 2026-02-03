@@ -99,4 +99,45 @@ export class EmailService {
       this.logger.error(`Failed to send reset link to ${email}`, error);
     }
   }
+
+  /**
+   * Send invitation email to new admin user with temporary password.
+   */
+  async sendAdminInvite(email: string, name: string, tempPass: string) {
+    if (!this.transporter) {
+      throw new Error('SMTP not configured');
+    }
+    const from = this.configService.get<string>('SMTP_FROM') || '"Aram Foundation Admin" <no-reply@aram.org>';
+    const subject = 'Your Aram Foundation Admin Portal Account';
+    const html = `
+      <div style="font-family: Arial, sans-serif; color: #333;">
+        <h2>Welcome to Aram Foundation Admin Portal</h2>
+        <p>Hello ${name},</p>
+        <p>An admin account has been created for you.</p>
+        <p>Your temporary password is:</p>
+        <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; font-size: 18px; font-weight: bold; letter-spacing: 1px; display: inline-block;">
+            ${tempPass}
+        </div>
+        <p>Please use this password to log in and change it after your first login.</p>
+        <br>
+        <p>Regards,<br>Aram Foundation Team</p>
+      </div>
+    `;
+    await this.transporter.sendMail({ from, to: email, subject, html });
+    this.logger.log(`Admin invite email sent to ${email}`);
+  }
+
+  /**
+   * Send a template-based email (e.g. for test send from Communication Templates).
+   * Body is treated as plain text and wrapped in a simple HTML div.
+   */
+  async sendTemplate(to: string, subject: string, body: string) {
+    if (!this.transporter) {
+      throw new Error('SMTP not configured');
+    }
+    const from = this.configService.get<string>('SMTP_FROM') || '"Aram Foundation" <no-reply@aram.org>';
+    const html = `<div style="font-family: Arial, sans-serif; color: #333; white-space: pre-wrap;">${body.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`;
+    await this.transporter.sendMail({ from, to, subject, html });
+    this.logger.log(`Template email sent to ${to}`);
+  }
 }

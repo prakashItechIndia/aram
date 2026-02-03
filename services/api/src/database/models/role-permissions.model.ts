@@ -11,7 +11,7 @@ import {
  * Per-role menu permissions (Users & Roles screen).
  */
 export const rolePermissions = mssqlTable('role_permissions', {
-  id: int('id').primaryKey(),
+  id: int('id').identity({ seed: 1, increment: 1 }).primaryKey(),
   roleId: int('role_id').notNull(),
   permissionKey: nvarchar('permission_key', { length: 128 }).notNull(),
   canCreate: bit('can_create').notNull().default(false),

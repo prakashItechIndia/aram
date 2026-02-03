@@ -23,6 +23,8 @@ import { AuditModule } from './modules/audit/audit.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { WebsiteModule } from './modules/website/website.module';
 import { ExportLogModule } from './modules/export-log/export-log.module';
+import { UserRolesModule } from './modules/user-roles/user-roles.module';
+import { AdminUsersModule } from './modules/admin-users/admin-users.module';
 
 @Module({
   imports: [
@@ -48,6 +50,8 @@ import { ExportLogModule } from './modules/export-log/export-log.module';
     NotificationsModule,
     WebsiteModule,
     ExportLogModule,
+    UserRolesModule,
+    AdminUsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
