@@ -18,7 +18,16 @@ function getStoredAdminAuth(): AuthUser {
     const s = sessionStorage.getItem(ADMIN_AUTH_STORAGE_KEY);
     if (!s) return null;
     const parsed = JSON.parse(s) as { accessToken?: string; refreshToken?: string };
-    if (parsed?.accessToken) return { accessToken: parsed.accessToken, refreshToken: parsed.refreshToken ?? '' };
+    if (parsed?.accessToken) {
+      return {
+        accessToken: parsed.accessToken,
+        refreshToken: parsed.refreshToken ?? '',
+        id: parsed.id,
+        name: parsed.name,
+        email: parsed.email,
+        userType: parsed.userType
+      };
+    }
   } catch {
     /* ignore */
   }
@@ -35,7 +44,15 @@ function setStoredAdminAuth(user: AuthUser): void {
   }
 }
 
-type AuthUser = { accessToken: string; refreshToken: string; name?: string; profilePicture?: string } | null;
+type AuthUser = {
+  accessToken: string;
+  refreshToken: string;
+  id?: number;
+  name?: string;
+  email?: string;
+  userType?: string;
+  profilePicture?: string;
+} | null;
 
 type ApiContextValue = {
   api: AramApiClient;
@@ -114,6 +131,12 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
         });
         const data = (await res.json()) as {
           access_token?: string;
+          user?: {
+            id: number;
+            name: string;
+            email: string;
+            userType: string;
+          };
           message?: string | string[];
           statusCode?: number;
         };
@@ -124,7 +147,14 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
           return { success: false, error: message };
         }
         authTokenVersionRef.current += 1;
-        const authUser = { accessToken, refreshToken: '' };
+        const authUser: AuthUser = {
+          accessToken,
+          refreshToken: '',
+          id: data.user?.id,
+          name: data.user?.name,
+          email: data.user?.email,
+          userType: data.user?.userType,
+        };
         setUserState(authUser);
         setStoredAdminAuth(authUser);
         return { success: true };

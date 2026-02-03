@@ -20,6 +20,9 @@ import * as schema from '../../database/schema';
 import { EmailService } from '../email/email.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { generateStrongPassword } from '../../common/utils/password.util';
+import { donors } from '../../database/models/donors.model';
+import { eChallans } from '../../database/models/e-challans.model';
+import { donationCategories } from '../../database/models/donation-categories.model';
 import { SmsService } from '../sms/sms.service';
 import { userOtp } from '../../database/models/user-otp.model';
 
@@ -472,6 +475,12 @@ export class AuthService {
     const payload = { email: user.email, sub: user.id, userType: user.userType };
     return {
       access_token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        userType: user.userType,
+      },
     };
   }
 
