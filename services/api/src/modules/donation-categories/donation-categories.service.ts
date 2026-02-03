@@ -197,4 +197,45 @@ export class DonationCategoriesService {
       updatedAt: row.updatedAt,
     };
   }
+  async seedDefaults() {
+    const defaults = [
+      { code: 'aram-sei', label: 'Aram Sei Fund' },
+      { code: 'building', label: 'Building Fund' },
+      { code: 'education', label: 'Education Fund' },
+      { code: 'general', label: 'General Fund' },
+      { code: 'medical', label: 'Medical Fund' },
+      { code: 'sairam-sap', label: 'Sairam SAP' },
+    ];
+
+    const results = [];
+    for (const def of defaults) {
+      const existing = await this.db
+        .select()
+        .from(donationCategories)
+        .where(eq(donationCategories.categoryCode, def.code));
+      
+      if (!existing.length) {
+        // Create new
+        await this.create({
+          typeCode: def.code,
+          name: def.label,
+          description: `${def.label} donations`,
+          visibleOnForm: true,
+          sortOrder: 1,
+          isDefault: def.code === 'general',
+          eligible80G: true,
+          receiptEnabled: true,
+          autoEmailReceipt: true,
+          allowCustomAmount: true,
+          allowAnonymous: false,
+          mobileRequired: true,
+          addressRequired: true,
+        } as any);
+        results.push(`Created ${def.label}`);
+      } else {
+        results.push(`Exists ${def.label}`);
+      }
+    }
+    return results;
+  }
 }

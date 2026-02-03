@@ -23,10 +23,10 @@ const donationTypes = [
 ];
 
 const countries = [
-  { value: 'india', label: 'India' },
-  { value: 'usa', label: 'United States' },
-  { value: 'uk', label: 'United Kingdom' },
-  { value: 'canada', label: 'Canada' },
+  { value: 'india', label: 'India' }
+  // { value: 'usa', label: 'United States' },
+  // { value: 'uk', label: 'United Kingdom' },
+  // { value: 'canada', label: 'Canada' },
 ];
 
 const amountPresets = [500, 1000, 2500, 5000];
@@ -148,9 +148,8 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
           amount,
           donationType,
         });
-        // Show success toast with name
-        toast.success(`Thank you for your donation, ${name.trim()}`);
-        
+        // Success toast removed as per request - will show in final step instead
+
         onPay({
           name,
           email,
@@ -297,8 +296,10 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
                 placeholder="Enter custom amount"
                 value={customAmount}
                 onChange={(val) => {
-                  setCustomAmount(val);
-                  setSelectedPreset(null);
+                  if (/^\d*$/.test(val)) {
+                    setCustomAmount(val);
+                    setSelectedPreset(null);
+                  }
                 }}
                 type="number"
                 error={errors.amount}

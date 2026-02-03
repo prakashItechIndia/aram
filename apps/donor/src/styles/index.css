@@ -1,3 +1,33 @@
-@import './fonts.css';
-@import './tailwind.css';
-@import './theme.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply antialiased bg-[#F3F3F3];
+    }
+
+    h1 {
+        @apply text-[24px] leading-[32px] font-bold text-[#0D0D0D];
+    }
+
+    h2 {
+        @apply text-[20px] leading-[28px] font-bold text-[#0D0D0D];
+    }
+
+    h3 {
+        @apply text-[16px] leading-[24px] font-semibold text-[#0D0D0D];
+    }
+}
+
+/* Hide number input arrows/spinners globally - outside layer for higher specificity */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+input[type=number] {
+    -moz-appearance: textfield !important;
+    appearance: textfield !important;
+}

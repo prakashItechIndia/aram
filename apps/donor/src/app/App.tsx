@@ -47,6 +47,7 @@ interface UserData {
   address?: string;
   pan?: string;
   isLoggedIn: boolean;
+  profilePicture?: string;
 }
 
 import { ResetPassword } from './components/screens/ResetPassword';
@@ -63,7 +64,11 @@ function AppContent() {
     resetPassword,
     fetchUnreadNotificationsCount,
     refreshNotifications,
-    processDonation
+
+    processDonation,
+    changePassword,
+    uploadProfileImage,
+    updateProfile
   } = useApi();
   const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
     // Check for reset password token in URL
@@ -80,6 +85,7 @@ function AppContent() {
     email: authUser?.email ?? '',
     phone: authUser?.phone ?? '',
     address: authUser?.address ?? '',
+    profilePicture: authUser?.profilePicture,
     isLoggedIn: isAuthenticated,
   }));
 
@@ -92,6 +98,7 @@ function AppContent() {
         email: authUser.email ?? '',
         phone: authUser.phone ?? '',
         address: authUser.address ?? '',
+        profilePicture: authUser.profilePicture,
         isLoggedIn: true,
       });
     }
@@ -103,7 +110,7 @@ function AppContent() {
     api.authApi
       .authControllerGetProfile()
       .then((profileRes: unknown) => {
-        const profile = (profileRes as { data?: { id?: number; name?: string; email?: string; mobileNumber?: string; location?: string } })?.data;
+        const profile = (profileRes as { data?: { id?: number; name?: string; email?: string; mobileNumber?: string; location?: string; profilePicture?: string } })?.data;
         setUser((prev: UserData) => ({
           ...prev,
           id: profile?.id,
@@ -111,6 +118,7 @@ function AppContent() {
           email: profile?.email ?? prev.email,
           phone: profile?.mobileNumber ?? prev.phone,
           address: profile?.location ?? prev.address,
+          profilePicture: profile?.profilePicture ?? prev.profilePicture,
           isLoggedIn: true,
         }));
 
@@ -162,7 +170,7 @@ function AppContent() {
     if (result.success) {
       try {
         const profileRes = await api.authApi.authControllerGetProfile();
-        const profile = (profileRes as { data?: { id?: number; name?: string; email?: string; mobileNumber?: string; pan?: string; address?: string } })?.data;
+        const profile = (profileRes as { data?: { id?: number; name?: string; email?: string; mobileNumber?: string; pan?: string; address?: string; profilePicture?: string } })?.data;
         setUser({
           id: profile?.id,
           name: profile?.name ?? email.split('@')[0],
@@ -170,13 +178,14 @@ function AppContent() {
           phone: profile?.mobileNumber ?? '',
           pan: profile?.pan,
           address: profile?.address,
+          profilePicture: profile?.profilePicture,
           isLoggedIn: true,
         });
       } catch {
         setUser({ name: email.split('@')[0], email, phone: '', isLoggedIn: true });
       }
       toast.success('Signed in successfully!');
-      setCurrentScreen('dashboard');
+      setCurrentScreen('donate');
       setIntendedRedirect(null);
     } else {
       toast.error(result.error ?? 'Sign in failed');
@@ -209,7 +218,12 @@ function AppContent() {
       const success = Math.random() > 0.1;
       if (success) {
         setPaymentStatus('success');
-        toast.success('Payment successful!');
+
+        if (user.isLoggedIn) {
+          toast.success('Payment successful!');
+        } else {
+          toast.success('Temporary password sent via mail successfully');
+        }
 
         // Trigger real persistence and notification (only for logged-in users)
         // Guest donations are already handled in the guest-donate API call
@@ -240,18 +254,48 @@ function AppContent() {
   };
 
   // Profile Handlers
-  const handleSaveProfile = (data: any) => {
-    setUser({
-      ...user,
+  const handleSaveProfile = async (data: any) => {
+    const res = await updateProfile({
       name: data.name,
-      phone: data.phone,
+      mobileNumber: data.phone,
     });
-    toast.success('Profile updated successfully!');
+
+    if (res.success) {
+      setUser({
+        ...user,
+        name: data.name,
+        phone: data.phone,
+      });
+      toast.success('Profile updated successfully!');
+    } else {
+      toast.error(res.error || 'Failed to update profile');
+    }
   };
 
-  const handleUpdatePassword = (data: any) => {
-    toast.success('Password updated successfully!');
-    refreshNotifications();
+  const handleUpdatePassword = async (data: any): Promise<{ success: boolean; error?: string }> => {
+    const res = await changePassword(data);
+    if (res.success) {
+      toast.success(res.message || 'Password updated successfully!');
+      refreshNotifications();
+    } else {
+      // Only show toast if it's NOT a current password error (which is handled inline in Profile)
+      if (!res.error?.toLowerCase().includes('current password')) {
+        toast.error(res.error || 'Failed to update password');
+      }
+    }
+    return res;
+  };
+
+  const handleUploadProfileImage = async (file: File) => {
+    const res = await uploadProfileImage(file);
+    if (res.success) {
+      toast.success('Profile photo updated!');
+      // User state is auto-updated by context, forcing re-render via effect or direct state update in context
+      // If context updates userRef, we need to sync local user state.
+      // The useEffect at line 87 syncs local user when authUser changes.
+    } else {
+      toast.error(res.error || 'Failed to upload photo');
+    }
   };
 
   const handleForgotPasswordSubmit = async (email: string) => {
@@ -434,6 +478,8 @@ function AppContent() {
                 userPhone={user.phone}
                 onSaveProfile={handleSaveProfile}
                 onUpdatePassword={handleUpdatePassword}
+                profileImage={user.profilePicture}
+                onUploadImage={handleUploadProfileImage}
               />
             </main>
           </div>

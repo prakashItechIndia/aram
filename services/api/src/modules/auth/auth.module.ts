@@ -9,6 +9,7 @@ import { DatabaseModule } from '../../database/database.module';
 import { AdminGuard } from './guards/admin.guard';
 import { EmailModule } from '../email/email.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { S3Module } from '../s3/s3.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     PassportModule,
     EmailModule,
     NotificationsModule,
+    S3Module,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -29,4 +31,4 @@ import { NotificationsModule } from '../notifications/notifications.module';
   providers: [AuthService, JwtStrategy, AdminGuard],
   exports: [AuthService, JwtStrategy, AdminGuard, PassportModule, JwtModule],
 })
-export class AuthModule {}
+export class AuthModule { }

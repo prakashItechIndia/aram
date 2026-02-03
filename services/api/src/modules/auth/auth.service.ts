@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { DRIZZLE } from '../../database/database.module';
 import { tUser } from '../../database/models/t-user.model';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, or, inArray, desc } from 'drizzle-orm';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { LoginDto } from './dto/login.dto';
@@ -11,6 +11,8 @@ import { RegisterDto } from './dto/register.dto';
 import { AdminLoginDto } from './dto/admin-login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { setResetToken, getAndConsumeResetToken } from './admin-reset-token.store';
 import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';
 import * as schema from '../../database/schema';
@@ -30,41 +32,85 @@ export class AuthService {
     private notificationsService: NotificationsService,
   ) { }
 
-  /** Validate against existing T_USER table (E_Mail, Password; supports bcrypt or legacy plain/base64). */
-  async validateUser(email: string, pass: string): Promise<any> {
+  /** Validate against existing T_USER (Email or Mobile, Password). Checks existence first. */
+  async validateUser(identifier: string, pass: string): Promise<any> {
     if (!this.db) return null;
-    const normalizedEmail = (email || '').trim().toLowerCase();
+    const normalizedInput = (identifier || '').trim().toLowerCase();
     const trimmedPass = (pass || '').trim();
-    if (!normalizedEmail) return null;
+    if (!normalizedInput) return null;
 
     const rows = await this.db
       .select()
       .top(1)
       .from(tUser)
-      .where(and(eq(tUser.eMail, normalizedEmail), eq(tUser.isActive, true)));
+      .where(
+        and(
+          or(eq(tUser.eMail, normalizedInput), eq(tUser.mobileNumber, normalizedInput)),
+          eq(tUser.isActive, true) // Ensure active
+        )
+      );
+
     const user = rows[0];
-    if (!user) return null;
+    if (!user) {
+      throw new NotFoundException('User not Registered');
+    }
 
     // Check match against bcrypt, plain text, or base64 (legacy)
     const match =
       (user.password?.startsWith('$2') && (await bcrypt.compare(pass, user.password))) ||
-      pass === user.password ||
+      (pass === user.password) ||
       (user.password && Buffer.from(user.password, 'base64').toString('utf8') === pass);
-    if (!match) return null;
+
+    if (!match) return null; // Let login() handle invalid password
+
     const { password, ...result } = user;
     return { id: result.id, email: result.eMail, name: result.name, userType: result.userType };
   }
+
   async getProfile(userId: number) {
     if (!this.db) return null;
     const rows = await this.db.select().from(tUser).where(eq(tUser.id, userId));
     const user = rows[0];
     if (!user) return null;
+
+    // Fetch latest donation from donors table
+    const donorRows = await this.db
+      .select()
+      .from(schema.donors)
+      .where(eq(schema.donors.email, user.eMail.trim().toLowerCase()));
+    
+    let donationAmount = null;
+    let donationType = null;
+
+    if (donorRows[0]) {
+      const lastDonation = await this.db
+        .select({
+          amount: schema.eChallans.amount,
+          typeCode: schema.donationCategories.categoryCode,
+        })
+        .from(schema.eChallans)
+        .leftJoin(
+          schema.donationCategories,
+          eq(schema.eChallans.categoryId, schema.donationCategories.id),
+        )
+        .where(eq(schema.eChallans.donorId, donorRows[0].id))
+        .orderBy(desc(schema.eChallans.id));
+
+      const last = lastDonation[0];
+      if (last) {
+        donationAmount = last.amount;
+        donationType = last.typeCode;
+      }
+    }
+
     const { password, ...result } = user;
     return {
       ...result,
       userId: result.id,
-      email: result.eMail, // Normalize for frontend
+      email: result.eMail,
       mobileNumber: result.mobileNumber,
+      donationAmount,
+      donationType,
     };
   }
 
@@ -80,7 +126,7 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     const user = await this.validateUser(loginDto.email, loginDto.password);
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Invalid email or password');
     }
     const payload = { email: user.email, sub: user.id };
     return {
@@ -118,11 +164,9 @@ export class AuthService {
     const user = rows[0];
 
     if (!user) {
-        console.log('User not found for email:', normalizedEmail);
-        throw new NotFoundException('Account with this email does not exist.');
+      console.log('User not found for email:', normalizedEmail);
+      throw new NotFoundException('Account with this email does not exist.');
     }
-
-    console.log('User found:', user.id);
 
     // Generate Token
     const token = randomBytes(32).toString('hex');
@@ -132,10 +176,8 @@ export class AuthService {
     const resetLink = `${baseUrl}/reset-password?token=${token}`;
 
     // Send Email
-    console.log('Sending email...');
     try {
       await this.emailService.sendResetLink(normalizedEmail, user.name || 'User', resetLink);
-      console.log('Reset link sent successfully');
     } catch (e) {
       console.error('Error sending email:', e);
     }
@@ -171,6 +213,61 @@ export class AuthService {
     }
 
     return { message: 'Password has been reset. You can sign in with your new password.' };
+  }
+
+  async changePassword(userId: number, dto: ChangePasswordDto) {
+    const rows = await this.db.select().top(1).from(tUser).where(eq(tUser.id, userId));
+    const user = rows[0];
+    if (!user) throw new NotFoundException('User not found');
+
+    // Verify current password
+    const match =
+      (user.password?.startsWith('$2') && (await bcrypt.compare(dto.currentPassword, user.password))) ||
+      user.password === dto.currentPassword ||
+      (user.password && Buffer.from(user.password, 'base64').toString('utf8') === dto.currentPassword);
+
+    if (!match) {
+      throw new BadRequestException('Current password is incorrect');
+    }
+
+    if (dto.currentPassword === dto.newPassword) {
+      throw new BadRequestException('New password cannot be the same as the current password');
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+
+    await this.db
+      .update(tUser)
+      .set({ password: hashedPassword })
+      .where(eq(tUser.id, userId));
+
+    return { message: 'Password updated successfully' };
+  }
+
+  async updateProfileImage(userId: number, url: string) {
+    await this.db
+      .update(tUser)
+      .set({ profilePicture: url })
+      .where(eq(tUser.id, userId));
+    return { url };
+  }
+
+  async updateProfile(userId: number, dto: UpdateProfileDto) {
+    const updateData: any = {};
+    if (dto.name) updateData.name = dto.name;
+    if (dto.mobileNumber) updateData.mobileNumber = dto.mobileNumber;
+
+    if (Object.keys(updateData).length === 0) {
+      throw new BadRequestException('No fields provided for update');
+    }
+
+    await this.db
+      .update(tUser)
+      .set(updateData)
+      .where(eq(tUser.id, userId));
+
+    return { message: 'Profile updated successfully' };
   }
 
   private generateTemporaryPassword(length = 10): string {

@@ -30,6 +30,13 @@ export class DonorsController {
     return this.donorsService.findDonationsByUserId(req.user.userId);
   }
 
+  @Get('me/tax-summaries')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async getTaxSummaries(@Request() req: any) {
+    return this.donorsService.getDonationSummaries(req.user.userId);
+  }
+
   @Post('process-donation')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

@@ -35,7 +35,7 @@ function setStoredAdminAuth(user: AuthUser): void {
   }
 }
 
-type AuthUser = { accessToken: string; refreshToken: string } | null;
+type AuthUser = { accessToken: string; refreshToken: string; name?: string; profilePicture?: string } | null;
 
 type ApiContextValue = {
   api: AramApiClient;

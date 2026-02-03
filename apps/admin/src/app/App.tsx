@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createQueryClient } from '@aram/shared';
 import { ApiProvider, useApi } from './context/ApiContext';
@@ -20,12 +20,29 @@ function getResetTokenFromUrl(): string | null {
 }
 
 function AppContent() {
-  const { login: apiLogin, forgotPassword, resetPassword, logout: apiLogout, isAuthenticated } = useApi();
+  const { api, login: apiLogin, forgotPassword, resetPassword, logout: apiLogout, isAuthenticated, setUser, user } = useApi();
   const [authState, setAuthState] = useState<AuthState>(() => {
     if (isAuthenticated) return 'authenticated';
     return getResetTokenFromUrl() ? 'reset' : 'login';
   });
   const [resetToken, setResetToken] = useState<string | null>(() => getResetTokenFromUrl());
+
+  useEffect(() => {
+    if (isAuthenticated && !user?.name) {
+      api.authApi.authControllerGetProfile()
+        .then((res: any) => {
+          const profile = res.data;
+          if (profile) {
+            setUser({
+              ...user!,
+              name: profile.name,
+              profilePicture: profile.profilePicture
+            });
+          }
+        })
+        .catch(err => console.error('Failed to fetch admin profile:', err));
+    }
+  }, [isAuthenticated, user, api, setUser]);
 
   const handleLogin = async (email: string, password: string) => {
     const result = await apiLogin(email, password);

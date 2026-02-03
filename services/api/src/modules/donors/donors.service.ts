@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, Inject } from '@nestjs/common';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, desc } from 'drizzle-orm';
 import { DRIZZLE } from '../../database/database.module';
 import { tUser } from '../../database/models/t-user.model';
 import { donors } from '../../database/models/donors.model';
@@ -79,10 +79,29 @@ export class DonorsService {
       const donorRows = await this.db.select().top(1).from(donors).where(eq(donors.email, e));
       const donorDetail = donorRows[0];
       if (donorDetail) {
+        // Fetch latest donation for preferences
+        const lastDonation = await this.db
+          .select({
+            amount: schema.eChallans.amount,
+            typeCode: schema.donationCategories.categoryCode,
+          })
+          .from(schema.eChallans)
+          .leftJoin(
+            schema.donationCategories,
+            eq(schema.eChallans.categoryId, schema.donationCategories.id),
+          )
+          .where(eq(schema.eChallans.donorId, donorDetail.id))
+          .orderBy(desc(schema.eChallans.id)); // Use ID for unambiguous chronological order
+
+        const last = lastDonation[0];
+        console.log('Last Donation fetched:', last);
+
         return {
           ...donorInfo,
           pan: donorDetail.pan || null,
-          location: donorDetail.address || donorInfo.location, // Prefer donors table address
+          location: donorDetail.address || donorInfo.location,
+          donationAmount: last ? last.amount : null,
+          donationType: last ? last.typeCode : null,
         };
       }
     } catch (err) {
@@ -147,6 +166,44 @@ export class DonorsService {
       console.error('Error fetching donations:', err);
       return [];
     }
+  }
+  /**
+   * Get aggregated donation summaries by Financial Year.
+   * Used for 80G and Tax Document reports.
+   */
+  async getDonationSummaries(userId: number) {
+    const donations = await this.findDonationsByUserId(userId);
+    
+    // Group by FY
+    const summaries: Record<string, { totalAmount: number; count: number }> = {};
+
+    donations.forEach(d => {
+      const date = new Date(d.date);
+      const month = date.getMonth(); // 0-11
+      const year = date.getFullYear();
+      
+      // If month is Jan-Mar (0-2), it belongs to previous year's FY start
+      // e.g. Jan 2025 is FY 2024-25
+      const startYear = month < 3 ? year - 1 : year;
+      const fyLabel = `FY ${startYear}-${(startYear + 1).toString().slice(-2)}`;
+
+      if (!summaries[fyLabel]) {
+        summaries[fyLabel] = { totalAmount: 0, count: 0 };
+      }
+      
+      summaries[fyLabel].totalAmount += d.amount;
+      summaries[fyLabel].count += 1;
+    });
+
+    // Convert to array
+    return Object.entries(summaries).map(([year, data], index) => ({
+      id: index + 1,
+      year,
+      generatedDate: new Date().toISOString().split('T')[0],
+      totalAmount: data.totalAmount,
+      type: 'Form 10BE', // Default type for tax docs
+      fileName: `Doc_${year.replace(/\s/g, '_')}.pdf`
+    })).sort((a, b) => b.year.localeCompare(a.year)); // Newest first
   }
 
   /**
@@ -224,11 +281,11 @@ export class DonorsService {
       donorId = newDonorRows[0].id;
     }
 
-    // 2. Find Category Id
+    // 2. Find Category Id by categoryCode (frontend sends "aram-sei", "building", etc.)
     const catRows = await this.db
       .select()
       .from(schema.donationCategories)
-      .where(eq(schema.donationCategories.displayName, dto.donationType));
+      .where(eq(schema.donationCategories.categoryCode, dto.donationType));
     const categoryId = catRows[0]?.id || 1;
 
     // 3. Insert into e_challans using donorId (from donors table)
@@ -295,8 +352,8 @@ export class DonorsService {
 
     const now = new Date();
     // Create new user in T_USER
-    // Generate temp pass
-    const tempPass = generateStrongPassword(10);
+    // Generate temp pass based on PAN
+    const tempPass = `Aram@${normalizedPan}`;
     
     const hashedPassword = Buffer.from(tempPass).toString('base64');
 
