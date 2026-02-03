@@ -8,6 +8,7 @@ import * as schema from '../../database/schema';
 import type { CreateGuestDonorDto } from './dto/create-guest-donor.dto';
 import { EmailService } from '../email/email.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { generateStrongPassword } from '../../common/utils/password.util';
 
 /** User_Type value for donor/portal users (T_USER). */
 const DONOR_USER_TYPE = 'Standard User';
@@ -89,6 +90,63 @@ export class DonorsService {
     }
 
     return donorInfo;
+  }
+
+  /**
+   * Fetch all donations for a logged-in user from e_challans table.
+   * Returns formatted donation history with receipt numbers, amounts, dates, etc.
+   */
+  async findDonationsByUserId(userId: number) {
+    try {
+      // First get the user's email to find their donor profile
+      const userRows = await this.db.select().from(tUser).where(eq(tUser.id, userId));
+      const user = userRows[0];
+      if (!user?.eMail) return [];
+
+      const email = user.eMail.trim().toLowerCase();
+
+      // Find donor profile by email
+      const donorRows = await this.db
+        .select()
+        .from(donors)
+        .where(eq(donors.email, email));
+      
+      if (!donorRows[0]) return [];
+      const donorId = donorRows[0].id;
+
+      // Fetch all donations (e_challans) for this donor
+      const donations = await this.db
+        .select({
+          id: schema.eChallans.id,
+          challanNumber: schema.eChallans.challanNumber,
+          amount: schema.eChallans.amount,
+          donationDate: schema.eChallans.donationDate,
+          paymentMode: schema.eChallans.paymentMode,
+          categoryId: schema.eChallans.categoryId,
+          categoryName: schema.donationCategories.displayName,
+        })
+        .from(schema.eChallans)
+        .leftJoin(
+          schema.donationCategories,
+          eq(schema.eChallans.categoryId, schema.donationCategories.id),
+        )
+        .where(eq(schema.eChallans.donorId, donorId))
+        .orderBy(sql`${schema.eChallans.donationDate} DESC`);
+
+      // Format for frontend
+      return donations.map((d) => ({
+        id: d.id,
+        receiptNo: d.challanNumber,
+        amount: parseFloat(d.amount as any) || 0,
+        date: d.donationDate ? new Date(d.donationDate).toISOString().split('T')[0] : '',
+        type: d.categoryName || 'General Fund',
+        status: 'Success',
+        eligible80G: true, // Assuming all donations are 80G eligible
+      }));
+    } catch (err) {
+      console.error('Error fetching donations:', err);
+      return [];
+    }
   }
 
   /**
@@ -237,28 +295,9 @@ export class DonorsService {
 
     const now = new Date();
     // Create new user in T_USER
-    // Generate temp pass with constraints: Uppercase, Number, Special Char
-    const length = 10;
-    const lower = 'abcdefghijklmnopqrstuvwxyz';
-    const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const numbers = '0123456789';
-    const special = '!@#$%';
-    const all = lower + upper + numbers + special;
-
-    // Ensure at least one of each required type
-    let tempPass = '';
-    tempPass += upper.charAt(Math.floor(Math.random() * upper.length));
-    tempPass += numbers.charAt(Math.floor(Math.random() * numbers.length));
-    tempPass += special.charAt(Math.floor(Math.random() * special.length));
-
-    // Fill the rest randomly
-    for (let i = tempPass.length; i < length; ++i) {
-      tempPass += all.charAt(Math.floor(Math.random() * all.length));
-    }
-
-    // Shuffle the password
-    tempPass = tempPass.split('').sort(() => 0.5 - Math.random()).join('');
-
+    // Generate temp pass
+    const tempPass = generateStrongPassword(10);
+    
     const hashedPassword = Buffer.from(tempPass).toString('base64');
 
     await this.db.insert(tUser).values({
@@ -279,7 +318,7 @@ export class DonorsService {
     if (!inserted) throw new Error('Failed to create account');
 
     // Send email
-    await this.emailService.sendGuestWelcome(email, tempPass);
+    await this.emailService.sendGuestWelcome(email, dto.name.trim(), tempPass);
 
     // Create persistent welcome notification
     await this.notificationsService.create({

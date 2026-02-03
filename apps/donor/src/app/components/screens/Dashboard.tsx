@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AramButton } from '@/app/components/aram/AramButton';
 import { AramCard } from '@/app/components/aram/AramCard';
-import { Heart, Download, Calendar, DownloadIcon } from 'lucide-react';
-
-import { generateReceiptPDF } from '@/app/utils/pdfGenerator';
+import { Heart, Download, Calendar } from 'lucide-react';
+import { useApi } from '@/app/context/ApiContext';
 
 interface DashboardProps {
   onDonateNow: () => void;
@@ -17,22 +16,65 @@ interface DashboardProps {
   };
 }
 
-const mockDonations = [
-  { id: 1, date: '2025-01-15', receiptNo: 'AR2501150001', type: 'Education Fund', amount: 5000, status: 'Success', eligible80G: true },
-  { id: 2, date: '2025-01-10', receiptNo: 'AR2501100002', type: 'Medical Fund', amount: 2500, status: 'Success', eligible80G: true },
-  { id: 3, date: '2024-12-25', receiptNo: 'AR2412250003', type: 'General Fund', amount: 1000, status: 'Success', eligible80G: true },
-];
+interface Donation {
+  id: number;
+  receiptNo: string;
+  amount: number;
+  date: string;
+  type: string;
+  status: string;
+  eligible80G: boolean;
+}
 
 const mockEvents = [
   { id: 1, title: 'Annual Medical Camp 2025', date: '2025-02-15', description: 'Support our community health initiative' },
   { id: 2, title: 'Education Scholarship Drive', date: '2025-03-01', description: 'Help students achieve their dreams' },
 ];
 
-export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
-  const totalDonated = mockDonations.reduce((sum, d) => sum + d.amount, 0);
-  const donationCount = mockDonations.length;
-  const lastDonation = mockDonations[0];
-  const eligible80G = mockDonations.filter(d => d.eligible80G).reduce((sum, d) => sum + d.amount, 0);
+export function Dashboard({ onDonateNow, userName }: DashboardProps) {
+  const { user } = useApi();
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch donations when component mounts
+  useEffect(() => {
+    const fetchDonations = async () => {
+      if (!user?.accessToken) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError(null);
+        const baseUrl = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:3000/api';
+        const response = await fetch(`${baseUrl}/donors/me/donations`, {
+          headers: {
+            'Authorization': `Bearer ${user.accessToken}`,
+          },
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch donations');
+        const data = await response.json();
+        setDonations(data || []);
+      } catch (err) {
+        console.error('Failed to fetch donations:', err);
+        setError('Failed to load donations');
+        setDonations([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDonations();
+  }, [user?.accessToken]);
+
+  // Calculate stats from real donations
+  const totalDonated = donations.reduce((sum: number, d: Donation) => sum + d.amount, 0);
+  const donationCount = donations.length;
+  const lastDonation = donations[0];
+  const eligible80G = donations.filter((d: Donation) => d.eligible80G).reduce((sum: number, d: Donation) => sum + d.amount, 0);
 
   const handleDownloadReceipt = (donation: typeof mockDonations[0]) => {
     generateReceiptPDF(
@@ -66,109 +108,133 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
       </AramCard>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[24px]">
-        <AramCard>
-          <div className="flex flex-col gap-[8px]">
-            <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E', fontWeight: 500 }}>
-              Total Donated
-            </span>
-            <span style={{ fontSize: '28px', lineHeight: '36px', fontWeight: 700, color: '#F36A4F' }}>
-              ₹{totalDonated.toLocaleString()}
-            </span>
-          </div>
-        </AramCard>
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[24px]">
+          {[1, 2, 3, 4].map((i) => (
+            <AramCard key={i}>
+              <div className="flex flex-col gap-[8px] animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-24"></div>
+                <div className="h-8 bg-gray-200 rounded w-32"></div>
+              </div>
+            </AramCard>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[24px]">
+          <AramCard>
+            <div className="flex flex-col gap-[8px]">
+              <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E', fontWeight: 500 }}>
+                Total Donated
+              </span>
+              <span style={{ fontSize: '28px', lineHeight: '36px', fontWeight: 700, color: '#F36A4F' }}>
+                ₹{totalDonated.toLocaleString()}
+              </span>
+            </div>
+          </AramCard>
 
-        <AramCard>
-          <div className="flex flex-col gap-[8px]">
-            <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E', fontWeight: 500 }}>
-              Donations Count
-            </span>
-            <span style={{ fontSize: '28px', lineHeight: '36px', fontWeight: 700, color: '#0D0D0D' }}>
-              {donationCount}
-            </span>
-          </div>
-        </AramCard>
+          <AramCard>
+            <div className="flex flex-col gap-[8px]">
+              <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E', fontWeight: 500 }}>
+                Donations Count
+              </span>
+              <span style={{ fontSize: '28px', lineHeight: '36px', fontWeight: 700, color: '#0D0D0D' }}>
+                {donationCount}
+              </span>
+            </div>
+          </AramCard>
 
-        <AramCard>
-          <div className="flex flex-col gap-[8px]">
-            <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E', fontWeight: 500 }}>
-              Last Donation Date
-            </span>
-            <span style={{ fontSize: '18px', lineHeight: '26px', fontWeight: 600, color: '#0D0D0D' }}>
-              {lastDonation.date}
-            </span>
-          </div>
-        </AramCard>
+          <AramCard>
+            <div className="flex flex-col gap-[8px]">
+              <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E', fontWeight: 500 }}>
+                Last Donation Date
+              </span>
+              <span style={{ fontSize: '18px', lineHeight: '26px', fontWeight: 600, color: '#0D0D0D' }}>
+                {lastDonation?.date || 'N/A'}
+              </span>
+            </div>
+          </AramCard>
 
-        <AramCard>
-          <div className="flex flex-col gap-[8px]">
-            <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E', fontWeight: 500 }}>
-              80G Eligible (FY 2024-25)
-            </span>
-            <span style={{ fontSize: '28px', lineHeight: '36px', fontWeight: 700, color: '#734F48' }}>
-              ₹{eligible80G.toLocaleString()}
-            </span>
-          </div>
-        </AramCard>
-      </div>
+          <AramCard>
+            <div className="flex flex-col gap-[8px]">
+              <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E', fontWeight: 500 }}>
+                80G Eligible (FY 2024-25)
+              </span>
+              <span style={{ fontSize: '28px', lineHeight: '36px', fontWeight: 700, color: '#734F48' }}>
+                ₹{eligible80G.toLocaleString()}
+              </span>
+            </div>
+          </AramCard>
+        </div>
+      )}
 
       {/* My Donations Table */}
       <AramCard noPadding>
         <div className="p-[24px] border-b border-[#DBDBDB]">
           <h3>My Donations</h3>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr style={{ height: '48px', backgroundColor: '#F3F3F3' }}>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Date</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Receipt No</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Donation Type</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Amount</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Status</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Download</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mockDonations.map((donation) => (
-                <tr key={donation.id} style={{ height: '52px', borderBottom: '1px solid #DBDBDB' }}>
-                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.date}</td>
-                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.receiptNo}</td>
-                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.type}</td>
-                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>₹{donation.amount.toLocaleString()}</td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <span style={{
-                      backgroundColor: '#FEF1EE',
-                      color: '#F36A4F',
-                      padding: '4px 12px',
-                      borderRadius: '999px',
-                      fontSize: '13px',
-                      fontWeight: 500
-                    }}>
-                      {donation.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <button
-                      className="flex items-center gap-[8px]"
-                      style={{ color: '#F36A4F' }}
-                      onClick={() => handleDownloadReceipt(donation)}
-                    >
-                      <Download size={16} />
-                      <span style={{ fontSize: '14px' }}>Receipt</span>
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {mockDonations.length === 0 && (
+        {isLoading ? (
+          <div className="p-[48px] text-center">
+            <div className="flex items-center justify-center gap-4">
+              <div className="w-8 h-8 border-4 border-[#F36A4F] border-t-transparent rounded-full animate-spin"></div>
+              <p style={{ fontSize: '16px', color: '#6E6E6E' }}>Loading donations...</p>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="p-[48px] text-center">
+            <p style={{ fontSize: '16px', color: '#F36A4F' }}>{error}</p>
+            <AramButton onClick={() => window.location.reload()} variant="primary" className="mt-[16px]">
+              Retry
+            </AramButton>
+          </div>
+        ) : donations.length === 0 ? (
           <div className="p-[48px] text-center">
             <p style={{ fontSize: '16px', color: '#6E6E6E' }}>No donations yet</p>
             <AramButton onClick={onDonateNow} variant="primary" className="mt-[16px]">
               Make your first donation
             </AramButton>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr style={{ height: '48px', backgroundColor: '#F3F3F3' }}>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Date</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Receipt No</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Donation Type</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Amount</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Status</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Download</th>
+                </tr>
+              </thead>
+              <tbody>
+                {donations.map((donation: Donation) => (
+                  <tr key={donation.id} style={{ height: '52px', borderBottom: '1px solid #DBDBDB' }}>
+                    <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.date}</td>
+                    <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.receiptNo}</td>
+                    <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.type}</td>
+                    <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>₹{donation.amount.toLocaleString()}</td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{ 
+                        backgroundColor: '#FEF1EE', 
+                        color: '#F36A4F', 
+                        padding: '4px 12px', 
+                        borderRadius: '999px',
+                        fontSize: '13px',
+                        fontWeight: 500
+                      }}>
+                        {donation.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <button className="flex items-center gap-[8px]" style={{ color: '#F36A4F' }}>
+                        <Download size={16} />
+                        <span style={{ fontSize: '14px' }}>Receipt</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </AramCard>

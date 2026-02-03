@@ -149,7 +149,7 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
           donationType,
         });
         // Show success toast with name
-        toast.success(`Temporary password has been sent to ${name.trim()}`);
+        toast.success(`Thank you for your donation, ${name.trim()}`);
         
         onPay({
           name,
