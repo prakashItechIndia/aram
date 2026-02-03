@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createQueryClient } from '@aram/shared';
 import { toast, Toaster } from 'sonner';
@@ -15,6 +15,7 @@ import { PaymentProcessing } from '@/app/components/screens/PaymentProcessing';
 import { Reports } from '@/app/components/screens/Reports';
 import { Profile } from '@/app/components/screens/Profile';
 import { ForgotPassword } from '@/app/components/screens/ForgotPassword';
+import { OtpScreen } from '@/app/components/screens/OtpScreen';
 
 // Components & context
 import { PortalHeader } from '@/app/components/aram/PortalHeader';
@@ -35,7 +36,8 @@ type Screen =
   | 'reports'
   | 'profile'
   | 'forgot-password'
-  | 'reset-password';
+  | 'reset-password'
+  | 'otp';
 
 type PaymentStatus = 'processing' | 'success' | 'failed';
 
@@ -58,6 +60,8 @@ function AppContent() {
     user: authUser,
     isAuthenticated,
     login: apiLogin,
+    sendOtp,
+    verifyOtp,
     register: apiRegister,
     logout: apiLogout,
     forgotPassword,
@@ -79,6 +83,7 @@ function AppContent() {
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('processing');
   const [lastDonation, setLastDonation] = useState<any>(null);
   const [intendedRedirect, setIntendedRedirect] = useState<Screen | null>(null);
+  const [tempPhone, setTempPhone] = useState<string>('');
   const [user, setUser] = useState<UserData>(() => ({
     id: authUser?.id,
     name: authUser?.name ?? '',
@@ -344,9 +349,40 @@ function AppContent() {
         return (
           <SignIn
             onSignIn={handleSignIn}
+            onGetOtp={async (phone) => {
+              const res = await sendOtp(phone);
+              if (res.success) {
+                toast.success('OTP sent successfully');
+                setTempPhone(phone);
+                setCurrentScreen('otp');
+              } else {
+                toast.error(res.error || 'Failed to send OTP');
+              }
+            }}
             onCreateAccount={() => setCurrentScreen('create-account')}
             onForgotPassword={() => setCurrentScreen('forgot-password')}
             onBack={() => setCurrentScreen('entry')}
+            initialEmailOrPhone={tempPhone}
+          />
+        );
+
+      case 'otp':
+        return (
+          <OtpScreen
+            phoneNumber={tempPhone}
+            onVerify={async (otp) => {
+              const res = await verifyOtp(tempPhone, otp);
+              if (res.success) {
+                toast.success('Successfully signed in with OTP');
+                setCurrentScreen('dashboard');
+              } else {
+                toast.error(res.error || 'Verification failed');
+              }
+            }}
+            onEditPhone={() => {
+              setCurrentScreen('sign-in');
+            }}
+            onBack={() => setCurrentScreen('sign-in')}
           />
         );
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AramButton } from '@/app/components/aram/AramButton';
 import { AramCard } from '@/app/components/aram/AramCard';
 import { AramInput } from '@/app/components/aram/AramInput';
@@ -7,19 +7,39 @@ import { validateForm as globalValidateForm, validationRules, validationMessages
 
 interface SignInProps {
   onSignIn: (email: string, password: string) => void | Promise<void>;
+  onGetOtp: (phone: string) => void;
   onCreateAccount: () => void;
   onForgotPassword: () => void;
   onBack: () => void;
+  initialEmailOrPhone?: string;
 }
 
-export function SignIn({ onSignIn, onCreateAccount, onForgotPassword, onBack }: SignInProps) {
-  const [emailOrPhone, setEmailOrPhone] = useState('');
+export function SignIn({ onSignIn, onGetOtp, onCreateAccount, onForgotPassword, onBack, initialEmailOrPhone = '' }: SignInProps) {
+  const [emailOrPhone, setEmailOrPhone] = useState(initialEmailOrPhone);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<any>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const trimmed = emailOrPhone.trim();
+    // 10 purely numeric characters = mobile number
+    const isPhone = /^\d{10}$/.test(trimmed);
+    setIsMobile(isPhone);
+
+    // Clear password if switching to mobile
+    if (isPhone) {
+      setPassword('');
+    }
+  }, [emailOrPhone]);
 
   const handleSubmit = async () => {
+    if (isMobile) {
+      onGetOtp(emailOrPhone.trim());
+      return;
+    }
+
     const formData = {
       emailOrPhone: emailOrPhone.trim(),
       password,
@@ -86,33 +106,38 @@ export function SignIn({ onSignIn, onCreateAccount, onForgotPassword, onBack }: 
                 placeholder="Enter your password"
                 value={password}
                 onChange={setPassword}
-                required
+                required={!isMobile}
                 error={errors.password}
+                disabled={isMobile}
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-[14px] top-[38px]"
-              >
-                {showPassword ? <Eye size={18} color="#6E6E6E" /> : <EyeOff size={18} color="#6E6E6E" />}
-              </button>
+              {!isMobile && (
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-[14px] top-[38px]"
+                >
+                  {showPassword ? <Eye size={18} color="#6E6E6E" /> : <EyeOff size={18} color="#6E6E6E" />}
+                </button>
+              )}
             </div>
 
-            <div className="text-right">
-              <button
-                type="button"
-                onClick={onForgotPassword}
-                style={{ fontSize: '14px', lineHeight: '20px', color: '#F36A4F' }}
-                className="hover:underline"
-              >
-                Forgot password?
-              </button>
-            </div>
+            {!isMobile && (
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={onForgotPassword}
+                  style={{ fontSize: '14px', lineHeight: '20px', color: '#F36A4F' }}
+                  className="hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-[12px]">
             <AramButton onClick={handleSubmit} variant="primary" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? (isMobile ? 'Sending...' : 'Signing in...') : (isMobile ? 'Get OTP' : 'Sign in')}
             </AramButton>
             <div className="text-center">
               <button

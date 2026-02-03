@@ -4,6 +4,7 @@ import { AramCard } from '@/app/components/aram/AramCard';
 import { Heart, Download, Calendar } from 'lucide-react';
 import { useApi } from '@/app/context/ApiContext';
 import { generateReceiptPDF } from '@/app/utils/pdfGenerator';
+import { useDonationFormStatus } from '@/app/hooks/useDonationFormStatus';
 
 interface DashboardProps {
   onDonateNow: () => void;
@@ -37,6 +38,7 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
   const [donations, setDonations] = useState<Donation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { checkAndNotify } = useDonationFormStatus();
 
   // Fetch donations when component mounts
   useEffect(() => {
@@ -78,6 +80,8 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
   const eligible80G = donations.filter((d: Donation) => d.eligible80G).reduce((sum: number, d: Donation) => sum + d.amount, 0);
 
   const handleDownloadReceipt = (donation: Donation) => {
+    if (!checkAndNotify()) return;
+    
     generateReceiptPDF(
       {
         receiptNo: donation.receiptNo,
@@ -88,6 +92,11 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
       },
       user
     );
+  };
+
+  const handleDonateClick = () => {
+    if (!checkAndNotify()) return;
+    onDonateNow();
   };
 
   return (
@@ -101,7 +110,7 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
               Your contributions are making a real difference in our community
             </p>
           </div>
-          <AramButton onClick={onDonateNow} variant="primary" className="whitespace-nowrap">
+          <AramButton onClick={handleDonateClick} variant="primary" className="whitespace-nowrap">
             <Heart size={18} className="inline mr-2" />
             Donate Now
           </AramButton>
@@ -262,7 +271,7 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
                     </div>
                     <p style={{ fontSize: '14px', color: '#3D3D3D', marginTop: '8px' }}>{event.description}</p>
                   </div>
-                  <AramButton onClick={onDonateNow} variant="primary">
+                  <AramButton onClick={handleDonateClick} variant="primary">
                     Donate
                   </AramButton>
                 </div>
@@ -273,7 +282,7 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
       </AramCard>
 
       {/* Impact Section */}
-      <AramCard>
+      {/* <AramCard>
         <div className="flex flex-col gap-[16px]">
           <h3>Impact / Funds Utilized</h3>
           <p style={{ fontSize: '16px', color: '#3D3D3D' }}>
@@ -294,7 +303,7 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
             </div>
           </div>
         </div>
-      </AramCard>
+      </AramCard> */}
     </div>
   );
 }

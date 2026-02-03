@@ -25,6 +25,7 @@ import { WebsiteModule } from './modules/website/website.module';
 import { ExportLogModule } from './modules/export-log/export-log.module';
 import { UserRolesModule } from './modules/user-roles/user-roles.module';
 import { AdminUsersModule } from './modules/admin-users/admin-users.module';
+import { SmsModule } from './modules/sms/sms.module';
 
 @Module({
   imports: [
@@ -52,8 +53,9 @@ import { AdminUsersModule } from './modules/admin-users/admin-users.module';
     ExportLogModule,
     UserRolesModule,
     AdminUsersModule,
+    SmsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

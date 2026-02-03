@@ -10,7 +10,6 @@ export interface DonationFormConfig {
   // Form Status
   formEnabled?: boolean;
   maintenanceMessage?: string;
-  testMode?: boolean;
 
   // Field Configuration
   multiCountry?: boolean;
@@ -49,6 +48,17 @@ export class DonationFormSettingsService {
   constructor(@Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>) {}
 
   /**
+   * Get public donation form status (no auth required)
+   */
+  async getPublicStatus() {
+    const current = await this.getCurrentSettings();
+    return {
+      formEnabled: current.formEnabled ?? true,
+      maintenanceMessage: current.maintenanceMessage ?? 'Donation form is currently under maintenance. Please try again later.',
+    };
+  }
+
+  /**
    * Get the current active settings
    */
   async getCurrentSettings() {
@@ -71,7 +81,6 @@ export class DonationFormSettingsService {
       version: 'v1.0',
       isActive: false,
       formEnabled: true,
-      testMode: false,
       multiCountry: false,
       panRequired: 'threshold',
       addressRequired: true,
@@ -175,7 +184,6 @@ export class DonationFormSettingsService {
       isActive: true,
       formEnabled: dto.formEnabled ?? config.formEnabled ?? true,
       maintenanceMessage: dto.maintenanceMessage ?? current[0]?.maintenanceMessage ?? '',
-      testMode: dto.testMode ?? config.testMode ?? false,
       multiCountry: dto.multiCountry ?? config.multiCountry ?? false,
       panRequired: dto.panRequired ?? config.panRequired ?? 'threshold',
       addressRequired: dto.addressRequired ?? config.addressRequired ?? true,
@@ -223,7 +231,6 @@ export class DonationFormSettingsService {
       isActive: true,
       formEnabled: targetVersion[0].formEnabled,
       maintenanceMessage: targetVersion[0].maintenanceMessage,
-      testMode: targetVersion[0].testMode,
       multiCountry: targetVersion[0].multiCountry,
       panRequired: targetVersion[0].panRequired,
       addressRequired: targetVersion[0].addressRequired,
@@ -261,7 +268,6 @@ export class DonationFormSettingsService {
     return {
       formEnabled: true,
       maintenanceMessage: '',
-      testMode: false,
       multiCountry: false,
       panRequired: 'threshold',
       panThreshold: 2000,

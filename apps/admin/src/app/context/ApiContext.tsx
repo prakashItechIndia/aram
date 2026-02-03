@@ -18,7 +18,16 @@ function getStoredAdminAuth(): AuthUser {
     const s = sessionStorage.getItem(ADMIN_AUTH_STORAGE_KEY);
     if (!s) return null;
     const parsed = JSON.parse(s) as { accessToken?: string; refreshToken?: string };
-    if (parsed?.accessToken) return { accessToken: parsed.accessToken, refreshToken: parsed.refreshToken ?? '' };
+    if (parsed?.accessToken) {
+      return {
+        accessToken: parsed.accessToken,
+        refreshToken: parsed.refreshToken ?? '',
+        id: parsed.id,
+        name: parsed.name,
+        email: parsed.email,
+        userType: parsed.userType
+      };
+    }
   } catch {
     /* ignore */
   }
@@ -35,14 +44,22 @@ function setStoredAdminAuth(user: AuthUser): void {
   }
 }
 
-type AuthUser = { accessToken: string; refreshToken: string; name?: string; profilePicture?: string } | null;
+type AuthUser = {
+  accessToken: string;
+  refreshToken: string;
+  id?: number;
+  name?: string;
+  email?: string;
+  userType?: string;
+  profilePicture?: string;
+} | null;
 
 type ApiContextValue = {
   api: AramApiClient;
   user: AuthUser;
   isAuthenticated: boolean;
-  /** Authenticated fetch for API mutate (POST, PATCH, DELETE). Uses Bearer token from context. */
-  apiFetch: (path: string, options?: { method?: string; body?: string }) => Promise<Response>;
+  /** Authenticated fetch for API mutate (POST, PATCH, DELETE). Uses Bearer token from context. Pass body as FormData for file uploads (Content-Type omitted). */
+  apiFetch: (path: string, options?: { method?: string; body?: string | FormData }) => Promise<Response>;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   forgotPassword: (email: string) => Promise<{ success: boolean; error?: string; resetLink?: string }>;
   resetPassword: (token: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
@@ -88,14 +105,16 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
   }, [httpClientMinState]);
 
   const apiFetch = useCallback(
-    (path: string, options?: { method?: string; body?: string }) => {
+    (path: string, options?: { method?: string; body?: string | FormData }) => {
       const basePath = getApiBaseUrl();
       const url = path.startsWith('http') ? path : `${basePath}${path.startsWith('/') ? path : `/${path}`}`;
       const token = userRef.current?.accessToken;
       const headers: Record<string, string> = {
-        ...(options?.body ? { 'Content-Type': 'application/json' } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
+      if (options?.body && typeof options.body === 'string') {
+        headers['Content-Type'] = 'application/json';
+      }
       return fetch(url, { method: options?.method ?? 'GET', headers, body: options?.body });
     },
     [],
@@ -112,6 +131,12 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
         });
         const data = (await res.json()) as {
           access_token?: string;
+          user?: {
+            id: number;
+            name: string;
+            email: string;
+            userType: string;
+          };
           message?: string | string[];
           statusCode?: number;
         };
@@ -122,7 +147,14 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
           return { success: false, error: message };
         }
         authTokenVersionRef.current += 1;
-        const authUser = { accessToken, refreshToken: '' };
+        const authUser: AuthUser = {
+          accessToken,
+          refreshToken: '',
+          id: data.user?.id,
+          name: data.user?.name,
+          email: data.user?.email,
+          userType: data.user?.userType,
+        };
         setUserState(authUser);
         setStoredAdminAuth(authUser);
         return { success: true };

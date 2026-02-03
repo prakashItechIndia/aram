@@ -8,12 +8,7 @@ type TabType =
   | 'templates'
   | 'fields'
   | 'delivery'
-  | 'storage'
-  | 'bulk'
-  | 'status'
-  | 'reissue'
-  | 'audit'
-  | 'search';
+  | 'reissue';
 
 type ReceiptType = 'online' | 'echallan_cash' | 'echallan_cheque' | 'echallan_dd' | 'echallan_bank';
 
@@ -90,46 +85,15 @@ export function ReceiptManagement() {
   const [smsTemplate, setSmsTemplate] = useState('Thank you for your donation! Receipt: {receipt_no}. Download: {short_link}');
   const [smsShortLink, setSmsShortLink] = useState(true);
 
-  // Storage settings
-  const [storageMode, setStorageMode] = useState<'local' | 's3'>('s3');
-  const [linkSecurity, setLinkSecurity] = useState<'token' | 'public'>('token');
-  const [linkExpiry, setLinkExpiry] = useState('30');
-  const [allowRegenerationTemplate, setAllowRegenerationTemplate] = useState(true);
-  const [allowRegenerationAnytime, setAllowRegenerationAnytime] = useState(false);
-
-  // Bulk operations
-  const [bulkGenerationAllowed, setBulkGenerationAllowed] = useState(true);
-  const [maxBatchSize, setMaxBatchSize] = useState('500');
-  const [zipFilenameFormat, setZipFilenameFormat] = useState('Receipts_YYYYMMDD_Batch001.zip');
-  const [includeIndexCSV, setIncludeIndexCSV] = useState(true);
-  const [runInBackground, setRunInBackground] = useState(true);
-
-  // Status workflow
-  const [allowMarkReissued, setAllowMarkReissued] = useState(true);
-  const [autoMarkDelivered, setAutoMarkDelivered] = useState(true);
-
   // Reprint/Reissue
   const [allowReprint, setAllowReprint] = useState(true);
   const [allowResendEmail, setAllowResendEmail] = useState(true);
   const [allowCorrection, setAllowCorrection] = useState(true);
   const [requireReasonReprint, setRequireReasonReprint] = useState(false);
   const [requireReasonCorrection, setRequireReasonCorrection] = useState(true);
-
-  // Audit settings
   const [requireReasonManualGen, setRequireReasonManualGen] = useState(true);
   const [requireReasonRegenerate, setRequireReasonRegenerate] = useState(true);
   const [requireReasonCancel, setRequireReasonCancel] = useState(true);
-  const [retentionYears] = useState('7');
-
-  // Search defaults
-  const [defaultDateFilter, setDefaultDateFilter] = useState<'today' | 'this_month'>('this_month');
-  const [defaultPageSize, setDefaultPageSize] = useState('50');
-  const [exportFormats, setExportFormats] = useState({
-    csv: true,
-    excel: true,
-    pdf: true,
-  });
-  const [maskPII, setMaskPII] = useState(true);
 
   // Modals
   const [showReasonModal, setShowReasonModal] = useState(false);
@@ -142,12 +106,7 @@ export function ReceiptManagement() {
     { id: 'templates', label: 'Template Rules' },
     { id: 'fields', label: 'Mandatory Fields' },
     { id: 'delivery', label: 'Delivery Settings' },
-    { id: 'storage', label: 'Storage & Access' },
-    { id: 'bulk', label: 'Bulk Operations' },
-    { id: 'status', label: 'Status Workflow' },
     { id: 'reissue', label: 'Reprint & Reissue' },
-    { id: 'audit', label: 'Audit & Compliance' },
-    { id: 'search', label: 'Search Defaults' },
   ];
 
   const fetchSettings = useCallback(async () => {
@@ -211,45 +170,15 @@ export function ReceiptManagement() {
       if (data.smsTemplate) setSmsTemplate(data.smsTemplate);
       if (data.smsShortLink !== undefined) setSmsShortLink(data.smsShortLink);
 
-      // Storage & Access
-      if (data.storageMode) setStorageMode(data.storageMode);
-      if (data.linkSecurity) setLinkSecurity(data.linkSecurity);
-      if (data.linkExpiryDays !== undefined) setLinkExpiry(String(data.linkExpiryDays));
-      if (data.allowRegenerationTemplate !== undefined) setAllowRegenerationTemplate(data.allowRegenerationTemplate);
-      if (data.allowRegenerationAnytime !== undefined) setAllowRegenerationAnytime(data.allowRegenerationAnytime);
-
-      // Bulk Operations
-      if (data.bulkGenerationAllowed !== undefined) setBulkGenerationAllowed(data.bulkGenerationAllowed);
-      if (data.maxBatchSize !== undefined) setMaxBatchSize(String(data.maxBatchSize));
-      if (data.zipFilenameFormat) setZipFilenameFormat(data.zipFilenameFormat);
-      if (data.includeIndexCsv !== undefined) setIncludeIndexCSV(data.includeIndexCsv);
-      if (data.runInBackground !== undefined) setRunInBackground(data.runInBackground);
-
-      // Status Workflow & Reprint/Reissue
-      if (data.allowMarkReissued !== undefined) setAllowMarkReissued(data.allowMarkReissued);
-      if (data.autoMarkDelivered !== undefined) setAutoMarkDelivered(data.autoMarkDelivered);
+      // Reprint/Reissue
       if (data.allowReprint !== undefined) setAllowReprint(data.allowReprint);
       if (data.allowResendEmail !== undefined) setAllowResendEmail(data.allowResendEmail);
       if (data.allowCorrection !== undefined) setAllowCorrection(data.allowCorrection);
       if (data.requireReasonReprint !== undefined) setRequireReasonReprint(data.requireReasonReprint);
       if (data.requireReasonCorrection !== undefined) setRequireReasonCorrection(data.requireReasonCorrection);
-
-      // Audit & Compliance
       if (data.requireReasonManualGen !== undefined) setRequireReasonManualGen(data.requireReasonManualGen);
       if (data.requireReasonRegenerate !== undefined) setRequireReasonRegenerate(data.requireReasonRegenerate);
       if (data.requireReasonCancel !== undefined) setRequireReasonCancel(data.requireReasonCancel);
-
-      // Search Defaults
-      if (data.defaultDateFilter) setDefaultDateFilter(data.defaultDateFilter);
-      if (data.defaultPageSize !== undefined) setDefaultPageSize(String(data.defaultPageSize));
-      if (data.exportFormatsCsv !== undefined || data.exportFormatsExcel !== undefined || data.exportFormatsPdf !== undefined) {
-        setExportFormats({
-          csv: data.exportFormatsCsv ?? true,
-          excel: data.exportFormatsExcel ?? true,
-          pdf: data.exportFormatsPdf ?? true,
-        });
-      }
-      if (data.maskPii !== undefined) setMaskPII(data.maskPii);
     } catch (e: unknown) {
       setError((e as Error)?.message ?? 'Failed to load settings');
     } finally {
@@ -319,21 +248,7 @@ export function ReceiptManagement() {
         autoSendSmsOnReceiptGeneration: autoSendSMS,
         smsTemplate,
         smsShortLink,
-        // Storage & Access
-        storageMode,
-        linkSecurity,
-        linkExpiryDays: parseInt(linkExpiry),
-        allowRegenerationTemplate,
-        allowRegenerationAnytime,
-        // Bulk Operations
-        bulkGenerationAllowed,
-        maxBatchSize: parseInt(maxBatchSize),
-        zipFilenameFormat,
-        includeIndexCsv: includeIndexCSV,
-        runInBackground,
-        // Status Workflow & Reprint/Reissue
-        allowMarkReissued,
-        autoMarkDelivered,
+        // Reprint & Reissue
         allowReprint,
         allowResendEmail,
         allowCorrection,
@@ -342,15 +257,6 @@ export function ReceiptManagement() {
         requireReasonManualGen,
         requireReasonRegenerate,
         requireReasonCancel,
-        // Audit & Compliance
-        retentionYears: parseInt(retentionYears),
-        // Search Defaults
-        defaultDateFilter,
-        defaultPageSize: parseInt(defaultPageSize),
-        exportFormatsCsv: exportFormats.csv,
-        exportFormatsExcel: exportFormats.excel,
-        exportFormatsPdf: exportFormats.pdf,
-        maskPii: maskPII,
         // Metadata
         updatedBy: (user?.accessToken && 'Admin') || 'System',
       };
@@ -1560,404 +1466,6 @@ export function ReceiptManagement() {
             </div>
           )}
 
-          {/* Storage & Access Tab */}
-          {activeTab === 'storage' && (
-            <div className="space-y-[24px]">
-              <div>
-                <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D] mb-[16px]">
-                  PDF Storage Mode
-                </h3>
-                <div className="space-y-[12px]">
-                  <label className="flex items-center gap-[12px] cursor-pointer p-[16px] border border-[#DBDBDB] rounded-[16px] hover:bg-[#FAFAFA]">
-                    <input
-                      type="radio"
-                      name="storageMode"
-                      checked={storageMode === 'local'}
-                      onChange={() => {
-                        setStorageMode('local');
-                        setHasChanges(true);
-                      }}
-                      className="w-[20px] h-[20px]"
-                    />
-                    <div>
-                      <span className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D]">
-                        Local Storage
-                      </span>
-                      <span className="text-[13px] leading-[18px] text-[#6E6E6E]">
-                        Store PDFs on local server
-                      </span>
-                    </div>
-                  </label>
-
-                  <label className="flex items-center gap-[12px] cursor-pointer p-[16px] border-2 border-[#F36A4F] bg-[#FEF1EE] rounded-[16px]">
-                    <input
-                      type="radio"
-                      name="storageMode"
-                      checked={storageMode === 's3'}
-                      onChange={() => {
-                        setStorageMode('s3');
-                        setHasChanges(true);
-                      }}
-                      className="w-[20px] h-[20px]"
-                    />
-                    <div>
-                      <span className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D]">
-                        S3 / Cloud + CDN (Recommended)
-                      </span>
-                      <span className="text-[13px] leading-[18px] text-[#734F48]">
-                        Fast delivery and scalable storage
-                      </span>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D] mb-[16px]">
-                  Public Download Link Behavior
-                </h3>
-                <div className="space-y-[16px]">
-                  <div>
-                    <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[12px]">
-                      Link Security
-                    </label>
-                    <div className="space-y-[8px]">
-                      <label className="flex items-center gap-[12px] cursor-pointer">
-                        <input
-                          type="radio"
-                          name="linkSecurity"
-                          checked={linkSecurity === 'token'}
-                          onChange={() => {
-                            setLinkSecurity('token');
-                            setHasChanges(true);
-                          }}
-                          className="w-[20px] h-[20px]"
-                        />
-                        <span className="text-[14px] leading-[20px] text-[#3D3D3D]">
-                          Secure link with token
-                        </span>
-                      </label>
-
-                      <label className="flex items-center gap-[12px] cursor-pointer">
-                        <input
-                          type="radio"
-                          name="linkSecurity"
-                          checked={linkSecurity === 'public'}
-                          onChange={() => {
-                            setLinkSecurity('public');
-                            setHasChanges(true);
-                          }}
-                          className="w-[20px] h-[20px]"
-                        />
-                        <span className="text-[14px] leading-[20px] text-[#3D3D3D]">
-                          Public link (not recommended)
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[8px]">
-                      Link Expiry
-                    </label>
-                    <select
-                      value={linkExpiry}
-                      onChange={(e) => {
-                        setLinkExpiry(e.target.value);
-                        setHasChanges(true);
-                      }}
-                      className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
-                    >
-                      <option value="7">7 days</option>
-                      <option value="30">30 days</option>
-                      <option value="90">90 days</option>
-                      <option value="never">Never expire</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D] mb-[16px]">
-                  PDF Regeneration Policy
-                </h3>
-                <div className="space-y-[16px]">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[4px]">
-                        Allow regeneration when template changes
-                      </label>
-                      <p className="text-[13px] leading-[18px] text-[#6E6E6E]">
-                        Users can regenerate PDF if template is updated
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setAllowRegenerationTemplate(!allowRegenerationTemplate);
-                        setHasChanges(true);
-                      }}
-                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                        allowRegenerationTemplate ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                      }`}
-                    >
-                      <div
-                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                          allowRegenerationTemplate ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[4px]">
-                        Allow regeneration anytime
-                      </label>
-                      <p className="text-[13px] leading-[18px] text-[#6E6E6E]">
-                        Requires audit reason for compliance
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setAllowRegenerationAnytime(!allowRegenerationAnytime);
-                        setHasChanges(true);
-                      }}
-                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                        allowRegenerationAnytime ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                      }`}
-                    >
-                      <div
-                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                          allowRegenerationAnytime ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Bulk Operations Tab */}
-          {activeTab === 'bulk' && (
-            <div className="space-y-[24px]">
-              <div>
-                <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D] mb-[16px]">
-                  Bulk Generation Settings
-                </h3>
-                <div className="space-y-[16px]">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[16px] leading-[24px] font-medium text-[#0D0D0D]">
-                      Allow bulk generation
-                    </label>
-                    <button
-                      onClick={() => {
-                        setBulkGenerationAllowed(!bulkGenerationAllowed);
-                        setHasChanges(true);
-                      }}
-                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                        bulkGenerationAllowed ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                      }`}
-                    >
-                      <div
-                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                          bulkGenerationAllowed ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  {bulkGenerationAllowed && (
-                    <>
-                      <div>
-                        <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[8px]">
-                          Maximum Records Per Batch
-                        </label>
-                        <select
-                          value={maxBatchSize}
-                          onChange={(e) => {
-                            setMaxBatchSize(e.target.value);
-                            setHasChanges(true);
-                          }}
-                          className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
-                        >
-                          <option value="100">100 records</option>
-                          <option value="500">500 records</option>
-                          <option value="1000">1000 records</option>
-                        </select>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <label className="text-[16px] leading-[24px] font-medium text-[#0D0D0D]">
-                          Run in background queue
-                        </label>
-                        <button
-                          onClick={() => {
-                            setRunInBackground(!runInBackground);
-                            setHasChanges(true);
-                          }}
-                          className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                            runInBackground ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                          }`}
-                        >
-                          <div
-                            className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                              runInBackground ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                            }`}
-                          />
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {bulkGenerationAllowed && (
-                <div>
-                  <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D] mb-[16px]">
-                    ZIP Download Settings
-                  </h3>
-                  <div className="space-y-[16px]">
-                    <div>
-                      <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[8px]">
-                        Filename Format
-                      </label>
-                      <input
-                        type="text"
-                        value={zipFilenameFormat}
-                        onChange={(e) => {
-                          setZipFilenameFormat(e.target.value);
-                          setHasChanges(true);
-                        }}
-                        className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
-                      />
-                      <p className="text-[13px] leading-[18px] text-[#6E6E6E] mt-[6px]">
-                        Variables: YYYYMMDD, Batch001
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <label className="text-[16px] leading-[24px] font-medium text-[#0D0D0D]">
-                        Include index CSV inside ZIP
-                      </label>
-                      <button
-                        onClick={() => {
-                          setIncludeIndexCSV(!includeIndexCSV);
-                          setHasChanges(true);
-                        }}
-                        className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                          includeIndexCSV ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                        }`}
-                      >
-                        <div
-                          className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                            includeIndexCSV ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Status Workflow Tab */}
-          {activeTab === 'status' && (
-            <div className="space-y-[24px]">
-              <div>
-                <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D] mb-[16px]">
-                  Receipt Statuses
-                </h3>
-                <div className="border border-[#DBDBDB] rounded-[16px] overflow-hidden">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-[#FAFAFA] border-b border-[#DBDBDB]">
-                        <th className="text-left px-[16px] py-[12px] text-[13px] leading-[18px] font-medium text-[#6E6E6E]">
-                          Status
-                        </th>
-                        <th className="text-left px-[16px] py-[12px] text-[13px] leading-[18px] font-medium text-[#6E6E6E]">
-                          Description
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[
-                        { status: 'Pending Generation', desc: 'Receipt queued for generation' },
-                        { status: 'Generated', desc: 'PDF created successfully' },
-                        { status: 'Email Sent', desc: 'Email delivered to donor' },
-                        { status: 'Email Failed', desc: 'Email delivery failed' },
-                        { status: 'SMS Sent', desc: 'SMS delivered to donor' },
-                        { status: 'SMS Failed', desc: 'SMS delivery failed' },
-                        { status: 'Cancelled', desc: 'Receipt cancelled (restricted)' },
-                      ].map((item, idx) => (
-                        <tr key={idx} className="border-b border-[#F0F0F0]">
-                          <td className="px-[16px] py-[12px]">
-                            <span className="px-[8px] py-[2px] bg-[#F3F3F3] text-[#3D3D3D] rounded-[4px] text-[13px] leading-[18px] font-medium">
-                              {item.status}
-                            </span>
-                          </td>
-                          <td className="px-[16px] py-[12px] text-[14px] leading-[20px] text-[#6E6E6E]">
-                            {item.desc}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D] mb-[16px]">
-                  Status Workflow Settings
-                </h3>
-                <div className="space-y-[16px]">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[16px] leading-[24px] font-medium text-[#0D0D0D]">
-                      Allow "mark as reissued"
-                    </label>
-                    <button
-                      onClick={() => {
-                        setAllowMarkReissued(!allowMarkReissued);
-                        setHasChanges(true);
-                      }}
-                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                        allowMarkReissued ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                      }`}
-                    >
-                      <div
-                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                          allowMarkReissued ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <label className="text-[16px] leading-[24px] font-medium text-[#0D0D0D]">
-                      Auto-mark delivered if email success
-                    </label>
-                    <button
-                      onClick={() => {
-                        setAutoMarkDelivered(!autoMarkDelivered);
-                        setHasChanges(true);
-                      }}
-                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                        autoMarkDelivered ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                      }`}
-                    >
-                      <div
-                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                          autoMarkDelivered ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Reprint & Reissue Tab */}
           {activeTab === 'reissue' && (
             <div className="space-y-[24px]">
@@ -2091,40 +1599,6 @@ export function ReceiptManagement() {
                   )}
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* Audit & Compliance Tab */}
-          {activeTab === 'audit' && (
-            <div className="space-y-[24px]">
-              <div>
-                <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D] mb-[16px]">
-                  Audit Log Events
-                </h3>
-                <div className="border border-[#DBDBDB] rounded-[16px] p-[16px]">
-                  <p className="text-[14px] leading-[20px] text-[#6E6E6E] mb-[12px]">
-                    The following events are automatically logged:
-                  </p>
-                  <ul className="space-y-[8px]">
-                    {[
-                      'Receipt generated (auto/manual)',
-                      'Receipt regenerated PDF',
-                      'Receipt reprinted',
-                      'Receipt emailed / SMS sent',
-                      'Template applied / changed',
-                      'Bulk generation started/completed',
-                      'Failed delivery retries',
-                      'Exported receipt register',
-                      'Status changes (cancelled, reissued)',
-                    ].map((event, idx) => (
-                      <li key={idx} className="flex items-center gap-[8px]">
-                        <Check className="w-4 h-4 text-[#F36A4F] flex-shrink-0" />
-                        <span className="text-[14px] leading-[20px] text-[#3D3D3D]">{event}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
 
               <div>
                 <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D] mb-[16px]">
@@ -2189,146 +1663,6 @@ export function ReceiptManagement() {
                       <div
                         className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
                           requireReasonCancel ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-[16px] bg-[#FEF1EE] border border-[#F36A4F] rounded-[16px]">
-                <div className="flex items-start gap-[12px]">
-                  <AlertCircle className="w-5 h-5 text-[#F36A4F] flex-shrink-0 mt-[2px]" />
-                  <div>
-                    <p className="text-[16px] leading-[24px] font-medium text-[#734F48] mb-[4px]">
-                      Retention Policy
-                    </p>
-                    <p className="text-[14px] leading-[20px] text-[#734F48]">
-                      All receipt audit logs are retained for minimum {retentionYears} years as per compliance requirements.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Search Defaults Tab */}
-          {activeTab === 'search' && (
-            <div className="space-y-[24px]">
-              <div>
-                <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D] mb-[16px]">
-                  Default Filters
-                </h3>
-                <div className="space-y-[16px]">
-                  <div>
-                    <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[8px]">
-                      Default Date Filter
-                    </label>
-                    <select
-                      value={defaultDateFilter}
-                      onChange={(e) => {
-                        setDefaultDateFilter(e.target.value as 'today' | 'this_month');
-                        setHasChanges(true);
-                      }}
-                      className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
-                    >
-                      <option value="today">Today</option>
-                      <option value="this_month">This Month</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[8px]">
-                      Default Page Size
-                    </label>
-                    <select
-                      value={defaultPageSize}
-                      onChange={(e) => {
-                        setDefaultPageSize(e.target.value);
-                        setHasChanges(true);
-                      }}
-                      className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
-                    >
-                      <option value="25">25 per page</option>
-                      <option value="50">50 per page</option>
-                      <option value="100">100 per page</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D] mb-[16px]">
-                  Export Settings
-                </h3>
-                <div className="space-y-[16px]">
-                  <div>
-                    <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[12px]">
-                      Allowed Export Formats
-                    </label>
-                    <div className="space-y-[8px]">
-                      <label className="flex items-center gap-[12px] cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={exportFormats.csv}
-                          onChange={() => {
-                            setExportFormats((prev) => ({ ...prev, csv: !prev.csv }));
-                            setHasChanges(true);
-                          }}
-                          className="w-[20px] h-[20px] rounded-[4px] border-2 border-[#DBDBDB] checked:bg-[#F36A4F] checked:border-[#F36A4F]"
-                        />
-                        <span className="text-[14px] leading-[20px] text-[#3D3D3D]">CSV</span>
-                      </label>
-
-                      <label className="flex items-center gap-[12px] cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={exportFormats.excel}
-                          onChange={() => {
-                            setExportFormats((prev) => ({ ...prev, excel: !prev.excel }));
-                            setHasChanges(true);
-                          }}
-                          className="w-[20px] h-[20px] rounded-[4px] border-2 border-[#DBDBDB] checked:bg-[#F36A4F] checked:border-[#F36A4F]"
-                        />
-                        <span className="text-[14px] leading-[20px] text-[#3D3D3D]">Excel</span>
-                      </label>
-
-                      <label className="flex items-center gap-[12px] cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={exportFormats.pdf}
-                          onChange={() => {
-                            setExportFormats((prev) => ({ ...prev, pdf: !prev.pdf }));
-                            setHasChanges(true);
-                          }}
-                          className="w-[20px] h-[20px] rounded-[4px] border-2 border-[#DBDBDB] checked:bg-[#F36A4F] checked:border-[#F36A4F]"
-                        />
-                        <span className="text-[14px] leading-[20px] text-[#3D3D3D]">PDF</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[4px]">
-                        Mask donor PII in exports
-                      </label>
-                      <p className="text-[13px] leading-[18px] text-[#6E6E6E]">
-                        For non-privileged roles (mask email, mobile, PAN)
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setMaskPII(!maskPII);
-                        setHasChanges(true);
-                      }}
-                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                        maskPII ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                      }`}
-                    >
-                      <div
-                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                          maskPII ? 'translate-x-[22px]' : 'translate-x-[2px]'
                         }`}
                       />
                     </button>

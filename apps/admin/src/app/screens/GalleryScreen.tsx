@@ -7,7 +7,6 @@ import {
   EyeOff,
   Folder,
   Search,
-  Filter,
   Grid3x3,
   List,
   Download,
@@ -162,7 +161,6 @@ export function GalleryScreen() {
   }, [fetchGallery]);
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [showFilters, setShowFilters] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
   const [showAlbums, setShowAlbums] = useState(false);
@@ -179,6 +177,11 @@ export function GalleryScreen() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const replaceFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Replace image in editor
+  const [replacementFile, setReplacementFile] = useState<File | null>(null);
+  const [replacementPreviewUrl, setReplacementPreviewUrl] = useState<string | null>(null);
 
   // Editor state
   const [imageTitle, setImageTitle] = useState('');
@@ -198,13 +201,58 @@ export function GalleryScreen() {
     setImageTags(image.tags);
     setImageAlbum(image.album);
     setImageVisibility(image.visibility);
+    if (replacementPreviewUrl) URL.revokeObjectURL(replacementPreviewUrl);
+    setReplacementFile(null);
+    setReplacementPreviewUrl(null);
     setShowEditor(true);
+  };
+
+  const handleReplaceImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) return;
+    if (replacementPreviewUrl) URL.revokeObjectURL(replacementPreviewUrl);
+    setReplacementFile(file);
+    setReplacementPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const clearReplacement = () => {
+    if (replacementPreviewUrl) URL.revokeObjectURL(replacementPreviewUrl);
+    setReplacementFile(null);
+    setReplacementPreviewUrl(null);
   };
 
   const handleSave = async () => {
     if (!selectedImage) return;
+    const token = user?.accessToken;
     try {
       setSaving(true);
+      let imagePath: string | undefined;
+      let thumbnailPath: string | undefined;
+      if (replacementFile && token) {
+        const baseUrl = getApiBaseUrl();
+        const formData = new FormData();
+        formData.append('file', replacementFile);
+        const uploadRes = await fetch(`${baseUrl}/website/gallery/upload`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        if (!uploadRes.ok) {
+          if (uploadRes.status === 401) {
+            logout();
+            throw new Error('Session expired. Please log in again.');
+          }
+          throw new Error(await uploadRes.text() || 'Upload failed');
+        }
+        const data = (await uploadRes.json()) as { imagePath: string; thumbnailPath?: string };
+        imagePath = data.imagePath;
+        thumbnailPath = data.thumbnailPath ?? data.imagePath;
+      }
       const body = JSON.stringify({
         title: imageTitle,
         caption: imageCaption || undefined,
@@ -213,9 +261,14 @@ export function GalleryScreen() {
         tagsJson: JSON.stringify(imageTags),
         visibility: imageVisibility,
         ...(imageAlbum ? { albumId: Number(imageAlbum) } : {}),
+        ...(imagePath !== undefined ? { imagePath } : {}),
+        ...(thumbnailPath !== undefined ? { thumbnailPath } : {}),
       });
       const res = await apiFetch(`/website/gallery/${selectedImage.id}`, { method: 'PATCH', body });
       if (!res.ok) throw new Error(await res.text());
+      if (replacementPreviewUrl) URL.revokeObjectURL(replacementPreviewUrl);
+      setReplacementFile(null);
+      setReplacementPreviewUrl(null);
       setShowEditor(false);
       await fetchGallery();
     } catch (e: unknown) {
@@ -385,14 +438,6 @@ export function GalleryScreen() {
             </button>
 
             <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] bg-white hover:bg-[#F3F3F3] transition-colors flex items-center gap-2 text-[14px] font-medium text-[#3D3D3D]"
-            >
-              <Filter className="w-4 h-4" />
-              Filters
-            </button>
-
-            <button
               onClick={() => setShowUpload(true)}
               className="h-[44px] px-[20px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] transition-colors flex items-center gap-2 text-[14px] font-medium text-white"
             >
@@ -408,6 +453,76 @@ export function GalleryScreen() {
           {error}
         </div>
       )}
+
+      {/* Filters – always visible, match design: Filters label left, Reset All right, then Album / Tags / Visibility / Search */}
+      <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[24px] mb-[24px]">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-[14px] font-semibold text-[#0D0D0D]">Filters</h3>
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="text-[13px] font-medium text-[#F36A4F] hover:text-[#E55A3F]"
+          >
+            Reset All
+          </button>
+        </div>
+        <div className="grid grid-cols-4 gap-4">
+          <div>
+            <label className="block text-[12px] font-medium text-[#6E6E6E] mb-2">Album</label>
+            <select
+              value={filterAlbum}
+              onChange={(e) => setFilterAlbum(e.target.value)}
+              className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#0D0D0D] bg-white focus:outline-none focus:border-[#F36A4F] appearance-none bg-[length:16px] bg-[right_12px_center] bg-no-repeat"
+              style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%236E6E6E\' stroke-width=\'2\'%3E%3Cpath d=\'M6 9l6 6 6-6\'/%3E%3C/svg%3E")' }}
+            >
+              <option value="">All Albums</option>
+              {albums.map((album) => (
+                <option key={album.id} value={album.id}>{album.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[12px] font-medium text-[#6E6E6E] mb-2">Tags</label>
+            <select
+              value={filterTag}
+              onChange={(e) => setFilterTag(e.target.value)}
+              className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#0D0D0D] bg-white focus:outline-none focus:border-[#F36A4F] appearance-none bg-[length:16px] bg-[right_12px_center] bg-no-repeat"
+              style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%236E6E6E\' stroke-width=\'2\'%3E%3Cpath d=\'M6 9l6 6 6-6\'/%3E%3C/svg%3E")' }}
+            >
+              <option value="">All Tags</option>
+              {TAGS.map((tag) => (
+                <option key={tag} value={tag}>{tag}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[12px] font-medium text-[#6E6E6E] mb-2">Visibility</label>
+            <select
+              value={filterVisibility}
+              onChange={(e) => setFilterVisibility(e.target.value)}
+              className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#0D0D0D] bg-white focus:outline-none focus:border-[#F36A4F] appearance-none bg-[length:16px] bg-[right_12px_center] bg-no-repeat"
+              style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%236E6E6E\' stroke-width=\'2\'%3E%3Cpath d=\'M6 9l6 6 6-6\'/%3E%3C/svg%3E")' }}
+            >
+              <option value="">All</option>
+              <option value="Public">Public</option>
+              <option value="Private">Private</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-[12px] font-medium text-[#6E6E6E] mb-2">Search</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6E6E6E] pointer-events-none" />
+              <input
+                type="text"
+                value={filterSearch}
+                onChange={(e) => setFilterSearch(e.target.value)}
+                placeholder="Search images..."
+                className="w-full h-[44px] pl-[36px] pr-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#0D0D0D] placeholder:text-[#9E9E9E] focus:outline-none focus:border-[#F36A4F]"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
 
       {loading ? (
         <div className="py-12 text-center text-[14px] text-[#6E6E6E]">Loading gallery...</div>
@@ -437,75 +552,6 @@ export function GalleryScreen() {
           <p className="text-[24px] font-semibold text-[#0D0D0D]">—</p>
         </div>
       </div>
-
-      {/* Filters Panel */}
-      {showFilters && (
-        <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px] mb-[24px]">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[14px] font-semibold text-[#0D0D0D]">Filters</h3>
-            <button onClick={resetFilters} className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
-              Reset All
-            </button>
-          </div>
-
-          <div className="grid grid-cols-4 gap-[16px]">
-            <div>
-              <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">Album</label>
-              <select 
-                value={filterAlbum}
-                onChange={(e) => setFilterAlbum(e.target.value)}
-                className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
-              >
-                <option value="">All Albums</option>
-                {albums.map((album) => (
-                  <option key={album.id} value={album.id}>{album.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">Tags</label>
-              <select 
-                value={filterTag}
-                onChange={(e) => setFilterTag(e.target.value)}
-                className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
-              >
-                <option value="">All Tags</option>
-                {TAGS.map((tag) => (
-                  <option key={tag} value={tag}>{tag}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">Visibility</label>
-              <select 
-                value={filterVisibility}
-                onChange={(e) => setFilterVisibility(e.target.value)}
-                className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
-              >
-                <option value="">All</option>
-                <option value="Public">Public</option>
-                <option value="Private">Private</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">Search</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6E6E6E]" />
-                <input
-                  type="text"
-                  value={filterSearch}
-                  onChange={(e) => setFilterSearch(e.target.value)}
-                  placeholder="Search images..."
-                  className="w-full h-[44px] pl-[36px] pr-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Toolbar */}
       <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px] mb-[16px]">
@@ -836,11 +882,21 @@ export function GalleryScreen() {
       {/* Image Editor Modal */}
       {showEditor && selectedImage && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-[24px] overflow-auto">
+          <input
+            type="file"
+            ref={replaceFileInputRef}
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={handleReplaceImageChange}
+          />
           <div className="bg-white rounded-[16px] w-full max-w-[900px] my-auto">
             <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
               <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Edit Image Details</h3>
               <button
-                onClick={() => setShowEditor(false)}
+                onClick={() => {
+                  clearReplacement();
+                  setShowEditor(false);
+                }}
                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
               >
                 <X className="w-5 h-5 text-[#3D3D3D]" />
@@ -851,18 +907,39 @@ export function GalleryScreen() {
               <div className="grid grid-cols-2 gap-[24px]">
                 <div>
                   <img
-                    src={galleryAssetUrl(selectedImage.thumbnail)}
+                    src={replacementPreviewUrl ?? galleryAssetUrl(selectedImage.thumbnail)}
                     alt={selectedImage.altText}
                     className="w-full rounded-[12px] border border-[#DBDBDB]"
                   />
                   <div className="mt-4 space-y-2 text-[12px] text-[#6E6E6E]">
-                    <p>File size: {selectedImage.fileSize}</p>
-                    <p>Uploaded: {selectedImage.uploadedOn}</p>
-                    <p>By: {selectedImage.uploadedBy}</p>
+                    {replacementFile ? (
+                      <p>New file: {replacementFile.name}</p>
+                    ) : (
+                      <>
+                        <p>File size: {selectedImage.fileSize}</p>
+                        <p>Uploaded: {selectedImage.uploadedOn}</p>
+                        <p>By: {selectedImage.uploadedBy}</p>
+                      </>
+                    )}
                   </div>
-                  <button className="mt-4 text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
-                    Replace Image
-                  </button>
+                  <div className="mt-4 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => replaceFileInputRef.current?.click()}
+                      className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium"
+                    >
+                      Replace Image
+                    </button>
+                    {replacementFile && (
+                      <button
+                        type="button"
+                        onClick={clearReplacement}
+                        className="text-[13px] text-[#6E6E6E] hover:text-[#3D3D3D]"
+                      >
+                        Remove replacement
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -986,16 +1063,20 @@ export function GalleryScreen() {
 
             <div className="p-[24px] border-t border-[#DBDBDB] flex justify-end gap-3">
               <button
-                onClick={() => setShowEditor(false)}
+                onClick={() => {
+                  clearReplacement();
+                  setShowEditor(false);
+                }}
                 className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                className="h-[44px] px-[20px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-white text-[14px] font-medium"
+                disabled={saving}
+                className="h-[44px] px-[20px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] disabled:opacity-50 disabled:cursor-not-allowed text-white text-[14px] font-medium"
               >
-                Save Changes
+                {saving ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
           </div>

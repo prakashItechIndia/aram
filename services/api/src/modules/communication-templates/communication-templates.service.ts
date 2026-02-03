@@ -91,7 +91,7 @@ export class CommunicationTemplatesService {
       .select()
       .from(communicationTemplates)
       .where(whereClause)
-      .orderBy(desc(communicationTemplates.updatedAt), desc(communicationTemplates.id));
+      .orderBy(desc(communicationTemplates.createdAt), desc(communicationTemplates.id));
     const rows = allRows.slice(offset, offset + limit);
     const items = rows.map(toApiRow);
 

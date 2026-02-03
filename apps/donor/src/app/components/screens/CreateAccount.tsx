@@ -5,6 +5,7 @@ import { AramInput } from '../aram/AramInput';
 import { AramSelect } from '../aram/AramSelect';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { validateForm as globalValidateForm, validationRules, validationMessages, sanitizeInput, countryPhoneConfigs, getMobileValidation } from '../../utils/validations';
+import { useDonationFormStatus } from '../../hooks/useDonationFormStatus';
 
 const countries = [
   { value: 'india', label: '+91' },
@@ -30,6 +31,7 @@ export function CreateAccount({ onCreateAccount, onSignIn, onBack }: CreateAccou
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [country, setCountry] = useState('india');
   const [errors, setErrors] = useState<any>({});
+  const { checkAndNotify } = useDonationFormStatus();
 
   // Erase phone number when country changes
   React.useEffect(() => {
@@ -99,6 +101,7 @@ export function CreateAccount({ onCreateAccount, onSignIn, onBack }: CreateAccou
   };
 
   const handleSubmit = () => {
+    if (!checkAndNotify()) return;
     if (validateForm()) {
       onCreateAccount({ name, email, phone, password });
     }

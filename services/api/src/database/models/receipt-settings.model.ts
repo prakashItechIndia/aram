@@ -8,9 +8,8 @@ import {
 } from 'drizzle-orm/mssql-core';
 
 /**
- * Receipt Management – all tabs (ReceiptManagement.tsx + BRD).
- * Numbering, Generation, Template, Mandatory Fields, Delivery, Storage,
- * Bulk, Status Workflow, Reprint & Reissue, Audit, Search Defaults.
+ * Receipt Management – remaining tabs (ReceiptManagement.tsx).
+ * Numbering, Generation, Template, Mandatory Fields, Delivery, Reprint & Reissue.
  */
 export const receiptSettings = mssqlTable('receipt_settings', {
   id: int('id').primaryKey().identity(),
@@ -61,20 +60,7 @@ export const receiptSettings = mssqlTable('receipt_settings', {
   autoSendSmsOnReceiptGeneration: bit('auto_send_sms_on_receipt_generation').notNull().default(false),
   smsTemplate: nvarchar('sms_template', { length: 'max' }),
   smsShortLink: bit('sms_short_link').notNull().default(true),
-  // Storage & Access
-  storageMode: nvarchar('storage_mode', { length: 16 }),
-  linkSecurity: nvarchar('link_security', { length: 16 }),
-  linkExpiryDays: int('link_expiry_days'),
-  allowRegenerationTemplate: bit('allow_regeneration_template').notNull().default(true),
-  allowRegenerationAnytime: bit('allow_regeneration_anytime').notNull().default(false),
-  // Bulk, Status, Reprint, Audit, Search
-  bulkGenerationAllowed: bit('bulk_generation_allowed').notNull().default(true),
-  maxBatchSize: int('max_batch_size'),
-  zipFilenameFormat: nvarchar('zip_filename_format', { length: 255 }),
-  includeIndexCsv: bit('include_index_csv').notNull().default(true),
-  runInBackground: bit('run_in_background').notNull().default(true),
-  allowMarkReissued: bit('allow_mark_reissued').notNull().default(true),
-  autoMarkDelivered: bit('auto_mark_delivered').notNull().default(true),
+  // Reprint & Reissue
   allowReprint: bit('allow_reprint').notNull().default(true),
   allowResendEmail: bit('allow_resend_email').notNull().default(true),
   allowCorrection: bit('allow_correction').notNull().default(true),
@@ -83,13 +69,6 @@ export const receiptSettings = mssqlTable('receipt_settings', {
   requireReasonManualGen: bit('require_reason_manual_gen').notNull().default(true),
   requireReasonRegenerate: bit('require_reason_regenerate').notNull().default(true),
   requireReasonCancel: bit('require_reason_cancel').notNull().default(true),
-  retentionYears: int('retention_years'),
-  defaultDateFilter: nvarchar('default_date_filter', { length: 32 }),
-  defaultPageSize: int('default_page_size'),
-  exportFormatsCsv: bit('export_formats_csv').notNull().default(true),
-  exportFormatsExcel: bit('export_formats_excel').notNull().default(true),
-  exportFormatsPdf: bit('export_formats_pdf').notNull().default(true),
-  maskPii: bit('mask_pii').notNull().default(true),
   createdAt: datetime2('created_at', { precision: 3 }).default(sql`GETDATE()`),
   updatedAt: datetime2('updated_at', { precision: 3 }),
   updatedBy: nvarchar('updated_by', { length: 128 }),

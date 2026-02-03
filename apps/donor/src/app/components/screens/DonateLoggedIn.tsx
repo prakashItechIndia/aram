@@ -4,6 +4,7 @@ import { AramCard } from '@/app/components/aram/AramCard';
 import { AramInput } from '@/app/components/aram/AramInput';
 import { AramTextarea } from '@/app/components/aram/AramTextarea';
 import { AramSelect } from '@/app/components/aram/AramSelect';
+import { useDonationFormStatus } from '@/app/hooks/useDonationFormStatus';
 
 interface DonorProfile {
   name?: string;
@@ -72,6 +73,7 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
   const [displayName, setDisplayName] = useState(userName);
   const [displayEmail, setDisplayEmail] = useState(userEmail);
   const [displayPhone, setDisplayPhone] = useState(userPhone);
+  const { checkAndNotify } = useDonationFormStatus();
 
   useEffect(() => {
     setDisplayName(userName);
@@ -165,6 +167,8 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
   };
 
   const handlePay = () => {
+    if (!checkAndNotify()) return;
+    
     if (validateForm()) {
       // Save donation preferences for next time
       saveLastDonationPrefs(amount, donationType);

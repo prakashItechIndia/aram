@@ -7,6 +7,7 @@ import { AramTextarea } from '../aram/AramTextarea';
 import { AramSelect } from '../aram/AramSelect';
 import { ArrowLeft } from 'lucide-react';
 import { validateForm as globalValidateForm, validationRules, validationMessages, sanitizeInput, countryPhoneConfigs, getMobileValidation } from '../../utils/validations';
+import { useDonationFormStatus } from '../../hooks/useDonationFormStatus';
 interface DonateGuestProps {
   onPay: (data: any) => void;
   onBack: () => void;
@@ -43,6 +44,7 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
   const [country, setCountry] = useState('india');
   const [errors, setErrors] = useState<any>({});
   const [submitting, setSubmitting] = useState(false);
+  const { checkAndNotify } = useDonationFormStatus();
 
   // Erase mobile number when country changes
   React.useEffect(() => {
@@ -122,6 +124,7 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
   };
 
   const handlePay = async () => {
+    if (!checkAndNotify()) return;
     if (!validateForm()) return;
 
     console.log('Overall donation details:', {

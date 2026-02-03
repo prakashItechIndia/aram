@@ -370,12 +370,6 @@ export interface DonationFormConfigDto {
      */
     maintenanceMessage?: string;
     /**
-     * Test mode – no real transactions
-     * @type {boolean}
-     * @memberof DonationFormConfigDto
-     */
-    testMode?: boolean;
-    /**
      * Country dropdown vs default India
      * @type {boolean}
      * @memberof DonationFormConfigDto

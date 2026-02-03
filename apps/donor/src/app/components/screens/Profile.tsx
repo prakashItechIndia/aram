@@ -4,6 +4,7 @@ import { AramCard } from '@/app/components/aram/AramCard';
 import { AramInput } from '@/app/components/aram/AramInput';
 import { Upload, Sun, Moon, Download, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { validateField, validationRules, validationMessages, sanitizeInput } from '../../utils/validations';
+import { useDonationFormStatus } from '../../hooks/useDonationFormStatus';
 
 export interface ProfileProps {
   userName: string;
@@ -28,8 +29,11 @@ export function Profile({ userName, userEmail, userPhone, profileImage, onSavePr
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const { checkAndNotify } = useDonationFormStatus();
 
   const handleSaveProfile = () => {
+    if (!checkAndNotify()) return;
+    
     const newErrors: any = {};
     const nameError = validateField(name, validationRules.name, validationMessages.name);
     if (nameError) newErrors.name = nameError;
@@ -50,6 +54,8 @@ export function Profile({ userName, userEmail, userPhone, profileImage, onSavePr
   };
 
   const handleUpdatePassword = async () => {
+    if (!checkAndNotify()) return;
+    
     const newErrors: any = {};
 
     if (!currentPassword) {
@@ -97,10 +103,22 @@ export function Profile({ userName, userEmail, userPhone, profileImage, onSavePr
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!checkAndNotify()) return;
+    
     const file = e.target.files?.[0];
     if (file) {
       onUploadImage(file);
     }
+  };
+
+  const handleThemeChange = (newTheme: 'light' | 'dark') => {
+    if (!checkAndNotify()) return;
+    setTheme(newTheme);
+  };
+
+  const handleDownloadHistory = () => {
+    if (!checkAndNotify()) return;
+    // Download logic would go here
   };
 
   return (
@@ -290,7 +308,7 @@ export function Profile({ userName, userEmail, userPhone, profileImage, onSavePr
 
           <div className="flex gap-[16px]">
             <button
-              onClick={() => setTheme('light')}
+              onClick={() => handleThemeChange('light')}
               className={`flex-1 p-[16px] rounded-[16px] border-2 transition-all ${theme === 'light'
                 ? 'border-[#F36A4F] bg-[#FEF1EE]'
                 : 'border-[#DBDBDB] bg-white hover:border-[#F36A4F]'
@@ -303,7 +321,7 @@ export function Profile({ userName, userEmail, userPhone, profileImage, onSavePr
               </div>
             </button>
             <button
-              onClick={() => setTheme('dark')}
+              onClick={() => handleThemeChange('dark')}
               className={`flex-1 p-[16px] rounded-[16px] border-2 transition-all ${theme === 'dark'
                 ? 'border-[#F36A4F] bg-[#FEF1EE]'
                 : 'border-[#DBDBDB] bg-white hover:border-[#F36A4F]'
@@ -330,7 +348,7 @@ export function Profile({ userName, userEmail, userPhone, profileImage, onSavePr
           </div>
 
           <div className="flex flex-col gap-[16px]">
-            <AramButton variant="secondary" className="w-fit">
+            <AramButton variant="secondary" className="w-fit" onClick={handleDownloadHistory}>
               {/* @ts-ignore */}
               <Download size={18} className="inline mr-2" />
               Download My Donation History
