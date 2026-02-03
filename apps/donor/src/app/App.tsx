@@ -45,6 +45,7 @@ interface UserData {
   email: string;
   phone: string;
   address?: string;
+  pan?: string;
   isLoggedIn: boolean;
 }
 
@@ -186,7 +187,7 @@ function AppContent() {
   const handleLogout = () => {
     apiLogout();
     setUser({ name: '', email: '', phone: '', isLoggedIn: false });
-    toast.info('Logged out successfully');
+    toast.success('Logged out successfully');
     setCurrentScreen('entry');
   };
 
@@ -450,7 +451,7 @@ function AppContent() {
   };
 
   return (
-    <div className="w-[1440px] min-h-[900px] mx-auto bg-white">
+    <div className="w-full min-h-[900px] mx-auto bg-white">
       {renderScreen()}
       <Toaster position="top-right" richColors />
     </div>

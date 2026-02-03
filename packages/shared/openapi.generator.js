@@ -153,29 +153,60 @@ async function generateApiClient() {
     console.log('⚙️  Generating TypeScript client from OpenAPI spec...');
 
     const configFile = path.join(__dirname, 'openapi.config.json');
+    const ignoreFile = path.join(__dirname, '.openapi-generator-ignore');
 
-    // Use npx to run openapi-generator-cli from node_modules
-    const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-    const args = [
-      '--yes',
-      '@openapitools/openapi-generator-cli',
-      'generate',
-      '-i',
-      openApiSource,
-      '--skip-validate-spec',
-      '--generator-name',
-      'typescript-axios',
-      '--output',
-      tempDir,
-      '--config',
-      configFile,
-    ];
+    // Resolve local CLI path to avoid npx issues with spaces in paths
+    const localCliPath = path.join(
+      __dirname,
+      'node_modules',
+      '@openapitools',
+      'openapi-generator-cli',
+      'main.js',
+    );
 
-    if (fs.existsSync(ignoreFile)) {
-      args.push('--ignore-file-override', ignoreFile);
+    let cmd;
+    let args;
+
+    if (fs.existsSync(localCliPath)) {
+      console.log(`🔌 Using local openapi-generator-cli: ${localCliPath}`);
+      cmd = 'node';
+      args = [
+        localCliPath,
+        'generate',
+        '-i',
+        `"${openApiSource}"`,
+        '--skip-validate-spec',
+        '--generator-name',
+        'typescript-axios',
+        '--output',
+        `"${tempDir}"`,
+        '--config',
+        `"${configFile}"`,
+      ];
+    } else {
+      console.log('🔌 Using npx to run openapi-generator-cli');
+      cmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+      args = [
+        '--yes',
+        '@openapitools/openapi-generator-cli',
+        'generate',
+        '-i',
+        `"${openApiSource}"`,
+        '--skip-validate-spec',
+        '--generator-name',
+        'typescript-axios',
+        '--output',
+        `"${tempDir}"`,
+        '--config',
+        `"${configFile}"`,
+      ];
     }
 
-    const result = spawnSync(npxCmd, args, {
+    if (fs.existsSync(ignoreFile)) {
+      args.push('--ignore-file-override', `"${ignoreFile}"`);
+    }
+
+    const result = spawnSync(cmd, args, {
       stdio: 'inherit',
       cwd: __dirname,
       shell: false,

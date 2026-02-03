@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 
 interface UserDetails {
     name: string;
-    email: string;
-    phone: string;
+    email?: string;
+    phone?: string;
     pan?: string;
     address?: string;
 }
@@ -108,12 +108,23 @@ export const generateReceiptPDF = (receipt: ReceiptDetails, user: UserDetails) =
         doc.setFont('helvetica', 'bold');
         doc.text(user.name, 20, 72);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Email: ${user.email}`, 20, 78);
-        doc.text(`Phone: ${user.phone}`, 20, 84);
-        if (user.pan) doc.text(`PAN: ${user.pan}`, 20, 90);
+
+        let currentY = 78;
+        if (user.email) {
+            doc.text(`Email: ${user.email}`, 20, currentY);
+            currentY += 6;
+        }
+        if (user.phone) {
+            doc.text(`Phone: ${user.phone}`, 20, currentY);
+            currentY += 6;
+        }
+        if (user.pan) {
+            doc.text(`PAN: ${user.pan}`, 20, currentY);
+            currentY += 6;
+        }
         if (user.address) {
             const splitAddress = doc.splitTextToSize(`Address: ${user.address}`, 80);
-            doc.text(splitAddress, 20, 96);
+            doc.text(splitAddress, 20, currentY);
         }
 
         // Receipt Info (Right side)

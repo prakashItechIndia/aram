@@ -33,7 +33,7 @@ export class DonorsService {
     @Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>,
     private emailService: EmailService,
     private notificationsService: NotificationsService,
-  ) {}
+  ) { }
 
   /** List users from T_USER where User_Type = Standard User (donors). */
   async findAll() {
@@ -99,7 +99,7 @@ export class DonorsService {
    */
   async processDonation(userId: number, dto: any) {
     const now = new Date();
-    
+
     // 1. Get User Email
     const userRows = await this.db.select().from(tUser).where(eq(tUser.id, userId));
     const user = userRows[0];
@@ -128,7 +128,7 @@ export class DonorsService {
       .select()
       .from(donors)
       .where(eq(donors.email, normalizedEmail));
-    
+
     if (donorRows[0]) {
       donorId = donorRows[0].id;
       // Update existing donor profile with latest details
@@ -157,7 +157,7 @@ export class DonorsService {
         createdAt: now,
         updatedAt: now,
       } as any);
-      
+
       const newDonorRows = await this.db
         .select()
         .from(donors)
@@ -165,7 +165,7 @@ export class DonorsService {
       if (!newDonorRows[0]) throw new Error('Failed to create donor profile');
       donorId = newDonorRows[0].id;
     }
-    
+
     // 2. Find Category Id
     const catRows = await this.db
       .select()
@@ -208,7 +208,7 @@ export class DonorsService {
         'You have donated before with this PAN. Please use Login to Donate.',
       );
     }
-    
+
     // Check Mobile
     const mobile = dto.mobile.trim();
     const existingByMobile = await this.db
@@ -216,9 +216,9 @@ export class DonorsService {
       .top(1)
       .from(tUser)
       .where(eq(tUser.mobileNumber, mobile));
-    
+
     if (existingByMobile[0]) {
-       throw new ConflictException(
+      throw new ConflictException(
         'An account with this mobile number already exists. Please use Login to Donate.',
       );
     }
@@ -237,11 +237,28 @@ export class DonorsService {
 
     const now = new Date();
     // Create new user in T_USER
-    // Generate temp pass
-    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
+    // Generate temp pass with constraints: Uppercase, Number, Special Char
+    const length = 10;
+    const lower = 'abcdefghijklmnopqrstuvwxyz';
+    const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const numbers = '0123456789';
+    const special = '!@#$%';
+    const all = lower + upper + numbers + special;
+
+    // Ensure at least one of each required type
     let tempPass = '';
-    for (let i = 0; i < 10; ++i) tempPass += charset.charAt(Math.floor(Math.random() * charset.length));
-    
+    tempPass += upper.charAt(Math.floor(Math.random() * upper.length));
+    tempPass += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    tempPass += special.charAt(Math.floor(Math.random() * special.length));
+
+    // Fill the rest randomly
+    for (let i = tempPass.length; i < length; ++i) {
+      tempPass += all.charAt(Math.floor(Math.random() * all.length));
+    }
+
+    // Shuffle the password
+    tempPass = tempPass.split('').sort(() => 0.5 - Math.random()).join('');
+
     const hashedPassword = Buffer.from(tempPass).toString('base64');
 
     await this.db.insert(tUser).values({

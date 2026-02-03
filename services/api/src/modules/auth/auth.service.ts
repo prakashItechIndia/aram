@@ -27,7 +27,7 @@ export class AuthService {
     private configService: ConfigService,
     private emailService: EmailService,
     private notificationsService: NotificationsService,
-  ) {}
+  ) { }
 
   /** Validate against existing T_USER table (E_Mail, Password; supports bcrypt or legacy plain/base64). */
   async validateUser(email: string, pass: string): Promise<any> {
@@ -117,8 +117,8 @@ export class AuthService {
     const user = rows[0];
 
     if (!user) {
-        console.log('User not found for email:', normalizedEmail);
-        return { message: 'If this email is registered, you will receive a reset link.' };
+      console.log('User not found for email:', normalizedEmail);
+      return { message: 'If this email is registered, you will receive a reset link.' };
     }
 
     console.log('User found:', user.id);
@@ -140,9 +140,9 @@ export class AuthService {
     }
 
     // Return link in dev mode for convenience
-    return { 
-        message: 'If this email is registered, you will receive a reset link.',
-        resetLink: this.configService.get<string>('NODE_ENV') === 'development' ? resetLink : undefined 
+    return {
+      message: 'If this email is registered, you will receive a reset link.',
+      resetLink: this.configService.get<string>('NODE_ENV') === 'development' ? resetLink : undefined
     };
   }
 
@@ -151,8 +151,8 @@ export class AuthService {
     if (!record) {
       throw new BadRequestException('Invalid or expired reset token');
     }
-    // Base64 encoding for new password to fit 50 chars
-    const hashedPassword = Buffer.from(dto.newPassword).toString('base64');
+    // Use bcrypt for secure hashing (now supported by column length 255)
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
     await this.db
       .update(tUser)
       .set({ password: hashedPassword })
@@ -176,7 +176,7 @@ export class AuthService {
     const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
     let retVal = '';
     for (let i = 0, n = charset.length; i < length; ++i) {
-        retVal += charset.charAt(Math.floor(Math.random() * n));
+      retVal += charset.charAt(Math.floor(Math.random() * n));
     }
     return retVal;
   }
