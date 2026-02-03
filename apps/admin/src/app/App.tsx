@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createQueryClient } from '@aram/shared';
 import { ApiProvider, useApi } from './context/ApiContext';
@@ -39,13 +39,30 @@ function getResetTokenFromUrl(): string | null {
 }
 
 function AppContent() {
-  const { login: apiLogin, forgotPassword, resetPassword, logout: apiLogout, isAuthenticated } = useApi();
+  const { api, login: apiLogin, forgotPassword, resetPassword, logout: apiLogout, isAuthenticated, setUser, user } = useApi();
   const [authState, setAuthState] = useState<AuthState>(() => {
     if (isAuthenticated) return 'authenticated';
     return getResetTokenFromUrl() ? 'reset' : 'login';
   });
   const [resetToken, setResetToken] = useState<string | null>(() => getResetTokenFromUrl());
   const [currentPath, setCurrentPath] = useState('/dashboard');
+
+  useEffect(() => {
+    if (isAuthenticated && !user?.name) {
+      api.authApi.authControllerGetProfile()
+        .then((res: any) => {
+          const profile = res.data;
+          if (profile) {
+            setUser({
+              ...user!,
+              name: profile.name,
+              profilePicture: profile.profilePicture
+            });
+          }
+        })
+        .catch(err => console.error('Failed to fetch admin profile:', err));
+    }
+  }, [isAuthenticated, user, api, setUser]);
 
   const handleLogin = async (email: string, password: string) => {
     const result = await apiLogin(email, password);
@@ -148,8 +165,8 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-[#F3F3F3]">
       <Sidebar currentPath={currentPath} onNavigate={handleNavigate} />
-      <Header onLogout={handleLogout} />
-      
+      <Header onLogout={handleLogout} userName={user?.name} profilePicture={user?.profilePicture} />
+
       {/* Main Content - Always 280px margin since header stays full width */}
       <div className="ml-[280px] mt-[72px] p-[24px]">
         {currentPath === '/dashboard' && <Dashboard onNavigate={handleNavigate} />}
@@ -171,7 +188,7 @@ function AppContent() {
         {currentPath === '/website/sponsors' && <SponsorsScreen />}
         {currentPath === '/website/gallery' && <GalleryScreen />}
         {currentPath === '/payments/e-challan-entry' && <EChallanEntryScreen />}
-        
+
         {/* Placeholder for other screens */}
         {!['dashboard', 'settings/donation-form', 'settings/users', 'payments/transactions', 'donors/all', 'reports/fund-collection', 'reports/receipt-register', 'settings/users-roles', 'payments/reconciliation', 'payments/gateway-settings', 'receipts/management', 'master-data/donation-categories', 'communications/enquiries', 'communications/templates', 'communications/automation', 'website/content', 'website/sponsors', 'website/gallery', 'payments/e-challan-entry'].some(path => currentPath.includes(path)) && (
           <div className="min-h-[400px] flex items-center justify-center">
@@ -198,7 +215,7 @@ function AppContent() {
           </div>
         )}
       </div>
-      
+
       <Toaster />
     </div>
   );

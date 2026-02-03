@@ -12,13 +12,14 @@ const getApiBaseUrl = (): string => {
 
 const DONOR_AUTH_STORAGE_KEY = 'aram_donor_auth';
 
-type AuthUser = { 
-  accessToken: string; 
+type AuthUser = {
+  accessToken: string;
   refreshToken: string;
   name?: string;
   email?: string;
   phone?: string;
   address?: string;
+  profilePicture?: string;
   id?: number;
 } | null;
 
@@ -60,6 +61,8 @@ type ApiContextValue = {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; data?: any }>;
   register: (data: { name: string; email: string; password: string }) => Promise<{ success: boolean; error?: string }>;
+  changePassword: (data: any) => Promise<{ success: boolean; error?: string; message?: string }>;
+  uploadProfileImage: (file: File) => Promise<{ success: boolean; url?: string; error?: string }>;
   logout: () => void;
   setUser: (user: AuthUser) => void;
   forgotPassword: (email: string) => Promise<{ success: boolean; error?: string; message?: string }>;
@@ -90,7 +93,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     setUserState(null);
   }, []);
 
-  const exchangeOnlyOnce = useCallback(async () => {}, []);
+  const exchangeOnlyOnce = useCallback(async () => { }, []);
 
   const httpClientMinState: HttpClientMinState = useMemo(
     () => ({
@@ -123,11 +126,11 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
         if (!accessToken) {
           return { success: false, error: 'Invalid response from server' };
         }
-        
+
         authTokenVersionRef.current += 1;
-        const tempAuthUser: AuthUser = { 
-            accessToken, 
-            refreshToken: data?.refresh_token ?? '',
+        const tempAuthUser: AuthUser = {
+          accessToken,
+          refreshToken: data?.refresh_token ?? '',
         };
         setUserState(tempAuthUser);
         userRef.current = tempAuthUser; // Immediately update ref for interceptors
@@ -136,20 +139,21 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
         // Fetch profile immediately to store full details
         let profile: any = {};
         try {
-            const profileRes = await api.authApi.authControllerGetProfile();
-            profile = (profileRes as { data?: any })?.data || {};
+          const profileRes = await api.authApi.authControllerGetProfile();
+          profile = (profileRes as { data?: any })?.data || {};
         } catch (e) {
-            console.warn('Failed to fetch profile during login, using partial data');
+          console.warn('Failed to fetch profile during login, using partial data');
         }
 
-        const authUser: AuthUser = { 
-            ...tempAuthUser,
-            accessToken, // Ensuring it's still there
-            id: profile?.id,
-            name: profile?.name,
-            email: profile?.email ?? email,
-            phone: profile?.mobileNumber || profile?.mobile_number, // Handle different casing if any
-            address: profile?.location,
+        const authUser: AuthUser = {
+          ...tempAuthUser,
+          accessToken, // Ensuring it's still there
+          id: profile?.id,
+          name: profile?.name,
+          email: profile?.email ?? email,
+          phone: profile?.mobileNumber || profile?.mobile_number, // Handle different casing if any
+          address: profile?.location,
+          profilePicture: profile?.profilePicture,
         };
         setUserState(authUser);
         userRef.current = authUser; // Update again with final data
@@ -197,167 +201,222 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
 
   const forgotPassword = useCallback(async (email: string) => {
     try {
-        const baseUrl = getApiBaseUrl();
-        console.log('Sending forgot password request to:', `${baseUrl}/auth/forgot-password`, { email });
-        const res = await fetch(`${baseUrl}/auth/forgot-password`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email }),
-        });
-        
-        console.log('Forgot password response status:', res.status);
+      const baseUrl = getApiBaseUrl();
+      console.log('Sending forgot password request to:', `${baseUrl}/auth/forgot-password`, { email });
+      const res = await fetch(`${baseUrl}/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
 
-        if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            console.error('Forgot password error response:', data);
-            throw new Error(data.message || 'Request failed');
-        }
-        
-        const data = await res.json();
-        console.log('Forgot password success:', data);
-        return { success: true, message: data.message };
+      console.log('Forgot password response status:', res.status);
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        console.error('Forgot password error response:', data);
+        throw new Error(data.message || 'Request failed');
+      }
+
+      const data = await res.json();
+      console.log('Forgot password success:', data);
+      return { success: true, message: data.message };
     } catch (err: unknown) {
-        console.error('Forgot password exception:', err);
-        return { success: false, error: (err as Error).message };
+      console.error('Forgot password exception:', err);
+      return { success: false, error: (err as Error).message };
     }
   }, []);
 
   const resetPassword = useCallback(async (token: string, newPassword: string) => {
     try {
-        const baseUrl = getApiBaseUrl();
-        const res = await fetch(`${baseUrl}/auth/reset-password`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ token, newPassword }),
-        });
-        
-        if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data.message || 'Request failed');
-        }
-        
-        return { success: true };
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/auth/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token, newPassword }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || 'Request failed');
+      }
+
+      return { success: true };
     } catch (err: unknown) {
-        return { success: false, error: (err as Error).message };
+      return { success: false, error: (err as Error).message };
     }
   }, []);
 
   const fetchUnreadNotificationsCount = useCallback(async (userId: number) => {
     try {
-        const baseUrl = getApiBaseUrl();
-        const res = await fetch(`${baseUrl}/notifications/unread-count/${userId}`, {
-            headers: {
-                'Authorization': `Bearer ${user?.accessToken}`,
-            },
-        });
-        if (!res.ok) return 0;
-        const count = await res.json();
-        const result = typeof count === 'number' ? count : 0;
-        setNotificationCount(result);
-        return result;
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/notifications/unread-count/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${user?.accessToken}`,
+        },
+      });
+      if (!res.ok) return 0;
+      const count = await res.json();
+      const result = typeof count === 'number' ? count : 0;
+      setNotificationCount(result);
+      return result;
     } catch {
-        return 0;
+      return 0;
     }
   }, [user]);
 
   const fetchNotifications = useCallback(async (userId: number) => {
     try {
-        const baseUrl = getApiBaseUrl();
-        const res = await fetch(`${baseUrl}/notifications?userId=${userId}`, {
-            headers: {
-                'Authorization': `Bearer ${user?.accessToken}`,
-            },
-        });
-        if (!res.ok) return [];
-        const data = await res.json();
-        const list = Array.isArray(data) ? data : [];
-        // Sort by date descending
-        const sortedList = list.sort((a: any, b: any) => 
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-        setNotifications(sortedList);
-        return sortedList;
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/notifications?userId=${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${user?.accessToken}`,
+        },
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : [];
+      // Sort by date descending
+      const sortedList = list.sort((a: any, b: any) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setNotifications(sortedList);
+      return sortedList;
     } catch {
-        return [];
+      return [];
     }
   }, [user]);
 
   const refreshNotifications = useCallback(async () => {
     if (user?.id) {
-        await Promise.all([
-            fetchUnreadNotificationsCount(user.id),
-            fetchNotifications(user.id)
-        ]);
+      await Promise.all([
+        fetchUnreadNotificationsCount(user.id),
+        fetchNotifications(user.id)
+      ]);
     }
   }, [user, fetchUnreadNotificationsCount, fetchNotifications]);
 
   const markNotificationAsRead = useCallback(async (notificationId: number) => {
     try {
-        const baseUrl = getApiBaseUrl();
-        const res = await fetch(`${baseUrl}/notifications/${notificationId}/read`, {
-            method: 'PATCH',
-            headers: {
-                'Authorization': `Bearer ${user?.accessToken}`,
-            },
-        });
-        if (!res.ok) throw new Error('Failed to mark notification as read');
-        
-        // Optimistic UI update
-        setNotifications((prev: Notification[]) => prev.map((n: Notification) => n.id === notificationId ? { ...n, readAt: new Date().toISOString() } : n));
-        setNotificationCount((prev: number) => Math.max(0, prev - 1));
-        
-        return { success: true };
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/notifications/${notificationId}/read`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${user?.accessToken}`,
+        },
+      });
+      if (!res.ok) throw new Error('Failed to mark notification as read');
+
+      // Optimistic UI update
+      setNotifications((prev: Notification[]) => prev.map((n: Notification) => n.id === notificationId ? { ...n, readAt: new Date().toISOString() } : n));
+      setNotificationCount((prev: number) => Math.max(0, prev - 1));
+
+      return { success: true };
     } catch (err: unknown) {
-        return { success: false, error: (err as Error).message };
+      return { success: false, error: (err as Error).message };
     }
   }, [user?.accessToken]);
 
   React.useEffect(() => {
     if (user?.id) {
-        refreshNotifications();
+      refreshNotifications();
     }
   }, [user?.id, refreshNotifications]);
 
   const createNotification = useCallback(async (data: { userId?: number; type: string; title: string; message: string }) => {
     try {
-        const baseUrl = getApiBaseUrl();
-        const res = await fetch(`${baseUrl}/notifications`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${user?.accessToken}`,
-            },
-            body: JSON.stringify(data),
-        });
-        if (!res.ok) throw new Error('Failed to create notification');
-        return { success: true };
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.accessToken}`,
+        },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Failed to create notification');
+      return { success: true };
     } catch (err: unknown) {
-        return { success: false, error: (err as Error).message };
+      return { success: false, error: (err as Error).message };
     }
   }, [user?.accessToken]);
 
   const processDonation = useCallback(async (data: any) => {
     try {
-        const baseUrl = getApiBaseUrl();
-        const res = await fetch(`${baseUrl}/donors/process-donation`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${user?.accessToken}`,
-            },
-            body: JSON.stringify(data),
-        });
-        if (!res.ok) throw new Error('Failed to process donation');
-        const result = await res.json();
-        return { success: true, ...result };
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/donors/process-donation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.accessToken}`,
+        },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Failed to process donation');
+      const result = await res.json();
+      return { success: true, ...result };
     } catch (err: unknown) {
-        return { success: false, error: (err as Error).message };
+      return { success: false, error: (err as Error).message };
     }
   }, [user?.accessToken]);
+
+  const changePassword = useCallback(async (data: any) => {
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.accessToken}`,
+        },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to update password');
+      }
+      return { success: true, message: 'Password updated successfully' };
+    } catch (err: unknown) {
+      return { success: false, error: (err as Error).message };
+    }
+  }, [user?.accessToken]);
+
+  const uploadProfileImage = useCallback(async (file: File) => {
+    try {
+      const baseUrl = getApiBaseUrl();
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch(`${baseUrl}/auth/profile/image`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${user?.accessToken}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to upload image');
+      }
+
+      const data = await res.json();
+      // Update local user state with new image
+      if (data.url && user) {
+        const updatedUser = { ...user, profilePicture: data.url };
+        setUserState(updatedUser);
+        userRef.current = updatedUser;
+        setStoredDonorAuth(updatedUser);
+      }
+
+      return { success: true, url: data.url };
+    } catch (err: unknown) {
+      return { success: false, error: (err as Error).message };
+    }
+  }, [user]);
 
   const value: ApiContextValue = useMemo(
     () => ({
@@ -366,6 +425,8 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: !!user?.accessToken,
       login,
       register,
+      changePassword,
+      uploadProfileImage,
       logout,
       setUser,
       forgotPassword,
@@ -380,20 +441,22 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       notifications,
     }),
     [
-      api, 
-      user, 
-      login, 
-      register, 
-      logout, 
-      setUser, 
-      forgotPassword, 
-      resetPassword, 
-      fetchUnreadNotificationsCount, 
+      api,
+      user,
+      login,
+      register,
+      changePassword,
+      uploadProfileImage,
+      logout,
+      setUser,
+      forgotPassword,
+      resetPassword,
+      fetchUnreadNotificationsCount,
       fetchNotifications,
-      refreshNotifications, 
+      refreshNotifications,
       markNotificationAsRead,
-      createNotification, 
-      processDonation, 
+      createNotification,
+      processDonation,
       notificationCount,
       notifications
     ],

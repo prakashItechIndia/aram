@@ -178,10 +178,14 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className="h-[40px] px-[12px] rounded-[999px] border border-[#DBDBDB] flex items-center gap-[8px] hover:bg-[#F3F3F3] transition-colors"
           >
-            <div className="w-[24px] h-[24px] rounded-full bg-[#F36A4F] flex items-center justify-center">
-              <span style={{ fontSize: '12px', fontWeight: 700, color: 'white' }}>
-                {userName.charAt(0).toUpperCase()}
-              </span>
+            <div className="w-[24px] h-[24px] rounded-full bg-[#F36A4F] flex items-center justify-center overflow-hidden">
+              {user?.profilePicture ? (
+                <img src={user.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'white' }}>
+                  {userName.charAt(0).toUpperCase()}
+                </span>
+              )}
             </div>
             <span style={{ fontSize: '14px', fontWeight: 600, color: '#3D3D3D' }}>{userName}</span>
           </button>

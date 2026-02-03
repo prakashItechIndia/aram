@@ -11,6 +11,7 @@ import { RegisterDto } from './dto/register.dto';
 import { AdminLoginDto } from './dto/admin-login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { setResetToken, getAndConsumeResetToken } from './admin-reset-token.store';
 import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';
 import * as schema from '../../database/schema';
@@ -54,6 +55,7 @@ export class AuthService {
     const { password, ...result } = user;
     return { id: result.id, email: result.eMail, name: result.name, userType: result.userType };
   }
+
   async getProfile(userId: number) {
     if (!this.db) return null;
     const rows = await this.db.select().from(tUser).where(eq(tUser.id, userId));
@@ -65,6 +67,7 @@ export class AuthService {
       userId: result.id,
       email: result.eMail, // Normalize for frontend
       mobileNumber: result.mobileNumber,
+      profilePicture: result.profilePicture, // Add profile picture to response
     };
   }
 
@@ -118,11 +121,9 @@ export class AuthService {
     const user = rows[0];
 
     if (!user) {
-        console.log('User not found for email:', normalizedEmail);
-        throw new NotFoundException('Account with this email does not exist.');
+      console.log('User not found for email:', normalizedEmail);
+      throw new NotFoundException('Account with this email does not exist.');
     }
-
-    console.log('User found:', user.id);
 
     // Generate Token
     const token = randomBytes(32).toString('hex');
@@ -132,10 +133,8 @@ export class AuthService {
     const resetLink = `${baseUrl}/reset-password?token=${token}`;
 
     // Send Email
-    console.log('Sending email...');
     try {
       await this.emailService.sendResetLink(normalizedEmail, user.name || 'User', resetLink);
-      console.log('Reset link sent successfully');
     } catch (e) {
       console.error('Error sending email:', e);
     }
@@ -171,6 +170,44 @@ export class AuthService {
     }
 
     return { message: 'Password has been reset. You can sign in with your new password.' };
+  }
+
+  async changePassword(userId: number, dto: ChangePasswordDto) {
+    const rows = await this.db.select().top(1).from(tUser).where(eq(tUser.id, userId));
+    const user = rows[0];
+    if (!user) throw new NotFoundException('User not found');
+
+    // Verify current password
+    const match =
+      (user.password?.startsWith('$2') && (await bcrypt.compare(dto.currentPassword, user.password))) ||
+      user.password === dto.currentPassword ||
+      (user.password && Buffer.from(user.password, 'base64').toString('utf8') === dto.currentPassword);
+
+    if (!match) {
+      throw new BadRequestException('Current password is incorrect');
+    }
+
+    if (dto.currentPassword === dto.newPassword) {
+      throw new BadRequestException('New password cannot be the same as the current password');
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+
+    await this.db
+      .update(tUser)
+      .set({ password: hashedPassword })
+      .where(eq(tUser.id, userId));
+
+    return { message: 'Password updated successfully' };
+  }
+
+  async updateProfileImage(userId: number, url: string) {
+    await this.db
+      .update(tUser)
+      .set({ profilePicture: url })
+      .where(eq(tUser.id, userId));
+    return { url };
   }
 
   private generateTemporaryPassword(length = 10): string {
