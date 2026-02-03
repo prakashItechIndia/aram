@@ -49,14 +49,14 @@ export class EmailService {
     }
   }
 
-  async sendGuestWelcome(email: string, tempPass: string) {
+  async sendGuestWelcome(email: string, name: string, tempPass: string) {
     if (!this.transporter) return;
     const from = this.configService.get<string>('SMTP_FROM') || '"Aram Support" <no-reply@aram.org>';
     const subject = 'Your Temporary Password - Aram Donor Portal';
     const html = `
       <div style="font-family: Arial, sans-serif; color: #333;">
         <h2>Welcome to Aram Donor Portal</h2>
-        <p>Hello,</p>
+        <p>Hello ${name},</p>
         <p>Thank you for your donation! We have created an account for you to track your donations and download receipts.</p>
         <p>Your temporary password is:</p>
         <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; font-size: 18px; font-weight: bold; letter-spacing: 1px; display: inline-block;">
@@ -75,14 +75,14 @@ export class EmailService {
     }
   }
 
-  async sendResetLink(email: string, link: string) {
+  async sendResetLink(email: string, name: string, link: string) {
     if (!this.transporter) return;
     const from = this.configService.get<string>('SMTP_FROM') || '"Aram Support" <no-reply@aram.org>';
     const subject = 'Reset Your Password - Aram Donor Portal';
     const html = `
       <div style="font-family: Arial, sans-serif; color: #333;">
         <h2>Reset Password</h2>
-        <p>Hello,</p>
+        <p>Hello ${name},</p>
         <p>You requested to reset your password.</p>
         <p>Click the link below to set a new password:</p>
         <p><a href="${link}" style="color: #F36A4F; font-weight: bold;">Reset Password</a></p>

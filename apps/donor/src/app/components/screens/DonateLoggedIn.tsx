@@ -12,6 +12,8 @@ interface DonorProfile {
   address?: string;
   pan?: string;
   country?: string;
+  donorType?: string;
+  donationAmount?: string;
 }
 
 interface DonateLoggedInProps {
@@ -39,6 +41,24 @@ const countries = [
 ];
 
 const amountPresets = [500, 1000, 2500, 5000];
+
+// Helper functions for localStorage
+const DONATION_PREFS_KEY = 'aram_last_donation_prefs';
+const getLastDonationPrefs = () => {
+  try {
+    const stored = localStorage.getItem(DONATION_PREFS_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+};
+const saveLastDonationPrefs = (amount: number, donationType: string) => {
+  try {
+    localStorage.setItem(DONATION_PREFS_KEY, JSON.stringify({ amount, donationType }));
+  } catch {
+    // Ignore localStorage errors
+  }
+};
 
 export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: DonateLoggedInProps) {
   const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
@@ -86,6 +106,24 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
       });
   }, [api?.donorsApi]);
 
+  // Restore last donation preferences on mount
+  useEffect(() => {
+    const lastPrefs = getLastDonationPrefs();
+    if (lastPrefs) {
+      const { amount, donationType: lastType } = lastPrefs;
+      // Check if the amount matches a preset
+      const matchingPreset = amountPresets.find(p => p === amount);
+      if (matchingPreset) {
+        setSelectedPreset(matchingPreset);
+      } else {
+        setCustomAmount(amount.toString());
+      }
+      if (lastType) {
+        setDonationType(lastType);
+      }
+    }
+  }, []);
+
   const amount = selectedPreset || Number(customAmount) || 0;
   const MIN_AMOUNT = 100;
   const MAX_AMOUNT = 50000;
@@ -109,6 +147,9 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
 
   const handlePay = () => {
     if (validateForm()) {
+      // Save donation preferences for next time
+      saveLastDonationPrefs(amount, donationType);
+      
       onPay({
         amount,
         address,

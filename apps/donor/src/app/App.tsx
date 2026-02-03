@@ -126,9 +126,8 @@ function AppContent() {
 
   const handleLoginToDonate = () => {
     if (isAuthenticated) {
-      setCurrentScreen('donate');
+      setCurrentScreen('dashboard');
     } else {
-      setIntendedRedirect('donate');
       setCurrentScreen('sign-in');
     }
   };
@@ -176,7 +175,7 @@ function AppContent() {
         setUser({ name: email.split('@')[0], email, phone: '', isLoggedIn: true });
       }
       toast.success('Signed in successfully!');
-      setCurrentScreen(intendedRedirect || 'dashboard');
+      setCurrentScreen('dashboard');
       setIntendedRedirect(null);
     } else {
       toast.error(result.error ?? 'Sign in failed');

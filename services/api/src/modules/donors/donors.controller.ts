@@ -23,6 +23,13 @@ export class DonorsController {
     return donor ?? null;
   }
 
+  @Get('me/donations')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async getMyDonations(@Request() req: any) {
+    return this.donorsService.findDonationsByUserId(req.user.userId);
+  }
+
   @Post('process-donation')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
