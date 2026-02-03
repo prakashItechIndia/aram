@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Settings,
@@ -116,12 +117,10 @@ const navigation: NavItem[] = [
   },
 ];
 
-interface SidebarProps {
-  currentPath: string;
-  onNavigate: (path: string) => void;
-}
-
-export function Sidebar({ currentPath, onNavigate }: SidebarProps) {
+export function Sidebar() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const currentPath = location.pathname;
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   
   const toggleExpand = (id: string) => {
@@ -144,7 +143,7 @@ export function Sidebar({ currentPath, onNavigate }: SidebarProps) {
             if (hasChildren) {
               toggleExpand(item.id);
             } else {
-              onNavigate(item.path);
+              navigate(item.path);
             }
           }}
           className={`w-full h-[44px] flex items-center gap-[10px] px-[12px] rounded-[16px] transition-colors ${

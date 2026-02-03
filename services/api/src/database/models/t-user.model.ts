@@ -22,6 +22,7 @@ export const tUser = mssqlTable('T_USER', {
   isActive: bit('Is_Active'),
   createdBy: int('Created_By'),
   createdDate: datetime2('Created_Date', { precision: 3 }),
+  profileImageUrl: nvarchar('Profile_Image_Url', { length: 512 }),
 });
 
 export type TUser = typeof tUser.$inferSelect;

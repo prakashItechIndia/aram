@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, like, or, desc, sql, gte, lte, inArray } from 'drizzle-orm';
 import { DRIZZLE } from '../../database/database.module';
 import { tUser } from '../../database/models/t-user.model';
 import { userRoles } from '../../database/models/user-roles.model';
@@ -10,6 +10,7 @@ import { EmailService } from '../email/email.service';
 import { generateStrongPassword } from '../../common/utils/password.util';
 import type { CreateAdminUserDto } from './dto/create-admin-user.dto';
 import type { UpdateAdminUserDto } from './dto/update-admin-user.dto';
+import type { QueryAdminUsersDto } from './dto/query-admin-users.dto';
 
 @Injectable()
 export class AdminUsersService {
@@ -18,10 +19,54 @@ export class AdminUsersService {
     private emailService: EmailService,
   ) {}
 
-  async findAll() {
-    const rows = await this.db.select().from(tUser).orderBy(tUser.id);
+  async findAll(query?: QueryAdminUsersDto) {
+    const page = Math.max(1, query?.page ?? 1);
+    const limit = Math.min(100, Math.max(1, query?.limit ?? 10));
+    const offset = (page - 1) * limit;
+
     const roles = await this.db.select().from(userRoles);
-    const roleNames = new Set(roles.map((r) => r.name));
+    const roleNamesArr = roles.map((r) => r.name).filter(Boolean);
+    const roleNames = new Set(roleNamesArr);
+
+    const conditions = [];
+    if (roleNamesArr.length > 0) {
+      conditions.push(inArray(tUser.userType, roleNamesArr));
+    }
+    if (query?.role?.trim()) {
+      conditions.push(eq(tUser.userType, query.role.trim()));
+    }
+    if (query?.search?.trim()) {
+      const term = `%${query.search.trim()}%`;
+      conditions.push(
+        or(
+          like(tUser.name, term),
+          like(tUser.eMail, term),
+        )!,
+      );
+    }
+    if (query?.dateFrom) {
+      const from = new Date(query.dateFrom);
+      if (!isNaN(from.getTime())) conditions.push(gte(tUser.createdDate, from));
+    }
+    if (query?.dateTo) {
+      const to = new Date(query.dateTo);
+      if (!isNaN(to.getTime())) conditions.push(lte(tUser.createdDate, to));
+    }
+    const whereClause = conditions.length ? and(...conditions) : undefined;
+
+    const countResult = await this.db
+      .select({ count: sql<number>`count_big(*)` })
+      .from(tUser)
+      .where(whereClause);
+    const total = Number(countResult[0]?.count ?? 0);
+
+    const allRows = await this.db
+      .select()
+      .from(tUser)
+      .where(whereClause)
+      .orderBy(desc(tUser.createdDate), desc(tUser.id));
+    const rows = allRows.slice(offset, offset + limit);
+
     const list = rows
       .filter((u) => u.userType && roleNames.has(u.userType))
       .map((u) => ({
@@ -32,8 +77,10 @@ export class AdminUsersService {
         roleName: u.userType ?? '',
         isActive: u.isActive ?? true,
         createdDate: u.createdDate,
+        profileImageUrl: u.profileImageUrl ?? undefined,
       }));
-    return list;
+
+    return { items: list, total, page, limit };
   }
 
   async findById(id: number) {
@@ -48,6 +95,7 @@ export class AdminUsersService {
       roleName: user.userType ?? '',
       isActive: user.isActive ?? true,
       createdDate: user.createdDate,
+      profileImageUrl: user.profileImageUrl ?? undefined,
     };
   }
 
@@ -77,6 +125,7 @@ export class AdminUsersService {
       isActive: true,
       createdBy: null,
       createdDate: new Date(),
+      profileImageUrl: dto.profileImageUrl?.trim() ?? null,
     });
 
     try {
@@ -112,6 +161,7 @@ export class AdminUsersService {
     if (dto.mobileNumber !== undefined) updates.mobileNumber = dto.mobileNumber?.trim() ?? null;
     if (dto.roleName !== undefined) updates.userType = dto.roleName.trim();
     if (dto.email !== undefined) updates.userName = dto.email.trim().toLowerCase().split('@')[0];
+    if (dto.profileImageUrl !== undefined) updates.profileImageUrl = dto.profileImageUrl?.trim() ?? null;
 
     if (Object.keys(updates).length > 0) {
       await this.db.update(tUser).set(updates as any).where(eq(tUser.id, id));

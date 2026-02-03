@@ -9,7 +9,7 @@ import {
 
 /**
  * Donation form settings (versioned).
- * BRD §7: Enable/Disable form, maintenance message, test mode, multi-country, PAN rules,
+ * BRD §7: Enable/Disable form, maintenance message, multi-country, PAN rules,
  * Require address, Require mobile, OTP verification, Preset amounts, Min/Max, Recurring.
  * 
  * Supports version history and rollback functionality.
@@ -24,7 +24,6 @@ export const donationFormSettings = mssqlTable('donation_form_settings', {
   changesDescription: nvarchar('changes_description', { length: 500 }),
   maintenanceMessage: nvarchar('maintenance_message', { length: 'max' }),
   formEnabled: bit('form_enabled').default(true),
-  testMode: bit('test_mode').default(false),
   multiCountry: bit('multi_country').default(false),
   panRequired: nvarchar('pan_required', { length: 32 }),
   addressRequired: bit('address_required').default(true),

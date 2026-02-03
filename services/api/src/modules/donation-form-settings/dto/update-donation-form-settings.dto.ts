@@ -10,10 +10,6 @@ export class UpdateDonationFormSettingsDto {
   @IsString()
   maintenanceMessage?: string;
 
-  @IsOptional()
-  @IsBoolean()
-  testMode?: boolean;
-
   // Field Configuration
   @IsOptional()
   @IsBoolean()
