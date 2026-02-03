@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useApi } from '@/app/context/ApiContext';
+import React, { useEffect, useState } from 'react';
 import { AramButton } from '@/app/components/aram/AramButton';
 import { AramCard } from '@/app/components/aram/AramCard';
 import { AramInput } from '@/app/components/aram/AramInput';
@@ -26,24 +27,17 @@ interface Receipt {
   eligible80G: boolean;
 }
 
-const mockReceipts: Receipt[] = [
-  { id: 1, date: '2025-01-15', receiptNo: 'AR2501150001', type: 'Education Fund', amount: 5000, eligible80G: true },
-  { id: 2, date: '2025-01-10', receiptNo: 'AR2501100002', type: 'Medical Fund', amount: 2500, eligible80G: true },
-  { id: 3, date: '2024-12-25', receiptNo: 'AR2412250003', type: 'General Fund', amount: 1000, eligible80G: true },
-  { id: 4, date: '2024-11-10', receiptNo: 'AR2411100004', type: 'Building Fund', amount: 3000, eligible80G: true },
-];
-
-const mock80GDocs = [
-  { id: 1, year: 'FY 2024-25', generatedDate: '2025-01-20', totalAmount: 8500, fileName: '80G_FY2024-25.pdf' },
-  { id: 2, year: 'FY 2023-24', generatedDate: '2024-04-10', totalAmount: 15000, fileName: '80G_FY2023-24.pdf' },
-];
-
-const mockTaxDocs = [
-  { id: 1, year: 'FY 2024-25', generatedDate: '2025-01-20', type: 'Form 10BE', fileName: 'Tax_FY2024-25.pdf' },
-  { id: 2, year: 'FY 2023-24', generatedDate: '2024-04-15', type: 'Form 10BE', fileName: 'Tax_FY2023-24.pdf' },
-];
+interface TaxDoc {
+  id: number;
+  year: string;
+  generatedDate: string;
+  totalAmount: number;
+  fileName: string;
+  type?: string;
+}
 
 const fyOptions = [
+  { value: 'fy2025-26', label: 'FY 2025-26' },
   { value: 'fy2024-25', label: 'FY 2024-25' },
   { value: 'fy2023-24', label: 'FY 2023-24' },
   { value: 'fy2022-23', label: 'FY 2022-23' },
@@ -60,10 +54,55 @@ const donationTypeOptions = [
 ];
 
 export function Reports({ user }: ReportsProps) {
+  const { user: apiAuth } = useApi();
   const [activeTab, setActiveTab] = useState<'receipts' | '80g' | 'tax'>('receipts');
+  
+  // Data States
+  const [receipts, setReceipts] = useState<Receipt[]>([]);
+  const [taxDocs, setTaxDocs] = useState<TaxDoc[]>([]);
+  
+  // Loading & Error States
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Filter States
   const [searchReceipt, setSearchReceipt] = useState('');
-  const [selectedFY, setSelectedFY] = useState('fy2024-25');
+  const [selectedFY, setSelectedFY] = useState('fy2025-26');
   const [selectedType, setSelectedType] = useState('');
+
+  // Fetch data based on active tab
+  useEffect(() => {
+    if (!apiAuth?.accessToken) return;
+
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const baseUrl = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:3000/api';
+        const headers = { 'Authorization': `Bearer ${apiAuth.accessToken}` };
+
+        if (activeTab === 'receipts') {
+          const res = await fetch(`${baseUrl}/donors/me/donations`, { headers });
+          if (res.ok) {
+            const data = await res.json();
+            setReceipts(data || []);
+          }
+        } else {
+          // Both 80G and Tax tabs use the tax-summaries endpoint
+          const res = await fetch(`${baseUrl}/donors/me/tax-summaries`, { headers });
+          if (res.ok) {
+            const data = await res.json();
+            setTaxDocs(data || []);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch report data:', err);
+        toast.error('Failed to load report data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [activeTab, apiAuth?.accessToken]);
 
   // Helper to map option values back to receipt type strings
   const getPaymentTypeLabel = (value: string) => {
@@ -72,14 +111,14 @@ export function Reports({ user }: ReportsProps) {
   };
 
   const filteredReceipts = React.useMemo(() => {
-    return mockReceipts.filter((receipt) => {
+    return receipts.filter((receipt: Receipt) => {
       // 1. Text Search (Receipt No)
       const matchesSearch =
         !searchReceipt ||
         receipt.receiptNo.toLowerCase().includes(searchReceipt.toLowerCase());
 
       // 2. Donation Type Filter
-      // Note: mockReceipts use labels like 'Education Fund', options use values like 'education'
+      // Note: receipts from API use labels like 'Education Fund', options use values like 'education'
       // We need to match the label if a type is selected.
       const matchesType = !selectedType || receipt.type === getPaymentTypeLabel(selectedType);
 
@@ -97,7 +136,7 @@ export function Reports({ user }: ReportsProps) {
 
       return matchesSearch && matchesType && matchesFY;
     });
-  }, [searchReceipt, selectedFY, selectedType]);
+  }, [receipts, searchReceipt, selectedFY, selectedType]);
 
   const handleDownloadReceipt = (receipt: Receipt) => {
     try {
@@ -120,12 +159,21 @@ export function Reports({ user }: ReportsProps) {
       user,
       {
         head: [['Date', 'Receipt No', 'Amount']],
-        body: mockReceipts.map((r) => [r.date, r.receiptNo, `INR ${r.amount.toLocaleString()}`]),
+        body: receipts
+          // Filter only for the requested FY for the PDF
+          .filter((r: Receipt) => {
+             const d = new Date(r.date);
+             const m = d.getMonth(); 
+             const y = d.getFullYear();
+             const startY = m < 3 ? y - 1 : y;
+             return `FY ${startY}-${(startY + 1).toString().slice(-2)}` === fy;
+          })
+          .map((r: Receipt) => [r.date, r.receiptNo, `INR ${r.amount.toLocaleString()}`]),
       }
     );
   };
 
-  const handleDownload80GDoc = (doc: any) => {
+  const handleDownload80GDoc = (doc: TaxDoc) => {
     generateGenericPDF(
       `80G Certificate - ${doc.year}`,
       [
@@ -152,11 +200,11 @@ export function Reports({ user }: ReportsProps) {
     );
   };
 
-  const handleDownloadTaxDoc = (doc: any) => {
+  const handleDownloadTaxDoc = (doc: TaxDoc) => {
     generateGenericPDF(
-      `Tax Document - ${doc.type}`,
+      `Tax Document - ${doc.type || 'Consolidated'}`,
       [
-        `Document Type: ${doc.type}`,
+        `Document Type: ${doc.type || 'Consolidated'}`,
         `Financial Year: ${doc.year}`,
         `Generated Date: ${doc.generatedDate}`,
         'Please consult your tax advisor for filing details.',
@@ -179,40 +227,32 @@ export function Reports({ user }: ReportsProps) {
 
       {/* Tabs */}
       <div className="flex gap-[8px] border-b border-[#DBDBDB]">
-        <button
-          onClick={() => setActiveTab('receipts')}
-          className={`px-[24px] py-[12px] transition-colors ${activeTab === 'receipts'
-            ? 'border-b-2 border-[#F36A4F] text-[#F36A4F]'
-            : 'text-[#6E6E6E] hover:text-[#3D3D3D]'
+        {(['receipts', '80g', 'tax'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-[24px] py-[12px] transition-colors capitalize ${
+              activeTab === tab
+                ? 'border-b-2 border-[#F36A4F] text-[#F36A4F]'
+                : 'text-[#6E6E6E] hover:text-[#3D3D3D]'
             }`}
-          style={{ fontSize: '14px', fontWeight: 600 }}
-        >
-          Receipts
-        </button>
-        <button
-          onClick={() => setActiveTab('80g')}
-          className={`px-[24px] py-[12px] transition-colors ${activeTab === '80g'
-            ? 'border-b-2 border-[#F36A4F] text-[#F36A4F]'
-            : 'text-[#6E6E6E] hover:text-[#3D3D3D]'
-            }`}
-          style={{ fontSize: '14px', fontWeight: 600 }}
-        >
-          80G Reports
-        </button>
-        <button
-          onClick={() => setActiveTab('tax')}
-          className={`px-[24px] py-[12px] transition-colors ${activeTab === 'tax'
-            ? 'border-b-2 border-[#F36A4F] text-[#F36A4F]'
-            : 'text-[#6E6E6E] hover:text-[#3D3D3D]'
-            }`}
-          style={{ fontSize: '14px', fontWeight: 600 }}
-        >
-          Tax Documents
-        </button>
+            style={{ fontSize: '14px', fontWeight: 600 }}
+          >
+            {tab === '80g' ? '80G Reports' : tab === 'tax' ? 'Tax Documents' : 'Receipts'}
+          </button>
+        ))}
       </div>
 
-      {/* Receipts Tab */}
-      {activeTab === 'receipts' && (
+      {isLoading ? (
+         <AramCard>
+           <div className="p-[48px] text-center">
+             <div className="flex items-center justify-center gap-4">
+               <div className="w-8 h-8 border-4 border-[#F36A4F] border-t-transparent rounded-full animate-spin"></div>
+               <p style={{ fontSize: '16px', color: '#6E6E6E' }}>Loading reports...</p>
+             </div>
+           </div>
+         </AramCard>
+      ) : activeTab === 'receipts' ? (
         <AramCard noPadding>
           {/* Filters */}
           <div className="p-[16px] border-b border-[#DBDBDB] flex flex-col md:flex-row gap-[12px]">
@@ -281,8 +321,6 @@ export function Reports({ user }: ReportsProps) {
             </table>
           </div>
 
-
-
           {filteredReceipts.length === 0 && (
             <div className="p-[48px] text-center">
               <FileText size={48} color="#DBDBDB" className="mx-auto mb-[16px]" />
@@ -290,12 +328,7 @@ export function Reports({ user }: ReportsProps) {
             </div>
           )}
         </AramCard>
-      )
-      }
-
-      {/* 80G Reports Tab */}
-      {
-        activeTab === '80g' && (
+      ) : activeTab === '80g' ? (
           <div className="flex flex-col gap-[24px]">
             <AramCard>
               <div className="flex flex-col gap-[16px]">
@@ -329,7 +362,7 @@ export function Reports({ user }: ReportsProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {mock80GDocs.map((doc) => (
+                    {taxDocs.map((doc) => (
                       <tr key={doc.id} style={{ height: '52px', borderBottom: '1px solid #DBDBDB' }}>
                         <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>{doc.year}</td>
                         <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{doc.generatedDate}</td>
@@ -346,17 +379,20 @@ export function Reports({ user }: ReportsProps) {
                         </td>
                       </tr>
                     ))}
+                    {taxDocs.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="p-[48px] text-center">
+                          <FileText size={48} color="#DBDBDB" className="mx-auto mb-[16px]" />
+                          <p style={{ fontSize: '16px', color: '#6E6E6E' }}>No 80G documents available yet</p>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
             </AramCard>
           </div>
-        )
-      }
-
-      {/* Tax Documents Tab */}
-      {
-        activeTab === 'tax' && (
+      ) : (
           <div className="flex flex-col gap-[24px]">
             <AramCard>
               <div className="flex flex-col gap-[16px]">
@@ -390,7 +426,7 @@ export function Reports({ user }: ReportsProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {mockTaxDocs.map((doc) => (
+                    {taxDocs.map((doc) => (
                       <tr key={doc.id} style={{ height: '52px', borderBottom: '1px solid #DBDBDB' }}>
                         <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>{doc.year}</td>
                         <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{doc.generatedDate}</td>
@@ -407,7 +443,7 @@ export function Reports({ user }: ReportsProps) {
                         </td>
                       </tr>
                     ))}
-                    {mockTaxDocs.length === 0 && (
+                    {taxDocs.length === 0 && (
                       <tr>
                         <td colSpan={4} className="p-[48px] text-center">
                           <FileText size={48} color="#DBDBDB" className="mx-auto mb-[16px]" />
@@ -420,8 +456,7 @@ export function Reports({ user }: ReportsProps) {
               </div>
             </AramCard>
           </div>
-        )
-      }
-    </div >
+      )}
+    </div>
   );
 }

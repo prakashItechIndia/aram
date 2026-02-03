@@ -176,7 +176,7 @@ function AppContent() {
         setUser({ name: email.split('@')[0], email, phone: '', isLoggedIn: true });
       }
       toast.success('Signed in successfully!');
-      setCurrentScreen('dashboard');
+      setCurrentScreen(intendedRedirect || 'dashboard');
       setIntendedRedirect(null);
     } else {
       toast.error(result.error ?? 'Sign in failed');
