@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 interface AramTextareaProps {
   label?: string;
@@ -10,6 +10,7 @@ interface AramTextareaProps {
   helperText?: string;
   rows?: number;
   className?: string;
+  maxLength?: number;
 }
 
 export function AramTextarea({
@@ -21,7 +22,8 @@ export function AramTextarea({
   error,
   helperText,
   rows = 4,
-  className = ''
+  className = '',
+  maxLength
 }: AramTextareaProps) {
   return (
     <div className={`flex flex-col gap-[6px] ${className}`}>
@@ -36,9 +38,9 @@ export function AramTextarea({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className={`min-h-[100px] px-[14px] py-[12px] rounded-[16px] border ${
-          error ? 'border-[#F36A4F]' : 'border-[#DBDBDB]'
-        } bg-white focus:outline-none focus:border-[#F36A4F] resize-y`}
+        maxLength={maxLength}
+        className={`min-h-[100px] px-[14px] py-[12px] rounded-[16px] border ${error ? 'border-[#F36A4F]' : 'border-[#DBDBDB]'
+          } bg-white focus:outline-none focus:border-[#F36A4F] resize-y`}
         style={{ fontSize: '14px', lineHeight: '20px', fontWeight: 400, color: '#3D3D3D' }}
       />
       {error && (

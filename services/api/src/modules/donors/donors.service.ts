@@ -129,7 +129,7 @@ export class DonorsService {
         .select()
         .from(donors)
         .where(eq(donors.email, email));
-      
+
       if (!donorRows[0]) return [];
       const donorId = donorRows[0].id;
 
@@ -173,7 +173,7 @@ export class DonorsService {
    */
   async getDonationSummaries(userId: number) {
     const donations = await this.findDonationsByUserId(userId);
-    
+
     // Group by FY
     const summaries: Record<string, { totalAmount: number; count: number }> = {};
 
@@ -181,7 +181,7 @@ export class DonorsService {
       const date = new Date(d.date);
       const month = date.getMonth(); // 0-11
       const year = date.getFullYear();
-      
+
       // If month is Jan-Mar (0-2), it belongs to previous year's FY start
       // e.g. Jan 2025 is FY 2024-25
       const startYear = month < 3 ? year - 1 : year;
@@ -190,7 +190,7 @@ export class DonorsService {
       if (!summaries[fyLabel]) {
         summaries[fyLabel] = { totalAmount: 0, count: 0 };
       }
-      
+
       summaries[fyLabel].totalAmount += d.amount;
       summaries[fyLabel].count += 1;
     });
@@ -300,7 +300,20 @@ export class DonorsService {
       createdByUserId: userId,
     });
 
-    // 4. Create Notification
+    // 4. Send Email Receipt
+    try {
+      const catName = catRows[0]?.displayName || 'General Fund';
+      await this.emailService.sendDonationReceipt(normalizedEmail, dto.name, {
+        amount: dto.amount,
+        receiptNo: challanNumber,
+        date: now.toISOString().split('T')[0],
+        type: catName,
+      });
+    } catch (err) {
+      console.error('Failed to send donation receipt email:', err);
+    }
+
+    // 5. Create Notification
     await this.notificationsService.create({
       userId,
       type: 'success',
@@ -354,7 +367,7 @@ export class DonorsService {
     // Create new user in T_USER
     // Generate temp pass based on PAN
     const tempPass = `Aram@${normalizedPan}`;
-    
+
     const hashedPassword = Buffer.from(tempPass).toString('base64');
 
     await this.db.insert(tUser).values({

@@ -261,10 +261,12 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
               label="Address"
               placeholder="Enter your complete address"
               value={address}
-              onChange={setAddress}
+              onChange={(val) => setAddress(val.slice(0, 250))}
               required
               error={errors.address}
               rows={3}
+              maxLength={250}
+              helperText={`${address.length}/250 characters`}
             />
           </div>
 

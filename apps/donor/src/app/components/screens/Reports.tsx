@@ -56,14 +56,14 @@ const donationTypeOptions = [
 export function Reports({ user }: ReportsProps) {
   const { user: apiAuth } = useApi();
   const [activeTab, setActiveTab] = useState<'receipts' | '80g' | 'tax'>('receipts');
-  
+
   // Data States
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [taxDocs, setTaxDocs] = useState<TaxDoc[]>([]);
-  
+
   // Loading & Error States
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Filter States
   const [searchReceipt, setSearchReceipt] = useState('');
   const [selectedFY, setSelectedFY] = useState('fy2025-26');
@@ -83,7 +83,8 @@ export function Reports({ user }: ReportsProps) {
           const res = await fetch(`${baseUrl}/donors/me/donations`, { headers });
           if (res.ok) {
             const data = await res.json();
-            setReceipts(data || []);
+            const sortedData = (data || []).sort((a: Receipt, b: Receipt) => b.id - a.id);
+            setReceipts(sortedData);
           }
         } else {
           // Both 80G and Tax tabs use the tax-summaries endpoint
@@ -162,11 +163,11 @@ export function Reports({ user }: ReportsProps) {
         body: receipts
           // Filter only for the requested FY for the PDF
           .filter((r: Receipt) => {
-             const d = new Date(r.date);
-             const m = d.getMonth(); 
-             const y = d.getFullYear();
-             const startY = m < 3 ? y - 1 : y;
-             return `FY ${startY}-${(startY + 1).toString().slice(-2)}` === fy;
+            const d = new Date(r.date);
+            const m = d.getMonth();
+            const y = d.getFullYear();
+            const startY = m < 3 ? y - 1 : y;
+            return `FY ${startY}-${(startY + 1).toString().slice(-2)}` === fy;
           })
           .map((r: Receipt) => [r.date, r.receiptNo, `INR ${r.amount.toLocaleString()}`]),
       }
@@ -231,11 +232,10 @@ export function Reports({ user }: ReportsProps) {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-[24px] py-[12px] transition-colors capitalize ${
-              activeTab === tab
-                ? 'border-b-2 border-[#F36A4F] text-[#F36A4F]'
-                : 'text-[#6E6E6E] hover:text-[#3D3D3D]'
-            }`}
+            className={`px-[24px] py-[12px] transition-colors capitalize ${activeTab === tab
+              ? 'border-b-2 border-[#F36A4F] text-[#F36A4F]'
+              : 'text-[#6E6E6E] hover:text-[#3D3D3D]'
+              }`}
             style={{ fontSize: '14px', fontWeight: 600 }}
           >
             {tab === '80g' ? '80G Reports' : tab === 'tax' ? 'Tax Documents' : 'Receipts'}
@@ -244,14 +244,14 @@ export function Reports({ user }: ReportsProps) {
       </div>
 
       {isLoading ? (
-         <AramCard>
-           <div className="p-[48px] text-center">
-             <div className="flex items-center justify-center gap-4">
-               <div className="w-8 h-8 border-4 border-[#F36A4F] border-t-transparent rounded-full animate-spin"></div>
-               <p style={{ fontSize: '16px', color: '#6E6E6E' }}>Loading reports...</p>
-             </div>
-           </div>
-         </AramCard>
+        <AramCard>
+          <div className="p-[48px] text-center">
+            <div className="flex items-center justify-center gap-4">
+              <div className="w-8 h-8 border-4 border-[#F36A4F] border-t-transparent rounded-full animate-spin"></div>
+              <p style={{ fontSize: '16px', color: '#6E6E6E' }}>Loading reports...</p>
+            </div>
+          </div>
+        </AramCard>
       ) : activeTab === 'receipts' ? (
         <AramCard noPadding>
           {/* Filters */}
@@ -329,133 +329,133 @@ export function Reports({ user }: ReportsProps) {
           )}
         </AramCard>
       ) : activeTab === '80g' ? (
-          <div className="flex flex-col gap-[24px]">
-            <AramCard>
-              <div className="flex flex-col gap-[16px]">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3>Annual 80G Summary</h3>
-                    <p style={{ fontSize: '14px', color: '#6E6E6E', marginTop: '4px' }}>
-                      These documents are generated based on successful donations.
-                    </p>
-                  </div>
-                  <AramButton variant="primary" onClick={() => handleDownload80GSummary('FY 2024-25')}>
-                    <Download size={18} className="inline mr-2" />
-                    Download 80G Summary (FY 2024-25)
-                  </AramButton>
+        <div className="flex flex-col gap-[24px]">
+          <AramCard>
+            <div className="flex flex-col gap-[16px]">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3>Annual 80G Summary</h3>
+                  <p style={{ fontSize: '14px', color: '#6E6E6E', marginTop: '4px' }}>
+                    These documents are generated based on successful donations.
+                  </p>
                 </div>
+                <AramButton variant="primary" onClick={() => handleDownload80GSummary('FY 2024-25')}>
+                  <Download size={18} className="inline mr-2" />
+                  Download 80G Summary (FY 2024-25)
+                </AramButton>
               </div>
-            </AramCard>
+            </div>
+          </AramCard>
 
-            <AramCard noPadding>
-              <div className="p-[24px] border-b border-[#DBDBDB]">
-                <h3>Generated 80G Documents</h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr style={{ height: '48px', backgroundColor: '#F3F3F3' }}>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Financial Year</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Generated Date</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Total Amount</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Download</th>
+          <AramCard noPadding>
+            <div className="p-[24px] border-b border-[#DBDBDB]">
+              <h3>Generated 80G Documents</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr style={{ height: '48px', backgroundColor: '#F3F3F3' }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Financial Year</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Generated Date</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Total Amount</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Download</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {taxDocs.map((doc) => (
+                    <tr key={doc.id} style={{ height: '52px', borderBottom: '1px solid #DBDBDB' }}>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>{doc.year}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{doc.generatedDate}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>₹{doc.totalAmount.toLocaleString()}</td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <button
+                          className="flex items-center gap-[8px] hover:opacity-80 transition-opacity"
+                          style={{ color: '#F36A4F' }}
+                          onClick={() => handleDownload80GDoc(doc)}
+                        >
+                          <Download size={16} />
+                          <span style={{ fontSize: '14px' }}>Download PDF</span>
+                        </button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {taxDocs.map((doc) => (
-                      <tr key={doc.id} style={{ height: '52px', borderBottom: '1px solid #DBDBDB' }}>
-                        <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>{doc.year}</td>
-                        <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{doc.generatedDate}</td>
-                        <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>₹{doc.totalAmount.toLocaleString()}</td>
-                        <td style={{ padding: '12px 16px' }}>
-                          <button
-                            className="flex items-center gap-[8px] hover:opacity-80 transition-opacity"
-                            style={{ color: '#F36A4F' }}
-                            onClick={() => handleDownload80GDoc(doc)}
-                          >
-                            <Download size={16} />
-                            <span style={{ fontSize: '14px' }}>Download PDF</span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {taxDocs.length === 0 && (
-                      <tr>
-                        <td colSpan={4} className="p-[48px] text-center">
-                          <FileText size={48} color="#DBDBDB" className="mx-auto mb-[16px]" />
-                          <p style={{ fontSize: '16px', color: '#6E6E6E' }}>No 80G documents available yet</p>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </AramCard>
-          </div>
+                  ))}
+                  {taxDocs.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="p-[48px] text-center">
+                        <FileText size={48} color="#DBDBDB" className="mx-auto mb-[16px]" />
+                        <p style={{ fontSize: '16px', color: '#6E6E6E' }}>No 80G documents available yet</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </AramCard>
+        </div>
       ) : (
-          <div className="flex flex-col gap-[24px]">
-            <AramCard>
-              <div className="flex flex-col gap-[16px]">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3>Annual Tax Summary</h3>
-                    <p style={{ fontSize: '14px', color: '#6E6E6E', marginTop: '4px' }}>
-                      Consolidated tax certificates for your financial records.
-                    </p>
-                  </div>
-                  <AramButton variant="primary" onClick={() => handleDownloadTaxSummary('FY 2024-25')}>
-                    <Download size={18} className="inline mr-2" />
-                    Download Tax Summary (FY 2024-25)
-                  </AramButton>
+        <div className="flex flex-col gap-[24px]">
+          <AramCard>
+            <div className="flex flex-col gap-[16px]">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3>Annual Tax Summary</h3>
+                  <p style={{ fontSize: '14px', color: '#6E6E6E', marginTop: '4px' }}>
+                    Consolidated tax certificates for your financial records.
+                  </p>
                 </div>
+                <AramButton variant="primary" onClick={() => handleDownloadTaxSummary('FY 2024-25')}>
+                  <Download size={18} className="inline mr-2" />
+                  Download Tax Summary (FY 2024-25)
+                </AramButton>
               </div>
-            </AramCard>
+            </div>
+          </AramCard>
 
-            <AramCard noPadding>
-              <div className="p-[24px] border-b border-[#DBDBDB]">
-                <h3>Generated Tax Documents</h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr style={{ height: '48px', backgroundColor: '#F3F3F3' }}>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Financial Year</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Generated Date</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Certificate Type</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Download</th>
+          <AramCard noPadding>
+            <div className="p-[24px] border-b border-[#DBDBDB]">
+              <h3>Generated Tax Documents</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr style={{ height: '48px', backgroundColor: '#F3F3F3' }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Financial Year</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Generated Date</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Certificate Type</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Download</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {taxDocs.map((doc) => (
+                    <tr key={doc.id} style={{ height: '52px', borderBottom: '1px solid #DBDBDB' }}>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>{doc.year}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{doc.generatedDate}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>{doc.type}</td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <button
+                          className="flex items-center gap-[8px] hover:opacity-80 transition-opacity"
+                          style={{ color: '#F36A4F' }}
+                          onClick={() => handleDownloadTaxDoc(doc)}
+                        >
+                          <Download size={16} />
+                          <span style={{ fontSize: '14px' }}>Download PDF</span>
+                        </button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {taxDocs.map((doc) => (
-                      <tr key={doc.id} style={{ height: '52px', borderBottom: '1px solid #DBDBDB' }}>
-                        <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>{doc.year}</td>
-                        <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{doc.generatedDate}</td>
-                        <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>{doc.type}</td>
-                        <td style={{ padding: '12px 16px' }}>
-                          <button
-                            className="flex items-center gap-[8px] hover:opacity-80 transition-opacity"
-                            style={{ color: '#F36A4F' }}
-                            onClick={() => handleDownloadTaxDoc(doc)}
-                          >
-                            <Download size={16} />
-                            <span style={{ fontSize: '14px' }}>Download PDF</span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {taxDocs.length === 0 && (
-                      <tr>
-                        <td colSpan={4} className="p-[48px] text-center">
-                          <FileText size={48} color="#DBDBDB" className="mx-auto mb-[16px]" />
-                          <p style={{ fontSize: '16px', color: '#6E6E6E' }}>No tax documents available yet</p>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </AramCard>
-          </div>
+                  ))}
+                  {taxDocs.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="p-[48px] text-center">
+                        <FileText size={48} color="#DBDBDB" className="mx-auto mb-[16px]" />
+                        <p style={{ fontSize: '16px', color: '#6E6E6E' }}>No tax documents available yet</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </AramCard>
+        </div>
       )}
     </div>
   );

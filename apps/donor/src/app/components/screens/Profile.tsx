@@ -10,15 +10,19 @@ export interface ProfileProps {
   userName: string;
   userEmail: string;
   userPhone: string;
+  userPan?: string;
+  userAddress?: string;
   profileImage?: string;
   onSaveProfile: (data: any) => void;
   onUpdatePassword: (data: any) => Promise<{ success: boolean; error?: string }>;
   onUploadImage: (file: File) => Promise<void>;
 }
 
-export function Profile({ userName, userEmail, userPhone, profileImage, onSaveProfile, onUpdatePassword, onUploadImage }: ProfileProps) {
+export function Profile({ userName, userEmail, userPhone, userPan, userAddress, profileImage, onSaveProfile, onUpdatePassword, onUploadImage }: ProfileProps) {
   const [name, setName] = useState(userName);
   const [phone, setPhone] = useState(userPhone);
+  const [pan, setPan] = useState(userPan || '');
+  const [address, setAddress] = useState(userAddress || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -49,7 +53,7 @@ export function Profile({ userName, userEmail, userPhone, profileImage, onSavePr
       return;
     }
 
-    onSaveProfile({ name, phone });
+    onSaveProfile({ name, phone, pan, address });
     setErrors({});
   };
 
@@ -192,6 +196,28 @@ export function Profile({ userName, userEmail, userPhone, profileImage, onSavePr
               helperText="Phone number cannot be changed"
               disabled
             />
+            <AramInput
+              label="PAN Number"
+              value={pan}
+              onChange={(val) => {
+                setPan(val.toUpperCase());
+                setErrors((prev: any) => ({ ...prev, pan: undefined }));
+              }}
+              placeholder="Enter your PAN"
+              error={errors.pan}
+              maxLength={10}
+            />
+            <AramInput
+              label="Address"
+              value={address}
+              onChange={(val) => {
+                setAddress(val);
+                setErrors((prev: any) => ({ ...prev, address: undefined }));
+              }}
+              placeholder="Enter your full address"
+              error={errors.address}
+              maxLength={250}
+            />
           </div>
 
           <div className="flex gap-[12px]">
@@ -201,6 +227,8 @@ export function Profile({ userName, userEmail, userPhone, profileImage, onSavePr
             <AramButton onClick={() => {
               setName(userName);
               setPhone(userPhone);
+              setPan(userPan || '');
+              setAddress(userAddress || '');
             }} variant="secondary">
               Cancel
             </AramButton>
