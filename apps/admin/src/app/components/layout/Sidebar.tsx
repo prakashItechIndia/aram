@@ -117,25 +117,33 @@ const navigation: NavItem[] = [
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  user?: {
+    name?: string;
+    email?: string;
+    profilePicture?: string;
+  } | null;
+}
+
+export function Sidebar({ user }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  
+
   const toggleExpand = (id: string) => {
     setExpandedItems((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
-  
+
   const renderNavItem = (item: NavItem, depth = 0) => {
     const isExpanded = expandedItems.includes(item.id);
     const isActive = currentPath === item.path || currentPath.startsWith(item.path + '/');
     const hasChildren = item.children && item.children.length > 0;
-    
+
     const Icon = item.icon;
-    
+
     return (
       <div key={item.id}>
         <button
@@ -146,11 +154,10 @@ export function Sidebar() {
               navigate(item.path);
             }
           }}
-          className={`w-full h-[44px] flex items-center gap-[10px] px-[12px] rounded-[16px] transition-colors ${
-            isActive
+          className={`w-full h-[44px] flex items-center gap-[10px] px-[12px] rounded-[16px] transition-colors ${isActive
               ? 'bg-[#FEF1EE] text-[#F36A4F] relative'
               : 'text-[#3D3D3D] hover:bg-[#F3F3F3]'
-          } ${depth > 0 ? 'ml-[24px]' : ''}`}
+            } ${depth > 0 ? 'ml-[24px]' : ''}`}
         >
           {isActive && depth === 0 && (
             <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[24px] bg-[#F36A4F] rounded-r" />
@@ -174,7 +181,7 @@ export function Sidebar() {
       </div>
     );
   };
-  
+
   return (
     <div className="w-[280px] h-screen bg-white border-r border-[#DBDBDB] flex flex-col fixed left-0 top-0">
       {/* Logo */}
@@ -189,21 +196,23 @@ export function Sidebar() {
           </div>
         </div>
       </div>
-      
+
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto p-[16px] space-y-1">
         {navigation.map((item) => renderNavItem(item))}
       </div>
-      
+
       {/* User Profile */}
       <div className="p-[16px] border-t border-[#DBDBDB]">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-[#F36A4F] rounded-full flex items-center justify-center">
-            <span className="text-white font-semibold text-sm">SA</span>
+            <span className="text-white font-semibold text-sm">
+              {user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'SA'}
+            </span>
           </div>
           <div className="flex-1">
-            <p className="text-[14px] leading-[20px] font-medium text-[#0D0D0D]">Super Admin</p>
-            <p className="text-[12px] leading-[16px] text-[#6E6E6E]">admin@aram.org</p>
+            <p className="text-[14px] leading-[20px] font-medium text-[#0D0D0D]">{user?.name || 'Super Admin'}</p>
+            <p className="text-[12px] leading-[16px] text-[#6E6E6E]">{user?.email || 'admin@aram.org'}</p>
           </div>
         </div>
       </div>

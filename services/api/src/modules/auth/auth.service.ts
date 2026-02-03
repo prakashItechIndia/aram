@@ -22,6 +22,8 @@ import { generateStrongPassword } from '../../common/utils/password.util';
 import { donors } from '../../database/models/donors.model';
 import { eChallans } from '../../database/models/e-challans.model';
 import { donationCategories } from '../../database/models/donation-categories.model';
+import { SmsService } from '../sms/sms.service';
+import { userOtp } from '../../database/models/user-otp.model';
 
 const ADMIN_USER_TYPES = ['Admin', 'Super Admin'] as const;
 
@@ -33,6 +35,7 @@ export class AuthService {
     private configService: ConfigService,
     private emailService: EmailService,
     private notificationsService: NotificationsService,
+    private smsService: SmsService,
   ) { }
 
   /** Validate against existing T_USER (Email or Mobile, Password). Checks existence first. */
@@ -66,8 +69,106 @@ export class AuthService {
 
     if (!match) return null; // Let login() handle invalid password
 
-    const { password, ...result } = user;
+    const { password: _, ...result } = user;
     return { id: result.id, email: result.eMail, name: result.name, userType: result.userType };
+  }
+
+  async checkMobile(mobileNumber: string) {
+    if (!this.db) throw new Error('Database not initialized');
+    const rows = await this.db
+      .select()
+      .from(tUser)
+      .where(and(eq(tUser.mobileNumber, mobileNumber.trim()), eq(tUser.isActive, true)));
+
+    return { registered: rows.length > 0 };
+  }
+
+  async sendOtp(mobileNumber: string) {
+    if (!this.db) throw new Error('Database not initialized');
+
+    // 1. Check if user exists
+    const users = await this.db
+      .select()
+      .from(tUser)
+      .where(and(eq(tUser.mobileNumber, mobileNumber.trim()), eq(tUser.isActive, true)));
+
+    const user = users[0];
+    if (!user) {
+      throw new NotFoundException('Mobile number is not registered');
+    }
+
+    // 2. Generate OTP
+    const code = this.smsService.generateOtpCode(6);
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 10); // 10 minutes expiry
+
+    // 3. Store in DB
+    console.log(`[AuthService] Inserting OTP into DB for mobile: ${mobileNumber.trim()}, userId: ${user.id}`);
+    try {
+      await this.db.insert(userOtp).values({
+        userId: user.id,
+        phone: mobileNumber.trim(),
+        otpCode: code,
+        expiresAt: expiresAt.toISOString(),
+      } as any);
+      console.log(`[AuthService] Successfully inserted OTP into DB`);
+    } catch (dbErr) {
+      console.error(`[AuthService] Database insertion FAILED:`, dbErr);
+      throw dbErr;
+    }
+
+    // 4. Send SMS
+    await this.smsService.sendOtpCode(mobileNumber.trim(), code);
+
+    return { success: true, message: 'OTP sent successfully' };
+  }
+
+  async verifyOtp(mobileNumber: string, otpCode: string) {
+    if (!this.db) throw new Error('Database not initialized');
+
+    // 1. Find latest unverified OTP for this phone
+    const otps = await this.db
+      .select()
+      .top(1)
+      .from(userOtp)
+      .where(
+        and(
+          eq(userOtp.phone, mobileNumber.trim()),
+          eq(userOtp.otpCode, otpCode.trim()),
+        )
+      )
+      .orderBy(desc(userOtp.createdAt));
+
+    const otp = otps[0];
+    if (!otp) {
+      throw new BadRequestException('Invalid OTP');
+    }
+
+    // 2. Check Expiry
+    if (new Date() > new Date(otp.expiresAt)) {
+      throw new BadRequestException('OTP has expired');
+    }
+
+    // 3. Get User and return token
+    const users = await this.db
+      .select()
+      .top(1)
+      .from(tUser)
+      .where(eq(tUser.id, otp.userId!));
+
+    const user = users[0];
+    if (!user) throw new NotFoundException('User not found');
+
+    const payload = { email: user.eMail, sub: user.id };
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.eMail,
+        phone: user.mobileNumber,
+      }
+    };
   }
 
   async getProfile(userId: number) {
@@ -81,7 +182,7 @@ export class AuthService {
       .select()
       .from(donors)
       .where(eq(donors.email, user.eMail.trim().toLowerCase()));
-    
+
     let donationAmount = null;
     let donationType = null;
 
@@ -314,6 +415,12 @@ export class AuthService {
     const payload = { email: user.email, sub: user.id, userType: user.userType };
     return {
       access_token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        userType: user.userType,
+      },
     };
   }
 

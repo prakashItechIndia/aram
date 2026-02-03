@@ -4,11 +4,11 @@ import { Header } from './Header';
 import { useApi } from '../../context/ApiContext';
 
 export function AuthenticatedLayout() {
-  const { logout } = useApi();
+  const { logout, user } = useApi();
   return (
     <div className="min-h-screen bg-[#F3F3F3]">
-      <Sidebar />
-      <Header onLogout={logout} />
+      <Sidebar user={user} />
+      <Header onLogout={logout} userName={user?.name} profilePicture={user?.profilePicture} />
       <div className="ml-[280px] mt-[72px] p-[24px]">
         <Outlet />
       </div>
