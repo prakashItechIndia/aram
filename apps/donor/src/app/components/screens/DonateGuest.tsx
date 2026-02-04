@@ -10,7 +10,7 @@ import { ArrowLeft } from 'lucide-react';
 import { validateForm as globalValidateForm, validationRules, validationMessages, sanitizeInput, countryPhoneConfigs, getMobileValidation } from '../../utils/validations';
 import { useDonationFormStatus } from '../../hooks/useDonationFormStatus';
 import { useCountries } from '../../hooks/useCountries';
-import { getCountryPhonePrefix } from '../../utils/countryPhonePrefixes';
+
 interface DonateGuestProps {
   onPay: (data: any) => void;
   onBack: () => void;
@@ -259,6 +259,29 @@ export function DonateGuest() {
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
+              {shouldShowPAN && (
+                <AramInput
+                  label="PAN Number"
+                  placeholder="AAAAA0000A"
+                  value={panNumber}
+                  onChange={(value: string) => setPanNumber(sanitizeInput.panNumber(value))}
+                  required
+                  error={errors.panNumber}
+                  helperText="Format: AAAAA0000A"
+                />
+              )}
+
+              <AramSelect
+                label="Country"
+                value={country}
+                onChange={setCountry}
+                options={countries}
+                required
+                error={errors.country}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
               <AramInput
                 label="Email ID"
                 type="email"
@@ -277,7 +300,7 @@ export function DonateGuest() {
                 onChange={handleMobileChange}
                 required
                 error={errors.mobile}
-                prefix={getCountryPhonePrefix(country)}
+                prefix={countries.find(c => c.value === country)?.code || '+91'}
               />
             </div>
 
@@ -342,28 +365,7 @@ export function DonateGuest() {
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
-              {shouldShowPAN && (
-                <AramInput
-                  label="PAN Number"
-                  placeholder="AAAAA0000A"
-                  value={panNumber}
-                  onChange={(value: string) => setPanNumber(sanitizeInput.panNumber(value))}
-                  required
-                  error={errors.panNumber}
-                  helperText="Format: AAAAA0000A"
-                />
-              )}
 
-              <AramSelect
-                label="Country"
-                value={country}
-                onChange={setCountry}
-                options={countries}
-                required
-                error={errors.country}
-              />
-            </div>
 
             <AramSelect
               label="Donation Type"

@@ -4,6 +4,7 @@ import { getApiBaseUrl } from '../context/ApiContext';
 interface CountryOption {
   value: string;
   label: string;
+  code?: string;
 }
 
 /**
@@ -11,7 +12,7 @@ interface CountryOption {
  * Returns all countries if multiCountry is enabled, otherwise returns only India
  */
 export function useCountries() {
-  const [countries, setCountries] = useState<CountryOption[]>([{ value: 'india', label: 'India' }]);
+  const [countries, setCountries] = useState<CountryOption[]>([{ value: 'india', label: 'India', code: '+91' }]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +34,7 @@ export function useCountries() {
         console.error('Error fetching countries:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch countries');
         // Fallback to India only
-        setCountries([{ value: 'india', label: 'India' }]);
+        setCountries([{ value: 'india', label: 'India', code: '+91' }]);
       } finally {
         setLoading(false);
       }

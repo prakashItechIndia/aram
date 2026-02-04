@@ -38,6 +38,13 @@ export class DonorsController {
     return this.donorsService.getDonationSummaries(req.user.userId);
   }
 
+  @Get('me/full-history')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async getFullHistory(@Request() req: any) {
+    return this.donorsService.getFullHistory(req.user.userId);
+  }
+
   @Post('process-donation')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

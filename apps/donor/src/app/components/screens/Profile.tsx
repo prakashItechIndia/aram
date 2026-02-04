@@ -6,6 +6,8 @@ import { Upload, Sun, Moon, Download, AlertTriangle, Eye, EyeOff } from 'lucide-
 import { validateField, validationRules, validationMessages, sanitizeInput } from '../../utils/validations';
 import { useDonationFormStatus } from '../../hooks/useDonationFormStatus';
 import { useApi } from '@/app/context/ApiContext';
+import { generateDonationHistoryPDF } from '../../utils/pdfGenerator';
+import { toast } from 'sonner';
 
 export function Profile() {
   const { user, updateProfile, changePassword, uploadProfileImage } = useApi();
@@ -118,8 +120,37 @@ export function Profile() {
     setTheme(newTheme);
   };
 
-  const handleDownloadHistory = () => {
-    // Download logic would go here
+  const handleDownloadHistory = async () => {
+    if (!user) return;
+    try {
+      const baseUrl = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:3000/api';
+      toast.info('Generating history report...', { duration: 2000 });
+      
+      const res = await fetch(`${baseUrl}/donors/me/full-history`, {
+        headers: {
+          'Authorization': `Bearer ${user.accessToken}`
+        }
+      });
+      
+      if (!res.ok) throw new Error('Failed to fetch history data');
+      
+      const data = await res.json();
+      
+      generateDonationHistoryPDF(
+        data.receipts, 
+        data.taxDocs, 
+        {
+          name: name,
+          email: user.email,
+          phone: phone,
+          pan: pan,
+          address: address
+        }
+      );
+    } catch (error) {
+       console.error(error);
+       toast.error('Failed to download history');
+    }
   };
 
   return (
