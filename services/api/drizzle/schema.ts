@@ -10,6 +10,7 @@ export const adminNotifications = mssqlTable("admin_notifications", {
 	readAt: datetime2("read_at", { mode: 'string', precision: 3 }),
 	createdAt: datetime2("created_at", { mode: 'string', precision: 3 }).default(sql`getdate()`),
 	userId: int("user_id").references(() => tUSER.id),
+	senderId: int("sender_id").references(() => tUSER.id),
 }, (table) => [
 	primaryKey({ columns: [table.id], name: "PK__admin_no__3213E83F46668038"}),
 	index("IDX_admin_notifications_user_id").on(table.userId),
@@ -575,14 +576,15 @@ export const tCFGRecipients = mssqlTable("T_CFG_Recipients", {
 
 export const tCountry = mssqlTable("T_Country", {
 	id: int("Id").identity({ seed: 1 ,increment: 1 }),
-	countryName: nvarchar("Country_Name", { length: 200 }),
+	countryName: nvarchar("Country_Name", { length: 128 }),
 	countryCode: nvarchar("Country_Code", { length: 10 }),
 	isActive: bit("Is_Active"),
 	createdBy: int("Created_By"),
-	createdDate: datetime("Created_Date", { mode: 'string' }),
+	createdDate: datetime2("Created_Date", { mode: 'string', precision: 3 }),
 	isDeleted: bit("Is_Deleted"),
 	modifiedBy: int("Modified_By"),
-	modifiedDate: datetime("Modified_Date", { mode: 'string' }),
+	modifiedDate: datetime2("Modified_Date", { mode: 'string', precision: 3 }),
+	countryNumber: nvarchar("Country_Number", { length: 10 }),
 }, (table) => [
 	primaryKey({ columns: [table.id], name: "PK_T_Country"}),
 ]);

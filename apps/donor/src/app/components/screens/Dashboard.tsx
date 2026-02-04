@@ -79,14 +79,14 @@ export function Dashboard() {
     const today = new Date();
     const currentYear = today.getFullYear();
     const currentMonth = today.getMonth(); // 0-11
-    
+
     // If month is Jan(0), Feb(1), Mar(2), then FY started in previous year
     const startYear = currentMonth < 3 ? currentYear - 1 : currentYear;
     const endYear = startYear + 1;
-    
+
     const startDate = new Date(`${startYear}-04-01`);
     const endDate = new Date(`${endYear}-03-31`);
-    
+
     return { startDate, endDate, label: `${startYear}-${endYear.toString().slice(-2)}` };
   };
 
@@ -95,13 +95,17 @@ export function Dashboard() {
   const totalDonated = donations.reduce((sum, d) => sum + d.amount, 0);
   const donationCount = donations.length;
   const lastDonationDate = donations.length > 0 ? donations[0].date : 'N/A';
-  
+
   const eligible80G = donations
     .filter(d => {
       const dDate = new Date(d.date);
       return d.eligible80G && dDate >= startDate && dDate <= endDate;
     })
     .reduce((sum, d) => sum + d.amount, 0);
+
+  const totalPages = Math.ceil(total / limit);
+  const startItem = total > 0 ? (page - 1) * limit + 1 : 0;
+  const endItem = Math.min(page * limit, total);
 
   const handleDownloadReceipt = (donation: Donation) => {
     generateReceiptPDF(
@@ -171,7 +175,7 @@ export function Dashboard() {
               Last Donation Date
             </span>
             <span style={{ fontSize: '18px', lineHeight: '26px', fontWeight: 600, color: '#0D0D0D' }}>
-              {lastDonation?.date || 'No donations yet'}
+              {lastDonationDate?.date || 'No donations yet'}
             </span>
           </div>
         </AramCard>

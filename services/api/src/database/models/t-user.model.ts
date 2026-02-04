@@ -19,11 +19,14 @@ export const tUser = mssqlTable('T_USER', {
   mobileNumber: nvarchar('Mobile_Number', { length: 15 }),
   location: nvarchar('Location', { length: 300 }),
   eMail: nvarchar('E_Mail', { length: 100 }),
-  profilePicture: nvarchar('Profile_Picture', { length: 500 }),
   isActive: bit('Is_Active'),
   createdBy: int('Created_By'),
   createdDate: datetime2('Created_Date', { precision: 3 }),
+  profilePicture: nvarchar('Profile_Picture', { length: 500 }),
   profileImageUrl: nvarchar('Profile_Image_Url', { length: 512 }),
+  isDeleted: bit('Is_Deleted'),
+  modifiedBy: int('Modified_By'),
+  modifiedDate: datetime2('Modified_Date', { precision: 3 }),
 });
 
 export type TUser = typeof tUser.$inferSelect;

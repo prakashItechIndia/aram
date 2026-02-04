@@ -1,0 +1,126 @@
+{
+  "version": "2",
+  "dialect": "mssql",
+  "id": "2b6f7b70-d9ff-46fd-8260-cc8a43d520eb",
+  "prevIds": [
+    "0d9368cf-be2a-4a6e-aeac-e848e7b96da7"
+  ],
+  "ddl": [
+    {
+      "name": "T_Country",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "Id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "T_Country"
+    },
+    {
+      "type": "nvarchar(128)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "Country_Name",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "T_Country"
+    },
+    {
+      "type": "nvarchar(10)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "Country_Code",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "T_Country"
+    },
+    {
+      "type": "nvarchar(10)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "Country_Number",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "T_Country"
+    },
+    {
+      "type": "bit",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "Is_Active",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "T_Country"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "Created_By",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "T_Country"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "Created_Date",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "T_Country"
+    },
+    {
+      "type": "bit",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "Is_Deleted",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "T_Country"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "Modified_By",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "T_Country"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "Modified_Date",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "T_Country"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "Id"
+      ],
+      "name": "T_Country_pkey",
+      "table": "T_Country",
+      "schema": "dbo",
+      "entityType": "pks"
+    }
+  ],
+  "renames": []
+}
