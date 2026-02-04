@@ -34,6 +34,7 @@ export function UsersRoles() {
   const [saving, setSaving] = useState(false);
   const [showEditPermissions, setShowEditPermissions] = useState(false);
   const [editPermissions, setEditPermissions] = useState<Permission[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; description?: string }>({});
 
   const fetchRoles = useCallback(async () => {
     setLoading(true);
@@ -87,12 +88,20 @@ export function UsersRoles() {
 
   const handleCreateRole = async () => {
     const name = addName.trim();
-    if (!name) {
-      setError('Role name is required');
+    const description = addDescription.trim();
+    const errors: { name?: string; description?: string } = {};
+
+    if (!name) errors.name = 'Role name is required';
+    if (!description) errors.description = 'Description is required';
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
+
     setSaving(true);
     setError(null);
+    setFieldErrors({});
     try {
       const res = await apiFetch('/user-roles', {
         method: 'POST',
@@ -100,9 +109,7 @@ export function UsersRoles() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.message || 'Failed to create role');
-      setShowAddModal(false);
-      setAddName('');
-      setAddDescription('');
+      closeAdd();
       fetchRoles();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to create role');
@@ -132,6 +139,22 @@ export function UsersRoles() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const openAdd = () => {
+    setAddName('');
+    setAddDescription('');
+    setFieldErrors({});
+    setError(null);
+    setShowAddModal(true);
+  };
+
+  const closeAdd = () => {
+    setShowAddModal(false);
+    setAddName('');
+    setAddDescription('');
+    setFieldErrors({});
+    setError(null);
   };
 
   const openEditPermissions = () => {
@@ -190,7 +213,7 @@ export function UsersRoles() {
           </p>
         </div>
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={openAdd}
           className="h-[44px] px-[20px] bg-[#F36A4F] text-white rounded-[999px] flex items-center gap-2 hover:bg-[#E55A3F] transition-colors"
         >
           <Plus className="w-5 h-5" />
@@ -216,11 +239,10 @@ export function UsersRoles() {
               <button
                 key={role.id}
                 onClick={() => setSelectedRole(String(role.id))}
-                className={`bg-white border rounded-[16px] p-[20px] text-left transition-all ${
-                  selectedRole === String(role.id)
-                    ? 'border-[#F36A4F] shadow-[0_0_0_3px_rgba(243,106,79,0.1)]'
-                    : 'border-[#DBDBDB] hover:border-[#F36A4F]'
-                }`}
+                className={`bg-white border rounded-[16px] p-[20px] text-left transition-all ${selectedRole === String(role.id)
+                  ? 'border-[#F36A4F] shadow-[0_0_0_3px_rgba(243,106,79,0.1)]'
+                  : 'border-[#DBDBDB] hover:border-[#F36A4F]'
+                  }`}
               >
                 <div className="flex items-start justify-between mb-[12px]">
                   <div className="w-[40px] h-[40px] bg-[#FEF1EE] rounded-full flex items-center justify-center">
@@ -266,9 +288,9 @@ export function UsersRoles() {
                   {!showEditPermissions ? (
                     <button
                       onClick={openEditPermissions}
-                      disabled={(selectedRoleData.userCount ?? 0) > 0}
+                      disabled={false}
                       className="h-[40px] px-[16px] border border-[#DBDBDB] rounded-[999px] flex items-center gap-2 hover:bg-[#F3F3F3] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title={(selectedRoleData.userCount ?? 0) > 0 ? 'Reassign or remove users before editing permissions' : 'Edit Permissions'}
+                      title="Edit Permissions"
                     >
                       <Edit2 className="w-4 h-4 text-[#6E6E6E]" />
                       <span className="text-[14px] leading-[20px] font-medium text-[#3D3D3D]">
@@ -295,9 +317,14 @@ export function UsersRoles() {
                   {selectedRoleData.name !== 'Super Admin' && (
                     <button
                       onClick={() => handleDeleteRole(selectedRoleData)}
-                      disabled={(selectedRoleData.userCount ?? 0) > 0}
+                      // disabled={(selectedRoleData.userCount ?? 0) > 0}
+                      disabled={selectedRoleData.name === 'Super Admin'}
                       className="h-[40px] px-[16px] border border-[#DBDBDB] rounded-[999px] flex items-center gap-2 hover:bg-[#FEF1EE] hover:border-[#F36A4F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title={(selectedRoleData.userCount ?? 0) > 0 ? 'Reassign or remove users before deleting role' : 'Delete Role'}
+                      title={
+                        selectedRoleData.name === 'Super Admin'
+                          ? 'Super Admin role cannot be deleted'
+                          : 'Delete Role'
+                      }
                     >
                       <Trash2 className="w-4 h-4 text-[#6E6E6E]" />
                       <span className="text-[14px] leading-[20px] font-medium text-[#3D3D3D]">
@@ -346,17 +373,15 @@ export function UsersRoles() {
                               <button
                                 type="button"
                                 onClick={() => togglePermission(index, 'create')}
-                                className={`w-[20px] h-[20px] rounded-[4px] flex items-center justify-center ${
-                                  permission.create ? 'bg-[#F36A4F]' : 'bg-[#F3F3F3] border border-[#DBDBDB]'
-                                }`}
+                                className={`w-[20px] h-[20px] rounded-[4px] flex items-center justify-center ${permission.create ? 'bg-[#F36A4F]' : 'bg-[#F3F3F3] border border-[#DBDBDB]'
+                                  }`}
                               >
                                 {permission.create && <Check className="w-[12px] h-[12px] text-white" />}
                               </button>
                             ) : (
                               <div
-                                className={`w-[20px] h-[20px] rounded-[4px] flex items-center justify-center ${
-                                  permission.create ? 'bg-[#F36A4F]' : 'bg-[#F3F3F3] border border-[#DBDBDB]'
-                                }`}
+                                className={`w-[20px] h-[20px] rounded-[4px] flex items-center justify-center ${permission.create ? 'bg-[#F36A4F]' : 'bg-[#F3F3F3] border border-[#DBDBDB]'
+                                  }`}
                               >
                                 {permission.create && <Check className="w-[12px] h-[12px] text-white" />}
                               </div>
@@ -369,17 +394,15 @@ export function UsersRoles() {
                               <button
                                 type="button"
                                 onClick={() => togglePermission(index, 'update')}
-                                className={`w-[20px] h-[20px] rounded-[4px] flex items-center justify-center ${
-                                  permission.update ? 'bg-[#F36A4F]' : 'bg-[#F3F3F3] border border-[#DBDBDB]'
-                                }`}
+                                className={`w-[20px] h-[20px] rounded-[4px] flex items-center justify-center ${permission.update ? 'bg-[#F36A4F]' : 'bg-[#F3F3F3] border border-[#DBDBDB]'
+                                  }`}
                               >
                                 {permission.update && <Check className="w-[12px] h-[12px] text-white" />}
                               </button>
                             ) : (
                               <div
-                                className={`w-[20px] h-[20px] rounded-[4px] flex items-center justify-center ${
-                                  permission.update ? 'bg-[#F36A4F]' : 'bg-[#F3F3F3] border border-[#DBDBDB]'
-                                }`}
+                                className={`w-[20px] h-[20px] rounded-[4px] flex items-center justify-center ${permission.update ? 'bg-[#F36A4F]' : 'bg-[#F3F3F3] border border-[#DBDBDB]'
+                                  }`}
                               >
                                 {permission.update && <Check className="w-[12px] h-[12px] text-white" />}
                               </div>
@@ -392,17 +415,15 @@ export function UsersRoles() {
                               <button
                                 type="button"
                                 onClick={() => togglePermission(index, 'view')}
-                                className={`w-[20px] h-[20px] rounded-[4px] flex items-center justify-center ${
-                                  permission.view ? 'bg-[#F36A4F]' : 'bg-[#F3F3F3] border border-[#DBDBDB]'
-                                }`}
+                                className={`w-[20px] h-[20px] rounded-[4px] flex items-center justify-center ${permission.view ? 'bg-[#F36A4F]' : 'bg-[#F3F3F3] border border-[#DBDBDB]'
+                                  }`}
                               >
                                 {permission.view && <Check className="w-[12px] h-[12px] text-white" />}
                               </button>
                             ) : (
                               <div
-                                className={`w-[20px] h-[20px] rounded-[4px] flex items-center justify-center ${
-                                  permission.view ? 'bg-[#F36A4F]' : 'bg-[#F3F3F3] border border-[#DBDBDB]'
-                                }`}
+                                className={`w-[20px] h-[20px] rounded-[4px] flex items-center justify-center ${permission.view ? 'bg-[#F36A4F]' : 'bg-[#F3F3F3] border border-[#DBDBDB]'
+                                  }`}
                               >
                                 {permission.view && <Check className="w-[12px] h-[12px] text-white" />}
                               </div>
@@ -415,17 +436,15 @@ export function UsersRoles() {
                               <button
                                 type="button"
                                 onClick={() => togglePermission(index, 'delete')}
-                                className={`w-[20px] h-[20px] rounded-[4px] flex items-center justify-center ${
-                                  permission.delete ? 'bg-[#F36A4F]' : 'bg-[#F3F3F3] border border-[#DBDBDB]'
-                                }`}
+                                className={`w-[20px] h-[20px] rounded-[4px] flex items-center justify-center ${permission.delete ? 'bg-[#F36A4F]' : 'bg-[#F3F3F3] border border-[#DBDBDB]'
+                                  }`}
                               >
                                 {permission.delete && <Check className="w-[12px] h-[12px] text-white" />}
                               </button>
                             ) : (
                               <div
-                                className={`w-[20px] h-[20px] rounded-[4px] flex items-center justify-center ${
-                                  permission.delete ? 'bg-[#F36A4F]' : 'bg-[#F3F3F3] border border-[#DBDBDB]'
-                                }`}
+                                className={`w-[20px] h-[20px] rounded-[4px] flex items-center justify-center ${permission.delete ? 'bg-[#F36A4F]' : 'bg-[#F3F3F3] border border-[#DBDBDB]'
+                                  }`}
                               >
                                 {permission.delete && <Check className="w-[12px] h-[12px] text-white" />}
                               </div>
@@ -444,14 +463,14 @@ export function UsersRoles() {
 
       {/* Add Role Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-[16px] w-full max-w-[500px] mx-[24px]">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-[24px]">
+          <div className="bg-white rounded-[16px] w-full max-w-[500px] shadow-lg">
             <div className="flex items-center justify-between px-[24px] py-[20px] border-b border-[#DBDBDB]">
               <h3 className="text-[18px] leading-[24px] font-semibold text-[#0D0D0D]">
                 Add New Role
               </h3>
               <button
-                onClick={() => setShowAddModal(false)}
+                onClick={closeAdd}
                 className="w-[32px] h-[32px] flex items-center justify-center rounded-full hover:bg-[#F3F3F3] transition-colors"
               >
                 <X className="w-5 h-5 text-[#6E6E6E]" />
@@ -461,33 +480,55 @@ export function UsersRoles() {
               <div className="flex flex-col gap-[16px]">
                 <div>
                   <label className="block text-[14px] leading-[20px] font-medium text-[#3D3D3D] mb-[8px]">
-                    Role Name
+                    Role Name <span className="text-[#F36A4F]">*</span>
                   </label>
                   <input
                     type="text"
                     value={addName}
-                    onChange={(e) => setAddName(e.target.value)}
+                    onChange={(e) => {
+                      setAddName(e.target.value);
+                      if (e.target.value) setFieldErrors((prev: { name?: string; description?: string }) => ({ ...prev, name: undefined }));
+                    }}
                     placeholder="Enter role name"
-                    className="w-full h-[44px] px-[16px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
+                    className={`w-full h-[44px] px-[16px] text-[16px] leading-[24px] bg-white border rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20 ${fieldErrors.name ? 'border-[#F36A4F]' : 'border-[#DBDBDB]'
+                      }`}
                   />
+                  {fieldErrors.name && (
+                    <p className="mt-1 text-[12px] text-[#F36A4F]">{fieldErrors.name}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[14px] leading-[20px] font-medium text-[#3D3D3D] mb-[8px]">
-                    Description
+                    Description <span className="text-[#F36A4F]">*</span>
                   </label>
                   <textarea
                     value={addDescription}
-                    onChange={(e) => setAddDescription(e.target.value)}
+                    maxLength={150}
+                    onChange={(e) => {
+                      setAddDescription(e.target.value);
+                      if (e.target.value) setFieldErrors((prev: { name?: string; description?: string }) => ({ ...prev, description: undefined }));
+                    }}
                     placeholder="Enter role description"
                     rows={3}
-                    className="w-full px-[16px] py-[12px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20 resize-none"
+                    className={`w-full px-[16px] py-[12px] text-[16px] leading-[24px] bg-white border rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20 resize-none ${fieldErrors.description ? 'border-[#F36A4F]' : 'border-[#DBDBDB]'
+                      }`}
                   />
+                  <div className="flex justify-between mt-1">
+                    {fieldErrors.description ? (
+                      <p className="text-[12px] text-[#F36A4F]">{fieldErrors.description}</p>
+                    ) : (
+                      <div />
+                    )}
+                    <p className={`text-[12px] ${addDescription.length >= 150 ? 'text-[#F36A4F]' : 'text-[#6E6E6E]'}`}>
+                      {addDescription.length}/150
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
             <div className="flex items-center justify-end gap-[12px] px-[24px] py-[20px] border-t border-[#DBDBDB]">
               <button
-                onClick={() => setShowAddModal(false)}
+                onClick={closeAdd}
                 className="h-[44px] px-[20px] border border-[#DBDBDB] rounded-[999px] text-[16px] leading-[24px] font-medium text-[#3D3D3D] hover:bg-[#F3F3F3] transition-colors"
               >
                 Cancel
@@ -506,8 +547,8 @@ export function UsersRoles() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && roleToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-[16px] w-full max-w-[440px] mx-[24px]">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-[24px]">
+          <div className="bg-white rounded-[16px] w-full max-w-[440px] shadow-lg">
             <div className="flex items-center justify-between px-[24px] py-[20px] border-b border-[#DBDBDB]">
               <h3 className="text-[18px] leading-[24px] font-semibold text-[#0D0D0D]">
                 Delete Role
@@ -524,15 +565,16 @@ export function UsersRoles() {
                 Are you sure you want to delete the role &quot;{roleToDelete.name}&quot;? This action
                 cannot be undone.
               </p>
-              {(roleToDelete.userCount ?? 0) > 0 && (
-                <div className="bg-[#FEF1EE] border border-[#F36A4F] rounded-[8px] px-[16px] py-[12px]">
-                  <p className="text-[12px] leading-[16px] text-[#734F48]">
-                    <strong>{roleToDelete.userCount}</strong> user
-                    {roleToDelete.userCount !== 1 ? 's are' : ' is'} currently assigned to this
-                    role. They will need to be reassigned before deletion.
-                  </p>
-                </div>
-              )}
+              {((roleToDelete.userCount ?? 0) > 0 ||
+                ['Admin', 'Finance Manager', 'Operator'].includes(roleToDelete.name)) && (
+                  <div className="bg-[#FEF1EE] border border-[#F36A4F] rounded-[8px] px-[16px] py-[12px]">
+                    <p className="text-[12px] leading-[16px] text-[#734F48]">
+                      <strong>{roleToDelete.userCount}</strong> user
+                      {roleToDelete.userCount !== 1 ? 's are' : ' is'} currently assigned to this
+                      role. They will need to be reassigned before deletion.
+                    </p>
+                  </div>
+                )}
             </div>
             <div className="flex items-center justify-end gap-[12px] px-[24px] py-[20px] border-t border-[#DBDBDB]">
               <button
@@ -543,7 +585,7 @@ export function UsersRoles() {
               </button>
               <button
                 onClick={confirmDelete}
-                disabled={saving || (roleToDelete.userCount ?? 0) > 0}
+                disabled={saving}
                 className="h-[44px] px-[20px] bg-[#F36A4F] text-white rounded-[999px] text-[16px] leading-[24px] font-medium hover:bg-[#E55A3F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Delete Role

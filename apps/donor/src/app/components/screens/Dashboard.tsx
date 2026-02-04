@@ -27,6 +27,10 @@ export function Dashboard() {
   const { user: apiAuth } = useApi();
   const [donations, setDonations] = useState<Donation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [total, setTotal] = useState(0);
 
   const user = {
     name: apiAuth?.name || 'Donor',
@@ -42,7 +46,11 @@ export function Dashboard() {
       try {
         setIsLoading(true);
         const baseUrl = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:3000/api';
-        const response = await fetch(`${baseUrl}/donors/me/donations`, {
+        const params = new URLSearchParams();
+        params.set('page', String(page));
+        params.set('limit', String(limit));
+        const queryString = params.toString();
+        const response = await fetch(`${baseUrl}/donors/me/donations${queryString ? `?${queryString}` : ''}`, {
           headers: {
             'Authorization': `Bearer ${apiAuth.accessToken}`,
           },
@@ -50,27 +58,34 @@ export function Dashboard() {
 
         if (!response.ok) throw new Error('Failed to fetch donations');
         const data = await response.json();
-        const sortedData = (data || []).sort((a: Donation, b: Donation) => b.id - a.id);
-        setDonations(sortedData);
+        const items = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+        const totalCount = typeof data?.total === 'number' ? data.total : items.length;
+        setDonations(items);
+        setTotal(totalCount);
       } catch (err) {
         console.error('Failed to fetch donations:', err);
         setDonations([]);
+        setTotal(0);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchDonations();
-  }, [apiAuth?.accessToken]);
+  }, [apiAuth?.accessToken, page, limit]);
 
-  const totalDonated = donations.reduce((sum, d) => sum + d.amount, 0);
-  const donationCount = donations.length;
-  const lastDonationDate = donations.length > 0 ? donations[0].date : 'N/A';
-  const eligible80G = donations.filter(d => d.eligible80G).reduce((sum, d) => sum + d.amount, 0);
+  // Calculate stats from all donations (not just current page)
+  const totalDonated = donations.reduce((sum: number, d: Donation) => sum + d.amount, 0);
+  const donationCount = total;
+  const lastDonation = donations[0];
+  const eligible80G = donations.filter((d: Donation) => d.eligible80G).reduce((sum: number, d: Donation) => sum + d.amount, 0);
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const startItem = total === 0 ? 0 : (page - 1) * limit + 1;
+  const endItem = Math.min(page * limit, total);
 
   const handleDownloadReceipt = (donation: Donation) => {
-    if (!checkAndNotify()) return;
-    
+
     generateReceiptPDF(
       {
         receiptNo: donation.receiptNo,
@@ -90,7 +105,6 @@ export function Dashboard() {
   };
 
   const handleDonateClick = () => {
-    if (!checkAndNotify()) return;
     onDonateNow();
   };
 
@@ -142,7 +156,7 @@ export function Dashboard() {
               Last Donation Date
             </span>
             <span style={{ fontSize: '18px', lineHeight: '26px', fontWeight: 600, color: '#0D0D0D' }}>
-              {lastDonationDate}
+              {lastDonation?.date || 'No donations yet'}
             </span>
           </div>
         </AramCard>
@@ -170,51 +184,84 @@ export function Dashboard() {
         ) : donations.length === 0 ? (
           <div className="p-[48px] text-center text-[#6E6E6E]">No donations found</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr style={{ height: '48px', backgroundColor: '#F3F3F3' }}>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Date</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Receipt No</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Donation Type</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Amount</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Status</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Download</th>
-                </tr>
-              </thead>
-              <tbody>
-                {donations.slice(0, 5).map((donation) => (
-                  <tr key={donation.id} style={{ height: '52px', borderBottom: '1px solid #DBDBDB' }}>
-                    <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.date}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.receiptNo}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.type}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>₹{donation.amount.toLocaleString()}</td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <span style={{
-                        backgroundColor: '#FEF1EE',
-                        color: '#F36A4F',
-                        padding: '4px 12px',
-                        borderRadius: '999px',
-                        fontSize: '13px',
-                        fontWeight: 500
-                      }}>
-                        Success
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <button
-                        onClick={() => handleDownloadReceipt(donation)}
-                        className="flex items-center gap-[8px]" style={{ color: '#F36A4F' }}
-                      >
-                        <Download size={16} />
-                        <span style={{ fontSize: '14px' }}>Receipt</span>
-                      </button>
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead className="sticky top-0 z-10 shadow-sm">
+                  <tr style={{ height: '48px', backgroundColor: '#F3F3F3' }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Date</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Receipt No</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Donation Type</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Amount</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Status</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Download</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {donations.map((donation: Donation) => (
+                    <tr key={donation.id} style={{ height: '52px', borderBottom: '1px solid #DBDBDB' }}>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.date}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.receiptNo}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.type}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>₹{donation.amount.toLocaleString()}</td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{
+                          backgroundColor: '#FEF1EE',
+                          color: '#F36A4F',
+                          padding: '4px 12px',
+                          borderRadius: '999px',
+                          fontSize: '13px',
+                          fontWeight: 500
+                        }}>
+                          {donation.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <button
+                          className="flex items-center gap-[8px]"
+                          style={{ color: '#F36A4F' }}
+                          onClick={() => handleDownloadReceipt(donation)}
+                        >
+                          <Download size={16} />
+                          <span style={{ fontSize: '14px' }}>Receipt</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {total > limit && (
+              <div className="px-[24px] py-[16px] border-t border-[#DBDBDB] flex items-center justify-between flex-wrap gap-4">
+                <div className="text-[14px] text-[#6E6E6E]">
+                  Showing {startItem}–{endItem} of {total} donations
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1 || isLoading}
+                    className="h-[40px] px-[16px] border border-[#DBDBDB] rounded-[8px] text-[14px] font-medium text-[#3D3D3D] bg-white hover:bg-[#F3F3F3] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-4 text-[14px] text-[#3D3D3D]">
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages || isLoading}
+                    className="h-[40px] px-[16px] border border-[#DBDBDB] rounded-[8px] text-[14px] font-medium text-[#3D3D3D] bg-white hover:bg-[#F3F3F3] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </AramCard>
 
@@ -265,6 +312,6 @@ export function Dashboard() {
           </div>
         </div>
       </AramCard> */}
-    </div>
+    </div >
   );
 }

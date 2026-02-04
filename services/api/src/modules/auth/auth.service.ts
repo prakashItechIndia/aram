@@ -7,13 +7,15 @@ import { and, desc, eq, inArray, or } from 'drizzle-orm';
 import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';
 import { generateStrongPassword } from '../../common/utils/password.util';
 import { DRIZZLE } from '../../database/database.module';
-import { donors } from '../../database/models/donors.model';
-import { tUser } from '../../database/models/t-user.model';
-import { eChallans } from '../../database/models/e-challans.model';
 import { donationCategories } from '../../database/models/donation-categories.model';
+import { donors } from '../../database/models/donors.model';
+import { eChallans } from '../../database/models/e-challans.model';
+import { tUser } from '../../database/models/t-user.model';
 import * as schema from '../../database/schema';
 import { EmailService } from '../email/email.service';
 import { NotificationsService } from '../notifications/notifications.service';
+// import { donors } from '../../database/models/donors.model';
+import { SmsService } from '../sms/sms.service';
 import { getAndConsumeResetToken, setResetToken } from './admin-reset-token.store';
 import { AdminLoginDto } from './dto/admin-login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -24,7 +26,6 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 import { userOtp } from '../../database/models/user-otp.model';
-import { SmsService } from '../sms/sms.service';
 
 const ADMIN_USER_TYPES = ['Admin', 'Super Admin'] as const;
 

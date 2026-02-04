@@ -17,7 +17,7 @@ export class AdminUsersService {
   constructor(
     @Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>,
     private emailService: EmailService,
-  ) {}
+  ) { }
 
   async findAll(query?: QueryAdminUsersDto) {
     const page = Math.max(1, query?.page ?? 1);
@@ -50,7 +50,10 @@ export class AdminUsersService {
     }
     if (query?.dateTo) {
       const to = new Date(query.dateTo);
-      if (!isNaN(to.getTime())) conditions.push(lte(tUser.createdDate, to));
+      if (!isNaN(to.getTime())) {
+        to.setHours(23, 59, 59, 999);
+        conditions.push(lte(tUser.createdDate, to));
+      }
     }
     const whereClause = conditions.length ? and(...conditions) : undefined;
 

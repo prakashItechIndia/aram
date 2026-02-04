@@ -164,11 +164,11 @@ export function DonateLoggedIn() {
 
     if (amount < minAmount) newErrors.amount = `Minimum donation amount is ₹${minAmount}`;
     if (amount > maxAmount) newErrors.amount = `Maximum donation amount is ₹${maxAmount}`;
-    
+
     if (addressRequired && !address.trim()) {
       newErrors.address = 'Address is required';
     }
-    
+
     // Only validate PAN if it should be shown
     if (shouldShowPAN) {
       if (!panNumber.trim()) newErrors.panNumber = 'PAN number is required';
@@ -176,7 +176,7 @@ export function DonateLoggedIn() {
         newErrors.panNumber = 'Invalid PAN format (e.g., AAAAA0000A)';
       }
     }
-    
+
     if (!donationType) newErrors.donationType = 'Please select a donation type';
     if (!country) newErrors.country = 'Country is required';
 
@@ -185,8 +185,7 @@ export function DonateLoggedIn() {
   };
 
   const handlePay = () => {
-    if (!checkAndNotify()) return;
-    
+
     if (validateForm()) {
       // Save donation preferences for next time
       saveLastDonationPrefs(amount, donationType);
