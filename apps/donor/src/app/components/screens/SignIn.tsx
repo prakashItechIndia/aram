@@ -1,21 +1,25 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { AramButton } from '@/app/components/aram/AramButton';
 import { AramCard } from '@/app/components/aram/AramCard';
 import { AramInput } from '@/app/components/aram/AramInput';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { validateForm as globalValidateForm, validationRules, validationMessages } from '../../utils/validations';
+import { useApi } from '@/app/context/ApiContext';
 
-interface SignInProps {
-  onSignIn: (email: string, password: string) => void | Promise<void>;
-  onGetOtp: (phone: string) => void;
-  onCreateAccount: () => void;
-  onForgotPassword: () => void;
-  onBack: () => void;
-  initialEmailOrPhone?: string;
-}
+export function SignIn() {
+  const navigate = useNavigate();
+  const { login, sendOtp, isAuthenticated } = useApi();
 
-export function SignIn({ onSignIn, onGetOtp, onCreateAccount, onForgotPassword, onBack, initialEmailOrPhone = '' }: SignInProps) {
-  const [emailOrPhone, setEmailOrPhone] = useState(initialEmailOrPhone);
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
+
+  const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<any>({});
@@ -36,7 +40,18 @@ export function SignIn({ onSignIn, onGetOtp, onCreateAccount, onForgotPassword, 
 
   const handleSubmit = async () => {
     if (isMobile) {
-      onGetOtp(emailOrPhone.trim());
+      setIsLoading(true);
+      try {
+        const res = await sendOtp(emailOrPhone.trim());
+        if (res.success) {
+          toast.success('OTP sent successfully');
+          navigate('/otp', { state: { phone: emailOrPhone.trim() } });
+        } else {
+          toast.error(res.error || 'Failed to send OTP');
+        }
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
@@ -61,7 +76,13 @@ export function SignIn({ onSignIn, onGetOtp, onCreateAccount, onForgotPassword, 
     if (Object.keys(newErrors).length === 0) {
       setIsLoading(true);
       try {
-        await onSignIn(emailOrPhone.trim(), password);
+        const result = await login(emailOrPhone.trim(), password);
+        if (result.success) {
+          toast.success('Signed in successfully!');
+          navigate('/donate');
+        } else {
+          toast.error(result.error ?? 'Sign in failed');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -74,7 +95,7 @@ export function SignIn({ onSignIn, onGetOtp, onCreateAccount, onForgotPassword, 
         <div className="flex flex-col gap-[24px]">
           {/* Back Button */}
           <button
-            onClick={onBack}
+            onClick={() => navigate('/')}
             className="flex items-center gap-[8px] text-[#6E6E6E] hover:text-[#3D3D3D] transition-colors w-fit"
             style={{ fontSize: '14px', fontWeight: 600 }}
           >
@@ -125,7 +146,7 @@ export function SignIn({ onSignIn, onGetOtp, onCreateAccount, onForgotPassword, 
               <div className="text-right">
                 <button
                   type="button"
-                  onClick={onForgotPassword}
+                  onClick={() => navigate('/forgot-password')}
                   style={{ fontSize: '14px', lineHeight: '20px', color: '#F36A4F' }}
                   className="hover:underline"
                 >
@@ -141,7 +162,7 @@ export function SignIn({ onSignIn, onGetOtp, onCreateAccount, onForgotPassword, 
             </AramButton>
             <div className="text-center">
               <button
-                onClick={onCreateAccount}
+                onClick={() => navigate('/create-account')}
                 style={{ fontSize: '14px', lineHeight: '20px', color: '#F36A4F' }}
               >
                 Don't have an account? Create one

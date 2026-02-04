@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AramButton } from '../aram/AramButton';
 import { AramCard } from '../aram/AramCard';
@@ -7,11 +8,7 @@ import { AramTextarea } from '../aram/AramTextarea';
 import { AramSelect } from '../aram/AramSelect';
 import { ArrowLeft } from 'lucide-react';
 import { validateForm as globalValidateForm, validationRules, validationMessages, sanitizeInput, countryPhoneConfigs, getMobileValidation } from '../../utils/validations';
-interface DonateGuestProps {
-  onPay: (data: any) => void;
-  onBack: () => void;
-  api?: { donorsApi: { donorsControllerGuestDonate: (body: any) => Promise<{ data?: { donorId?: number }; response?: { status?: number; data?: { message?: string } } }> } };
-}
+import { useApi } from '@/app/context/ApiContext';
 
 const donationTypes = [
   { value: 'aram-sei', label: 'Aram Sei Fund' },
@@ -24,14 +21,13 @@ const donationTypes = [
 
 const countries = [
   { value: 'india', label: 'India' }
-  // { value: 'usa', label: 'United States' },
-  // { value: 'uk', label: 'United Kingdom' },
-  // { value: 'canada', label: 'Canada' },
 ];
 
 const amountPresets = [500, 1000, 2500, 5000];
 
-export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
+export function DonateGuest() {
+  const navigate = useNavigate();
+  const { api } = useApi();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
@@ -124,17 +120,6 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
   const handlePay = async () => {
     if (!validateForm()) return;
 
-    console.log('Overall donation details:', {
-      name,
-      email,
-      mobile,
-      address,
-      amount,
-      panNumber: panNumber.toUpperCase(),
-      donationType,
-      country,
-    });
-
     if (api?.donorsApi) {
       setSubmitting(true);
       try {
@@ -148,17 +133,15 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
           amount,
           donationType,
         });
-        // Success toast removed as per request - will show in final step instead
 
-        onPay({
-          name,
-          email,
-          mobile,
-          address,
-          amount,
-          panNumber: panNumber.toUpperCase(),
-          donationType,
-          country,
+        // Navigate to payment processing
+        navigate('/payment-processing', {
+          state: {
+            amount,
+            donationType,
+            date: new Date().toISOString(),
+            isGuest: true
+          }
         });
       } catch (err: unknown) {
         const res = (err as { response?: { status?: number; data?: { message?: string } } })?.response;
@@ -170,17 +153,6 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
       } finally {
         setSubmitting(false);
       }
-    } else {
-      onPay({
-        name,
-        email,
-        mobile,
-        address,
-        amount,
-        panNumber: panNumber.toUpperCase(),
-        donationType,
-        country,
-      });
     }
   };
 
@@ -203,7 +175,7 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
         <div className="flex flex-col gap-[24px]">
           {/* Back Button */}
           <button
-            onClick={onBack}
+            onClick={() => navigate('/')}
             className="flex items-center gap-[8px] text-[#6E6E6E] hover:text-[#3D3D3D] transition-colors w-fit"
             style={{ fontSize: '14px', fontWeight: 600 }}
           >

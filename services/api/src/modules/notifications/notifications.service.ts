@@ -7,7 +7,7 @@ import * as schema from '../../database/schema';
 
 @Injectable()
 export class NotificationsService {
-  constructor(@Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>) {}
+  constructor(@Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>) { }
 
   async create(data: { userId?: number; type: string; title: string; message: string }) {
     return this.db.insert(adminNotifications).values({
@@ -22,9 +22,9 @@ export class NotificationsService {
         .select()
         .from(adminNotifications)
         .where(eq(adminNotifications.userId, userId))
-        .orderBy(schema.adminNotifications.createdAt);
+        .orderBy(adminNotifications.createdAt);
     }
-    return this.db.select().from(adminNotifications).orderBy(schema.adminNotifications.createdAt);
+    return this.db.select().from(adminNotifications).orderBy(adminNotifications.createdAt);
   }
 
   async findUnreadCount(userId: number) {

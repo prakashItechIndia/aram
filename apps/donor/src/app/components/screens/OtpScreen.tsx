@@ -1,23 +1,29 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AramButton } from '@/app/components/aram/AramButton';
 import { AramCard } from '@/app/components/aram/AramCard';
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { useApi } from '@/app/context/ApiContext';
 import { toast } from 'sonner';
 
-interface OtpScreenProps {
-    phoneNumber: string;
-    onVerify: (otp: string) => void | Promise<void>;
-    onEditPhone: () => void;
-    onBack: () => void;
-}
+export function OtpScreen() {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { sendOtp, verifyOtp } = useApi();
 
-export function OtpScreen({ phoneNumber, onVerify, onEditPhone, onBack }: OtpScreenProps) {
+    // Get phone number from navigation state
+    const phoneNumber = location.state?.phone || '';
+
+    // Redirect if no phone number
+    useEffect(() => {
+        if (!phoneNumber) {
+            navigate('/signin');
+        }
+    }, [phoneNumber, navigate]);
     const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
     const [isLoading, setIsLoading] = useState(false);
     const [resendTimer, setResendTimer] = useState(30);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-    const { sendOtp } = useApi();
 
     const hashedPhone = phoneNumber.length >= 10
         ? `+91 ******${phoneNumber.slice(-4)}`
@@ -66,7 +72,15 @@ export function OtpScreen({ phoneNumber, onVerify, onEditPhone, onBack }: OtpScr
         if (fullOtp.length < 6) return;
         setIsLoading(true);
         try {
-            await onVerify(fullOtp);
+            const res = await verifyOtp(phoneNumber, fullOtp);
+            if (res.success) {
+                toast.success('Verified successfully');
+                navigate('/dashboard');
+            } else {
+                toast.error(res.error || 'Verification failed');
+            }
+        } catch (error) {
+            toast.error('An error occurred during verification');
         } finally {
             setIsLoading(false);
         }
@@ -88,7 +102,7 @@ export function OtpScreen({ phoneNumber, onVerify, onEditPhone, onBack }: OtpScr
             <AramCard className="w-full max-w-[520px]">
                 <div className="flex flex-col gap-[24px]">
                     <button
-                        onClick={onBack}
+                        onClick={() => navigate(-1)}
                         className="flex items-center gap-[8px] text-[#6E6E6E] hover:text-[#3D3D3D] transition-colors w-fit"
                         style={{ fontSize: '14px', fontWeight: 600 }}
                     >
@@ -104,7 +118,7 @@ export function OtpScreen({ phoneNumber, onVerify, onEditPhone, onBack }: OtpScr
                         <div className="flex items-center justify-center gap-[8px] mt-[4px]">
                             <span style={{ fontSize: '16px', fontWeight: 600, color: '#3D3D3D' }}>{hashedPhone}</span>
                             <button
-                                onClick={onEditPhone}
+                                onClick={() => navigate('/signin')}
                                 className="p-[4px] hover:bg-gray-100 rounded-full transition-colors"
                                 title="Edit Phone Number"
                             >
