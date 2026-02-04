@@ -16,8 +16,8 @@ export class UpdateDonationFormSettingsDto {
   multiCountry?: boolean;
 
   @IsOptional()
-  @IsIn(['always', 'threshold', 'optional', 'never'])
-  panRequired?: 'always' | 'threshold' | 'optional' | 'never';
+  @IsIn(['always', 'threshold', 'optional'])
+  panRequired?: 'always' | 'threshold' | 'optional';
 
   @IsOptional()
   @IsNumber()
@@ -60,9 +60,7 @@ export class UpdateDonationFormSettingsDto {
   @IsBoolean()
   enableRecurring?: boolean;
 
-  @IsOptional()
-  @IsBoolean()
-  suggestRecurring?: boolean;
+
 
   @IsOptional()
   @IsArray()

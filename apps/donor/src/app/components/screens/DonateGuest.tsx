@@ -47,12 +47,12 @@ export function DonateGuest() {
   const [country, setCountry] = useState('india');
   const [errors, setErrors] = useState<any>({});
   const [submitting, setSubmitting] = useState(false);
-  const { checkAndNotify, panRequired, panThreshold, addressRequired, presetAmounts, minAmount, maxAmount } = useDonationFormStatus();
+  const { checkAndNotify, panRequired, panThreshold, addressRequired, presetAmounts, minAmount, maxAmount, allowCustomAmount } = useDonationFormStatus();
   const { countries, loading: countriesLoading } = useCountries();
 
   // Calculate if PAN field should be shown
   const shouldShowPAN = React.useMemo(() => {
-    if (panRequired === 'never') return false;
+    // panRequired 'never' option has been removed
     if (panRequired === 'always') return true;
     if (panRequired === 'threshold') {
       const currentAmount = selectedPreset || Number(customAmount) || 0;
@@ -164,7 +164,7 @@ export function DonateGuest() {
     if (api?.donorsApi) {
       setSubmitting(true);
       try {
-        await api.donorsApi.donorsControllerGuestDonate({
+        const response = await api.donorsApi.donorsControllerGuestDonate({
           name: name.trim(),
           email: email.trim(),
           mobile: mobile.trim(),
@@ -175,13 +175,28 @@ export function DonateGuest() {
           donationType,
         });
 
-        // Navigate to payment processing
+        // The API now returns the confirmed donation details
+        // We can navigate directly to success state or let PaymentProcessing show it
+        // Since we already called the API and it succeeded, valid flow is to go to success.
+        
+        const data = (response as any).data;
+
+        // Navigate to payment processing -> success
         navigate('/payment-processing', {
           state: {
-            amount,
-            donationType,
-            date: new Date().toISOString(),
-            isGuest: true
+            status: 'success',
+            donationData: {
+              amount: data.amount,
+              type: data.type, // Display name from API
+              receiptNo: data.receiptNo,
+              donationType: data.donationType, // Original code
+              name: name.trim(),
+              email: email.trim(),
+              phone: mobile.trim(),
+              address: address.trim(),
+              panNumber: shouldShowPAN ? panNumber.trim().toUpperCase() : undefined,
+              country: country || 'India',
+            }
           }
         });
       } catch (err: unknown) {
@@ -310,20 +325,22 @@ export function DonateGuest() {
                   </button>
                 ))}
               </div>
-              <AramInput
-                placeholder="Enter custom amount"
-                value={customAmount}
-                onChange={(val) => {
-                  if (/^\d*$/.test(val)) {
-                    setCustomAmount(val);
-                    setSelectedPreset(null);
-                    setPanNumber(''); // Clear PAN on amount change
-                  }
-                }}
-                type="number"
-                error={errors.amount}
-                helperText={`Min: ₹${minAmount}, Max: ₹${maxAmount}`}
-              />
+              {allowCustomAmount && (
+                <AramInput
+                  placeholder="Enter custom amount"
+                  value={customAmount}
+                  onChange={(val) => {
+                    if (/^\d*$/.test(val)) {
+                      setCustomAmount(val);
+                      setSelectedPreset(null);
+                      setPanNumber(''); // Clear PAN on amount change
+                    }
+                  }}
+                  type="number"
+                  error={errors.amount}
+                  helperText={`Min: ₹${minAmount}, Max: ₹${maxAmount}`}
+                />
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">

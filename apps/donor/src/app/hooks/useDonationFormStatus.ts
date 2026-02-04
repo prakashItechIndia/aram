@@ -4,12 +4,15 @@ import { toast } from 'sonner';
 interface DonationFormStatus {
   formEnabled: boolean;
   maintenanceMessage: string;
-  panRequired?: 'always' | 'threshold' | 'optional' | 'never';
+  panRequired?: 'always' | 'threshold' | 'optional';
   panThreshold?: number;
   addressRequired?: boolean;
   presetAmounts?: number[];
   minAmount?: number;
   maxAmount?: number;
+  allowCustomAmount?: boolean;
+  mobileRequired?: boolean;
+  otpVerification?: boolean;
 }
 
 interface UseDonationFormStatusReturn {
@@ -18,12 +21,15 @@ interface UseDonationFormStatusReturn {
   isLoading: boolean;
   checkAndNotify: () => boolean;
   refetch: () => Promise<void>;
-  panRequired: 'always' | 'threshold' | 'optional' | 'never';
+  panRequired: 'always' | 'threshold' | 'optional';
   panThreshold: number;
   addressRequired: boolean;
   presetAmounts: number[];
   minAmount: number;
   maxAmount: number;
+  allowCustomAmount: boolean;
+  mobileRequired: boolean;
+  otpVerification: boolean;
 }
 
 // Cache for the form status
@@ -44,6 +50,9 @@ export function useDonationFormStatus(): UseDonationFormStatusReturn {
     presetAmounts: [500, 1000, 2500, 5000, 10000],
     minAmount: 100,
     maxAmount: 1000000,
+    allowCustomAmount: true,
+    mobileRequired: true,
+    otpVerification: false,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -77,6 +86,9 @@ export function useDonationFormStatus(): UseDonationFormStatusReturn {
         presetAmounts: data.config?.presetAmounts ?? [500, 1000, 2500, 5000, 10000],
         minAmount: data.config?.minAmount ?? 100,
         maxAmount: data.config?.maxAmount ?? 1000000,
+        allowCustomAmount: data.config?.allowCustomAmount ?? true,
+        mobileRequired: data.mobileRequired ?? true,
+        otpVerification: data.otpVerification ?? false,
       };
       
       // Update cache
@@ -98,6 +110,9 @@ export function useDonationFormStatus(): UseDonationFormStatusReturn {
         presetAmounts: [500, 1000, 2500, 5000, 10000],
         minAmount: 100,
         maxAmount: 1000000,
+        allowCustomAmount: true,
+        mobileRequired: true,
+        otpVerification: false,
       });
     } finally {
       setIsLoading(false);
@@ -133,5 +148,8 @@ export function useDonationFormStatus(): UseDonationFormStatusReturn {
     presetAmounts: status.presetAmounts ?? [500, 1000, 2500, 5000, 10000],
     minAmount: status.minAmount ?? 100,
     maxAmount: status.maxAmount ?? 1000000,
+    allowCustomAmount: status.allowCustomAmount ?? true,
+    mobileRequired: status.mobileRequired ?? true,
+    otpVerification: status.otpVerification ?? false,
   };
 }

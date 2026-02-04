@@ -7,10 +7,12 @@ import { AramInput } from '@/app/components/aram/AramInput';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { validateForm as globalValidateForm, validationRules, validationMessages } from '../../utils/validations';
 import { useApi } from '@/app/context/ApiContext';
+import { useDonationFormStatus } from '@/app/hooks/useDonationFormStatus';
 
 export function SignIn() {
   const navigate = useNavigate();
   const { login, sendOtp, isAuthenticated } = useApi();
+  const { otpVerification, mobileRequired } = useDonationFormStatus();
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -24,6 +26,7 @@ export function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<any>({});
   const [isLoading, setIsLoading] = useState(false);
+  // isMobile is true if input matches 10 digits
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -32,20 +35,21 @@ export function SignIn() {
     const isPhone = /^\d{10}$/.test(trimmed);
     setIsMobile(isPhone);
 
-    // Clear password if switching to mobile
-    if (isPhone) {
+    // Clear password only if switching to mobile AND OTP is enabled
+    if (isPhone && otpVerification) {
       setPassword('');
     }
-  }, [emailOrPhone]);
+  }, [emailOrPhone, otpVerification]);
 
   const handleSubmit = async () => {
-    if (isMobile) {
+    // Only use OTP flow if input is mobile AND OTP verification is enabled
+    if (isMobile && otpVerification) {
       setIsLoading(true);
       try {
         const res = await sendOtp(emailOrPhone.trim());
         if (res.success) {
           toast.success('OTP sent successfully');
-          navigate('/otp', { state: { phone: emailOrPhone.trim() } });
+          navigate('/verify-otp', { state: { phone: emailOrPhone.trim() } });
         } else {
           toast.error(res.error || 'Failed to send OTP');
         }
@@ -55,6 +59,7 @@ export function SignIn() {
       return;
     }
 
+    // Standard Login Flow (Email OR Mobile+Password)
     const formData = {
       emailOrPhone: emailOrPhone.trim(),
       password,
@@ -88,6 +93,16 @@ export function SignIn() {
       }
     }
   };
+  
+  // Dynamic Label
+  // If mobileRequired is true -> "Email or Phone" (or just "Phone" if strictly phone?)
+  // User asked: "if disable means email label should come".
+  // "if enable mobile number... email or mobile number label"
+  const loginLabel = mobileRequired ? "Email or Mobile Number" : "Email Address";
+  const loginPlaceholder = mobileRequired ? "Enter your email or mobile number" : "Enter your email address";
+  
+  // Is password disabled? Only if using Mobile AND OTP is ON.
+  const isPasswordDisabled = isMobile && otpVerification;
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex items-center justify-center p-[24px]">
@@ -112,8 +127,8 @@ export function SignIn() {
 
           <div className="flex flex-col gap-[16px]">
             <AramInput
-              label="Email or Phone"
-              placeholder="Enter your email or phone"
+              label={loginLabel}
+              placeholder={loginPlaceholder}
               value={emailOrPhone}
               onChange={setEmailOrPhone}
               required
@@ -127,11 +142,11 @@ export function SignIn() {
                 placeholder="Enter your password"
                 value={password}
                 onChange={setPassword}
-                required={!isMobile}
+                required={!isPasswordDisabled}
                 error={errors.password}
-                disabled={isMobile}
+                disabled={isPasswordDisabled}
               />
-              {!isMobile && (
+              {!isPasswordDisabled && (
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -142,7 +157,7 @@ export function SignIn() {
               )}
             </div>
 
-            {!isMobile && (
+            {!isPasswordDisabled && (
               <div className="text-right">
                 <button
                   type="button"
@@ -158,7 +173,7 @@ export function SignIn() {
 
           <div className="flex flex-col gap-[12px]">
             <AramButton onClick={handleSubmit} variant="primary" className="w-full" disabled={isLoading}>
-              {isLoading ? (isMobile ? 'Sending...' : 'Signing in...') : (isMobile ? 'Get OTP' : 'Sign in')}
+              {isLoading ? (isPasswordDisabled ? 'Sending...' : 'Signing in...') : (isPasswordDisabled ? 'Get OTP' : 'Sign in')}
             </AramButton>
             <div className="text-center">
               <button

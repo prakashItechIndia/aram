@@ -77,7 +77,7 @@ type ApiContextValue = {
   refreshNotifications: () => Promise<void>;
   markNotificationAsRead: (notificationId: number) => Promise<{ success: boolean; error?: string }>;
   createNotification: (data: { userId?: number; type: string; title: string; message: string }) => Promise<{ success: boolean; error?: string }>;
-  processDonation: (data: any) => Promise<{ success: boolean; error?: string; challanNumber?: string }>;
+  processDonation: (data: any) => Promise<{ success: boolean; error?: string; challanNumber?: string; receiptNo?: string; amount?: number; type?: string; donationType?: string }>;
   notificationCount: number;
   notifications: Notification[];
 };
