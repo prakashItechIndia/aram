@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   ParseIntPipe,
   UseGuards,
 } from '@nestjs/common';
@@ -14,16 +15,17 @@ import { UserRolesService } from './user-roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { UpdatePermissionsDto } from './dto/update-permissions.dto';
+import { QueryRolesDto } from './dto/query-roles.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('user-roles')
 @Controller('user-roles')
 export class UserRolesController {
-  constructor(private readonly service: UserRolesService) {}
+  constructor(private readonly service: UserRolesService) { }
 
   @Get()
-  findAll() {
-    return this.service.findAll();
+  findAll(@Query() query: QueryRolesDto) {
+    return this.service.findAll(query);
   }
 
   @Get('menu-keys')

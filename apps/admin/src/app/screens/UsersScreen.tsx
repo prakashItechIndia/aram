@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Edit2, Trash2, X, Upload, User as UserIcon, Filter } from 'lucide-react';
+import { toast } from '../components/ui/toast';
 import { useApi } from '../context/ApiContext';
 
 const DATE_RANGES = [
@@ -23,7 +24,12 @@ function getDateRangeBounds(value: string): { dateFrom?: string; dateTo?: string
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MOBILE_REGEX = /^\d{10}$/;
+
+interface Country {
+  value: string;
+  label: string;
+  code: string;
+}
 
 interface User {
   id: number;
@@ -71,6 +77,8 @@ export function UsersScreen() {
   const [formProfilePreview, setFormProfilePreview] = useState<string | null>(null); // local file preview
   const [uploadingImage, setUploadingImage] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string; mobile?: string; role?: string }>({});
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [formCountryCode, setFormCountryCode] = useState('+91');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchRoles = useCallback(async () => {
@@ -78,7 +86,7 @@ export function UsersScreen() {
       const res = await apiFetch('/user-roles');
       if (!res.ok) throw new Error('Failed to load roles');
       const data = await res.json();
-      setRoles(Array.isArray(data) ? data : []);
+      setRoles(Array.isArray(data?.items) ? data.items : (Array.isArray(data) ? data : []));
     } catch {
       setRoles([]);
     }
@@ -115,6 +123,18 @@ export function UsersScreen() {
     }
   }, [apiFetch, page, limit, appliedRole, appliedSearch, appliedDateRange]);
 
+  const fetchCountries = useCallback(async () => {
+    try {
+      const res = await apiFetch('/countries');
+      if (res.ok) {
+        const data = await res.json();
+        setCountries(data);
+      }
+    } catch {
+      setCountries([{ value: 'india', label: 'India', code: '+91' }]);
+    }
+  }, [apiFetch]);
+
   useEffect(() => {
     fetchRoles();
   }, [fetchRoles]);
@@ -123,13 +143,23 @@ export function UsersScreen() {
     fetchUsers();
   }, [fetchUsers]);
 
+  useEffect(() => {
+    fetchCountries();
+  }, [fetchCountries]);
+
   const validateForm = (): boolean => {
     const err: typeof fieldErrors = {};
     if (!formName.trim()) err.name = 'User name is required';
     if (!formEmail.trim()) err.email = 'Email is required';
     else if (!EMAIL_REGEX.test(formEmail.trim())) err.email = 'Please enter a valid email address';
-    if (!formMobile.trim()) err.mobile = 'Mobile number is required';
-    else if (!MOBILE_REGEX.test(formMobile.trim())) err.mobile = 'Please enter a valid 10-digit mobile number';
+
+    if (!formMobile.trim()) {
+      err.mobile = 'Mobile number is required';
+    } else {
+      if (formMobile.length !== 10) {
+        err.mobile = 'Please enter a valid 10-digit mobile number';
+      }
+    }
     if (!formRoleName.trim()) err.role = 'Role is required';
     setFieldErrors(err);
     return Object.keys(err).length === 0;
@@ -182,7 +212,39 @@ export function UsersScreen() {
     setSelectedUser(user);
     setFormName(user.name);
     setFormEmail(user.email);
-    setFormMobile(user.mobileNumber || '');
+
+    // Split mobile number if it contains country code, otherwise assume India
+    const mobile = user.mobileNumber || '';
+    let code = '+91';
+    let num = mobile;
+
+    // Check if the mobile starts with any of our country codes
+    const matchedCountry = countries.find(c => mobile.startsWith(c.code));
+    if (matchedCountry) {
+      code = matchedCountry.code;
+      num = mobile.slice(code.length);
+    } else if (mobile.startsWith('+')) {
+      const parts = mobile.split(' ');
+      if (parts.length > 1) {
+        code = parts[0];
+        num = parts.slice(1).join('');
+      } else if (mobile.length > 4) {
+        // Try to find the longest matching code
+        let longestMatch = '';
+        for (const c of countries) {
+          if (mobile.startsWith(c.code) && c.code.length > longestMatch.length) {
+            longestMatch = c.code;
+          }
+        }
+        if (longestMatch) {
+          code = longestMatch;
+          num = mobile.slice(longestMatch.length);
+        }
+      }
+    }
+
+    setFormMobile(num);
+    setFormCountryCode(code);
     setFormRoleName(user.roleName || '');
     setFormProfileImageUrl(user.profileImageUrl || '');
     setFormProfilePreview(null);
@@ -245,17 +307,20 @@ export function UsersScreen() {
         body: JSON.stringify({
           name: formName.trim(),
           email: formEmail.trim().toLowerCase(),
-          mobileNumber: formMobile.trim() || undefined,
+          mobileNumber: formMobile.trim() ? `${formCountryCode}${formMobile.trim()}` : undefined,
           roleName: formRoleName.trim(),
           profileImageUrl: formProfileImageUrl || undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(Array.isArray(data?.message) ? data.message.join(' ') : data?.message || 'Failed to create user');
+      toast.success('User created successfully');
       setShowAddModal(false);
       fetchUsers();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to create user');
+      const msg = e instanceof Error ? e.message : 'Failed to create user';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -272,18 +337,21 @@ export function UsersScreen() {
         body: JSON.stringify({
           name: formName.trim(),
           email: formEmail.trim().toLowerCase(),
-          mobileNumber: formMobile.trim() || undefined,
+          mobileNumber: formMobile.trim() ? `${formCountryCode}${formMobile.trim()}` : undefined,
           roleName: formRoleName.trim(),
           profileImageUrl: formProfileImageUrl || undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(Array.isArray(data?.message) ? data.message.join(' ') : data?.message || 'Failed to update user');
+      toast.success('User updated successfully');
       setShowEditModal(false);
       setSelectedUser(null);
       fetchUsers();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to update user');
+      const msg = e instanceof Error ? e.message : 'Failed to update user';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -297,11 +365,14 @@ export function UsersScreen() {
       const res = await apiFetch(`/admin-users/${selectedUser.id}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.message || 'Failed to delete user');
+      toast.success('User deleted successfully');
       setShowDeleteModal(false);
       setSelectedUser(null);
       fetchUsers();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to delete user');
+      const msg = e instanceof Error ? e.message : 'Failed to delete user';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -592,17 +663,32 @@ export function UsersScreen() {
               </div>
               <div>
                 <label className="block text-[14px] leading-[20px] font-medium text-[#3D3D3D] mb-[8px]">Mobile number <span className="text-[#F36A4F]">*</span></label>
-                <input
-                  type="tel"
-                  value={formMobile}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                    setFormMobile(val);
-                    setFieldErrors((prev) => ({ ...prev, mobile: undefined }));
-                  }}
-                  placeholder="Enter mobile number"
-                  className={`w-full h-[44px] px-[16px] text-[16px] leading-[24px] bg-white border rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20 ${fieldErrors.mobile ? 'border-[#F36A4F]' : 'border-[#DBDBDB]'}`}
-                />
+                <div className="flex gap-2">
+                  <select
+                    value={formCountryCode}
+                    onChange={(e) => {
+                      setFormCountryCode(e.target.value);
+                      setFieldErrors((prev) => ({ ...prev, mobile: undefined }));
+                    }}
+                    className="h-[44px] px-[8px] min-w-[80px] text-[14px] border border-[#DBDBDB] rounded-[8px] bg-white focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
+                  >
+                    {countries.map((c) => (
+                      <option key={c.value} value={c.code}>{c.code}</option>
+                    ))}
+                    {countries.length === 0 && <option value="+91">+91</option>}
+                  </select>
+                  <input
+                    type="tel"
+                    value={formMobile}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setFormMobile(val);
+                      setFieldErrors((prev) => ({ ...prev, mobile: undefined }));
+                    }}
+                    placeholder="Enter mobile"
+                    className={`flex-1 h-[44px] px-[16px] text-[16px] leading-[24px] bg-white border rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20 ${fieldErrors.mobile ? 'border-[#F36A4F]' : 'border-[#DBDBDB]'}`}
+                  />
+                </div>
                 {fieldErrors.mobile && <p className="mt-[6px] text-[12px] leading-[16px] text-[#F36A4F]">{fieldErrors.mobile}</p>}
               </div>
               <div>
@@ -702,17 +788,32 @@ export function UsersScreen() {
               </div>
               <div>
                 <label className="block text-[14px] leading-[20px] font-medium text-[#3D3D3D] mb-[8px]">Mobile number <span className="text-[#F36A4F]">*</span></label>
-                <input
-                  type="tel"
-                  value={formMobile}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                    setFormMobile(val);
-                    setFieldErrors((prev) => ({ ...prev, mobile: undefined }));
-                  }}
-                  placeholder="Enter mobile number"
-                  className={`w-full h-[44px] px-[16px] text-[16px] leading-[24px] bg-white border rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20 ${fieldErrors.mobile ? 'border-[#F36A4F]' : 'border-[#DBDBDB]'}`}
-                />
+                <div className="flex gap-2">
+                  <select
+                    value={formCountryCode}
+                    onChange={(e) => {
+                      setFormCountryCode(e.target.value);
+                      setFieldErrors((prev) => ({ ...prev, mobile: undefined }));
+                    }}
+                    className="h-[44px] px-[8px] min-w-[80px] text-[14px] border border-[#DBDBDB] rounded-[8px] bg-white focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
+                  >
+                    {countries.map((c) => (
+                      <option key={c.value} value={c.code}>{c.code}</option>
+                    ))}
+                    {countries.length === 0 && <option value="+91">+91</option>}
+                  </select>
+                  <input
+                    type="tel"
+                    value={formMobile}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setFormMobile(val);
+                      setFieldErrors((prev) => ({ ...prev, mobile: undefined }));
+                    }}
+                    placeholder="Enter mobile"
+                    className={`flex-1 h-[44px] px-[16px] text-[16px] leading-[24px] bg-white border rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20 ${fieldErrors.mobile ? 'border-[#F36A4F]' : 'border-[#DBDBDB]'}`}
+                  />
+                </div>
                 {fieldErrors.mobile && <p className="mt-[6px] text-[12px] leading-[16px] text-[#F36A4F]">{fieldErrors.mobile}</p>}
               </div>
               <div>
