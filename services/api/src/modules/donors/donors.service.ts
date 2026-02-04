@@ -147,11 +147,11 @@ export class DonorsService {
       const donorId = donorRows[0].id;
 
       // Build WHERE conditions
-      const conditions: any[] = [eq(schema.eChallans.donorId, donorId)];
+      const conditions: any[] = [eq(eChallans.donorId, donorId)];
 
       // Filter by receipt number (search)
       if (query?.searchReceipt) {
-        conditions.push(sql`${schema.eChallans.challanNumber} LIKE ${`%${query.searchReceipt}%`}`);
+        conditions.push(sql`${eChallans.challanNumber} LIKE ${`%${query.searchReceipt}%`}`);
       }
 
       // Filter by financial year
@@ -160,8 +160,8 @@ export class DonorsService {
         const startYear = parseInt(startYearStr, 10);
         const fyStart = new Date(`${startYear}-04-01`);
         const fyEnd = new Date(`${startYear + 1}-03-31T23:59:59`);
-        conditions.push(sql`${schema.eChallans.donationDate} >= ${fyStart}`);
-        conditions.push(sql`${schema.eChallans.donationDate} <= ${fyEnd}`);
+        conditions.push(sql`${eChallans.donationDate} >= ${fyStart}`);
+        conditions.push(sql`${eChallans.donationDate} <= ${fyEnd}`);
       }
 
       // Filter by donation type (categoryCode)
@@ -169,11 +169,11 @@ export class DonorsService {
         // First get the category ID from the code
         const catRows = await this.db
           .select()
-          .from(schema.donationCategories)
-          .where(eq(schema.donationCategories.categoryCode, query.donationType));
+          .from(donationCategories)
+          .where(eq(donationCategories.categoryCode, query.donationType));
 
         if (catRows[0]) {
-          conditions.push(eq(schema.eChallans.categoryId, catRows[0].id));
+          conditions.push(eq(eChallans.categoryId, catRows[0].id));
         }
       }
 
@@ -199,7 +199,7 @@ export class DonorsService {
           eq(eChallans.categoryId, donationCategories.id),
         )
         .where(and(...conditions))
-        .orderBy(sql`${schema.eChallans.donationDate} DESC`);
+        .orderBy(sql`${eChallans.donationDate} DESC`);
 
       const total = allDonations.length;
 
@@ -387,7 +387,7 @@ export class DonorsService {
   async createGuestOrReject(dto: CreateGuestDonorDto): Promise<{ donorId: number }> {
     // Normalize PAN if provided
     const normalizedPan = dto.pan ? dto.pan.trim().toUpperCase() : '';
-    
+
     // Only check for existing PAN if PAN is provided
     if (normalizedPan) {
       const existingByPan = await this.findByPan(normalizedPan);
