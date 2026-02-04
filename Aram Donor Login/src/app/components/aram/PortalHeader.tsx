@@ -13,13 +13,13 @@ export function PortalHeader({ currentPage, onNavigate, userName, onLogout }: Po
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
-    <header 
+    <header
       className="h-[72px] bg-white border-b border-[#DBDBDB] px-[24px] flex items-center justify-between sticky top-0 z-50"
     >
       {/* Logo and Nav */}
       <div className="flex items-center gap-[48px]">
         <div className="flex items-center gap-[12px]">
-          <div 
+          <div
             className="w-[40px] h-[40px] rounded-full flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg, #F36A4F 0%, #FF8870 100%)' }}
           >
@@ -33,11 +33,10 @@ export function PortalHeader({ currentPage, onNavigate, userName, onLogout }: Po
             <button
               key={page}
               onClick={() => onNavigate(page.toLowerCase())}
-              className={`transition-colors ${
-                currentPage === page.toLowerCase()
+              className={`transition-colors ${currentPage === page.toLowerCase()
                   ? 'text-[#F36A4F]'
                   : 'text-[#6E6E6E] hover:text-[#3D3D3D]'
-              }`}
+                }`}
               style={{ fontSize: '14px', fontWeight: 600 }}
             >
               {page}
@@ -83,8 +82,8 @@ export function PortalHeader({ currentPage, onNavigate, userName, onLogout }: Po
 
           {showProfileMenu && (
             <>
-              <div 
-                className="fixed inset-0 z-10" 
+              <div
+                className="fixed inset-0 z-10"
                 onClick={() => setShowProfileMenu(false)}
               />
               <div className="absolute right-0 top-[48px] w-[220px] bg-white rounded-[16px] border border-[#DBDBDB] shadow-lg z-20 overflow-hidden">

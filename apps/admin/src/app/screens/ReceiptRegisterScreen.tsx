@@ -190,12 +190,12 @@ export function ReceiptRegisterScreen() {
   const [showReasonModal, setShowReasonModal] = useState(false);
   const [reasonAction, setReasonAction] = useState<string>('');
   const [showExportOptions, setShowExportOptions] = useState(false);
-  
+
   // Visible columns state
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
     COLUMN_OPTIONS.filter(col => col.core).map(col => col.id)
   );
-  
+
   // Filter states
   const [filters, setFilters] = useState({
     dateRange: 'This Month',
@@ -207,9 +207,9 @@ export function ReceiptRegisterScreen() {
     searchTerm: '',
     showRefunded: 'exclude',
   });
-  
+
   const [gapDetection, setGapDetection] = useState(true);
-  
+
   // Calculate summary metrics
   const totalReceipts = mockReceipts.length;
   const totalAmount = mockReceipts.reduce((sum, r) => sum + r.amount, 0);
@@ -219,38 +219,38 @@ export function ReceiptRegisterScreen() {
     r => r.deliveryStatus.email === 'failed' || r.deliveryStatus.sms === 'failed'
   ).length;
   const missingReceipts = ['ARAM/2025-26/00125', 'ARAM/2025-26/00126'];
-  
+
   const handleColumnToggle = (columnId: string) => {
-    setVisibleColumns(prev =>
+    setVisibleColumns((prev: string[]) =>
       prev.includes(columnId)
-        ? prev.filter(id => id !== columnId)
+        ? prev.filter((id: string) => id !== columnId)
         : [...prev, columnId]
     );
   };
-  
+
   const handleExport = (format: 'excel' | 'csv' | 'pdf') => {
     console.log(`Exporting as ${format}`);
     setShowExportOptions(false);
     // This would trigger actual export with watermarking and logging
   };
-  
+
   const handleResend = (type: 'email' | 'sms', receipt: Receipt) => {
     setSelectedReceipt(receipt);
     setReasonAction(`Resend ${type.toUpperCase()}`);
     setShowReasonModal(true);
   };
-  
+
   const handleRegenerate = (receipt: Receipt) => {
     setSelectedReceipt(receipt);
     setReasonAction('Regenerate PDF');
     setShowReasonModal(true);
   };
-  
+
   const handleViewAudit = (receipt: Receipt) => {
     setSelectedReceipt(receipt);
     setShowAuditTrail(true);
   };
-  
+
   return (
     <div className="flex flex-col bg-[#F8F8F8]">
       {/* Header */}
@@ -264,7 +264,7 @@ export function ReceiptRegisterScreen() {
               Complete register with compliance tracking and gap detection
             </p>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowColumnConfig(!showColumnConfig)}
@@ -273,7 +273,7 @@ export function ReceiptRegisterScreen() {
               <Settings className="w-4 h-4" />
               Configure Columns
             </button>
-            
+
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] bg-white hover:bg-[#F3F3F3] transition-colors flex items-center gap-2 text-[14px] font-medium text-[#3D3D3D]"
@@ -281,7 +281,7 @@ export function ReceiptRegisterScreen() {
               <Filter className="w-4 h-4" />
               {showFilters ? 'Hide Filters' : 'Show Filters'}
             </button>
-            
+
             <div className="relative">
               <button
                 onClick={() => setShowExportOptions(!showExportOptions)}
@@ -290,7 +290,7 @@ export function ReceiptRegisterScreen() {
                 <Download className="w-4 h-4" />
                 Export Register
               </button>
-              
+
               {showExportOptions && (
                 <div className="absolute right-0 top-full mt-2 w-[240px] bg-white rounded-[16px] border border-[#DBDBDB] shadow-lg p-2 z-50">
                   <div className="p-3 border-b border-[#DBDBDB]">
@@ -333,7 +333,7 @@ export function ReceiptRegisterScreen() {
           </div>
         </div>
       </div>
-      
+
       {/* Content Area */}
       <div className="flex-1 overflow-auto p-[24px]">
         {/* Summary Cards */}
@@ -342,14 +342,14 @@ export function ReceiptRegisterScreen() {
             <p className="text-[13px] text-[#6E6E6E] mb-1">Total Receipts</p>
             <p className="text-[24px] font-semibold text-[#0D0D0D]">{totalReceipts}</p>
           </div>
-          
+
           <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
             <p className="text-[13px] text-[#6E6E6E] mb-1">Total Amount</p>
             <p className="text-[24px] font-semibold text-[#0D0D0D]">
               ₹{totalAmount.toLocaleString('en-IN')}
             </p>
           </div>
-          
+
           <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
             <p className="text-[13px] text-[#6E6E6E] mb-1">80G Receipts</p>
             <p className="text-[24px] font-semibold text-[#0D0D0D]">{total80GReceipts}</p>
@@ -357,19 +357,19 @@ export function ReceiptRegisterScreen() {
               ₹{total80GAmount.toLocaleString('en-IN')}
             </p>
           </div>
-          
+
           <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
             <p className="text-[13px] text-[#6E6E6E] mb-1">Online Donations</p>
             <p className="text-[24px] font-semibold text-[#0D0D0D]">
               {mockReceipts.filter(r => r.donationType === 'Online').length}
             </p>
           </div>
-          
+
           <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
             <p className="text-[13px] text-[#6E6E6E] mb-1">Delivery Failures</p>
             <p className="text-[24px] font-semibold text-[#F36A4F]">{deliveryFailures}</p>
           </div>
-          
+
           <div
             className="bg-white rounded-[16px] border-2 border-[#F36A4F] p-[16px] cursor-pointer hover:bg-[#FEF1EE] transition-colors"
             onClick={() => setShowGapDetails(!showGapDetails)}
@@ -384,7 +384,7 @@ export function ReceiptRegisterScreen() {
             <p className="text-[12px] text-[#6E6E6E] mt-1">Click to view details</p>
           </div>
         </div>
-        
+
         {/* Gap Details Panel */}
         {showGapDetails && (
           <div className="bg-[#FEF1EE] rounded-[16px] border border-[#F36A4F] p-[16px] mb-[24px]">
@@ -402,7 +402,7 @@ export function ReceiptRegisterScreen() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="grid grid-cols-3 gap-[16px] mb-4">
               <div className="bg-white rounded-[12px] p-[12px]">
                 <p className="text-[12px] text-[#6E6E6E]">Total in Range</p>
@@ -417,7 +417,7 @@ export function ReceiptRegisterScreen() {
                 <p className="text-[14px] font-semibold text-[#0D0D0D]">{missingReceipts[0]}</p>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-[12px] p-[12px]">
               <p className="text-[13px] font-medium text-[#0D0D0D] mb-2">Missing Receipt Numbers:</p>
               <div className="flex flex-wrap gap-2">
@@ -427,7 +427,7 @@ export function ReceiptRegisterScreen() {
                   </div>
                 ))}
               </div>
-              
+
               <div className="mt-4 flex gap-2">
                 <button className="h-[36px] px-[16px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-white text-[13px] font-medium">
                   Generate Pending Receipts
@@ -439,7 +439,7 @@ export function ReceiptRegisterScreen() {
             </div>
           </div>
         )}
-        
+
         {/* Filters Panel */}
         {showFilters && (
           <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px] mb-[24px]">
@@ -449,14 +449,14 @@ export function ReceiptRegisterScreen() {
                 Reset All
               </button>
             </div>
-            
+
             <div className="grid grid-cols-4 gap-[16px]">
               {/* Date Range */}
               <div>
                 <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
                   Date Range
                 </label>
-                <select 
+                <select
                   defaultValue="This Month"
                   className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
                 >
@@ -467,7 +467,7 @@ export function ReceiptRegisterScreen() {
                   <option>Custom Range</option>
                 </select>
               </div>
-              
+
               {/* Receipt Type */}
               <div>
                 <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
@@ -479,13 +479,13 @@ export function ReceiptRegisterScreen() {
                   <option>E-Challan</option>
                 </select>
               </div>
-              
+
               {/* Status */}
               <div>
                 <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
                   Status
                 </label>
-                <select 
+                <select
                   defaultValue="Generated"
                   className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
                 >
@@ -495,13 +495,13 @@ export function ReceiptRegisterScreen() {
                   <option>Cancelled/Reissued</option>
                 </select>
               </div>
-              
+
               {/* 80G Filter */}
               <div>
                 <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
                   80G Eligible
                 </label>
-                <select 
+                <select
                   defaultValue="All"
                   className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
                 >
@@ -510,7 +510,7 @@ export function ReceiptRegisterScreen() {
                   <option>No</option>
                 </select>
               </div>
-              
+
               {/* Amount Range */}
               <div>
                 <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
@@ -519,10 +519,16 @@ export function ReceiptRegisterScreen() {
                 <input
                   type="number"
                   placeholder="₹ Min"
+                  value={filters.amountMin}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFilters((prev: any) => ({ ...prev, amountMin: val === '' ? '' : Math.max(0, parseInt(val)).toString() }));
+                  }}
+                  min="0"
                   className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
                   Amount To
@@ -530,10 +536,16 @@ export function ReceiptRegisterScreen() {
                 <input
                   type="number"
                   placeholder="₹ Max"
+                  value={filters.amountMax}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFilters((prev: any) => ({ ...prev, amountMax: val === '' ? '' : Math.max(0, parseInt(val)).toString() }));
+                  }}
+                  min="0"
                   className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
                 />
               </div>
-              
+
               {/* Category Filter */}
               <div>
                 <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
@@ -547,7 +559,7 @@ export function ReceiptRegisterScreen() {
                   <option>Infrastructure</option>
                 </select>
               </div>
-              
+
               {/* Payment Method */}
               <div>
                 <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
@@ -564,7 +576,7 @@ export function ReceiptRegisterScreen() {
                 </select>
               </div>
             </div>
-            
+
             {/* Advanced Filters Toggle */}
             <div className="mt-4 pt-4 border-t border-[#DBDBDB]">
               <button className="flex items-center gap-2 text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
@@ -574,7 +586,7 @@ export function ReceiptRegisterScreen() {
             </div>
           </div>
         )}
-        
+
         {/* Column Configuration Panel */}
         {showColumnConfig && (
           <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px] mb-[24px]">
@@ -587,7 +599,7 @@ export function ReceiptRegisterScreen() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="grid grid-cols-4 gap-[12px]">
               {COLUMN_OPTIONS.map(col => (
                 <label key={col.id} className="flex items-center gap-2 cursor-pointer">
@@ -604,13 +616,13 @@ export function ReceiptRegisterScreen() {
                 </label>
               ))}
             </div>
-            
+
             <p className="text-[12px] text-[#6E6E6E] mt-3">
               * Core columns recommended for compliance
             </p>
           </div>
         )}
-        
+
         {/* Search Bar */}
         <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px] mb-[16px]">
           <div className="flex items-center gap-2">
@@ -622,7 +634,7 @@ export function ReceiptRegisterScreen() {
             />
           </div>
         </div>
-        
+
         {/* Data Table */}
         <div className="bg-white rounded-[16px] border border-[#DBDBDB] overflow-hidden">
           <div className="overflow-x-auto">
@@ -719,11 +731,10 @@ export function ReceiptRegisterScreen() {
                     {visibleColumns.includes('status') && (
                       <td className="h-[56px] px-[16px]">
                         <span
-                          className={`inline-block px-2 py-1 text-[12px] font-medium rounded-full ${
-                            receipt.status === 'Generated'
-                              ? 'bg-[#E8F5E9] text-[#2E7D32]'
-                              : 'bg-[#FFF3E0] text-[#E65100]'
-                          }`}
+                          className={`inline-block px-2 py-1 text-[12px] font-medium rounded-full ${receipt.status === 'Generated'
+                            ? 'bg-[#E8F5E9] text-[#2E7D32]'
+                            : 'bg-[#FFF3E0] text-[#E65100]'
+                            }`}
                         >
                           {receipt.status}
                         </span>
@@ -733,41 +744,37 @@ export function ReceiptRegisterScreen() {
                       <td className="h-[56px] px-[16px]">
                         <div className="flex items-center justify-center gap-2">
                           <div
-                            className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                              receipt.deliveryStatus.email === 'sent'
-                                ? 'bg-[#E8F5E9]'
-                                : receipt.deliveryStatus.email === 'failed'
+                            className={`w-6 h-6 rounded-full flex items-center justify-center ${receipt.deliveryStatus.email === 'sent'
+                              ? 'bg-[#E8F5E9]'
+                              : receipt.deliveryStatus.email === 'failed'
                                 ? 'bg-[#FFEBEE]'
                                 : 'bg-[#F3F3F3]'
-                            }`}
+                              }`}
                           >
                             <Mail
-                              className={`w-3 h-3 ${
-                                receipt.deliveryStatus.email === 'sent'
-                                  ? 'text-[#2E7D32]'
-                                  : receipt.deliveryStatus.email === 'failed'
+                              className={`w-3 h-3 ${receipt.deliveryStatus.email === 'sent'
+                                ? 'text-[#2E7D32]'
+                                : receipt.deliveryStatus.email === 'failed'
                                   ? 'text-[#C62828]'
                                   : 'text-[#6E6E6E]'
-                              }`}
+                                }`}
                             />
                           </div>
                           <div
-                            className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                              receipt.deliveryStatus.sms === 'sent'
-                                ? 'bg-[#E8F5E9]'
-                                : receipt.deliveryStatus.sms === 'failed'
+                            className={`w-6 h-6 rounded-full flex items-center justify-center ${receipt.deliveryStatus.sms === 'sent'
+                              ? 'bg-[#E8F5E9]'
+                              : receipt.deliveryStatus.sms === 'failed'
                                 ? 'bg-[#FFEBEE]'
                                 : 'bg-[#F3F3F3]'
-                            }`}
+                              }`}
                           >
                             <MessageSquare
-                              className={`w-3 h-3 ${
-                                receipt.deliveryStatus.sms === 'sent'
-                                  ? 'text-[#2E7D32]'
-                                  : receipt.deliveryStatus.sms === 'failed'
+                              className={`w-3 h-3 ${receipt.deliveryStatus.sms === 'sent'
+                                ? 'text-[#2E7D32]'
+                                : receipt.deliveryStatus.sms === 'failed'
                                   ? 'text-[#C62828]'
                                   : 'text-[#6E6E6E]'
-                              }`}
+                                }`}
                             />
                           </div>
                         </div>
@@ -825,7 +832,7 @@ export function ReceiptRegisterScreen() {
               </tbody>
             </table>
           </div>
-          
+
           {/* Pagination */}
           <div className="h-[64px] px-[16px] flex items-center justify-between border-t border-[#DBDBDB]">
             <p className="text-[13px] text-[#6E6E6E]">
@@ -845,7 +852,7 @@ export function ReceiptRegisterScreen() {
           </div>
         </div>
       </div>
-      
+
       {/* Reason Modal */}
       {showReasonModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -853,14 +860,14 @@ export function ReceiptRegisterScreen() {
             <h3 className="text-[18px] font-semibold text-[#0D0D0D] mb-4">
               {reasonAction} - Reason Required
             </h3>
-            
+
             <div className="mb-4">
               <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
                 Receipt Number
               </label>
               <p className="text-[14px] text-[#6E6E6E]">{selectedReceipt?.receiptNo}</p>
             </div>
-            
+
             <div className="mb-6">
               <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
                 Reason *
@@ -870,7 +877,7 @@ export function ReceiptRegisterScreen() {
                 placeholder="Enter reason for this action..."
               />
             </div>
-            
+
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => {
@@ -888,7 +895,7 @@ export function ReceiptRegisterScreen() {
           </div>
         </div>
       )}
-      
+
       {/* Audit Trail Drawer */}
       {showAuditTrail && (
         <div className="fixed inset-0 bg-black/50 flex items-end justify-end z-50">
@@ -912,7 +919,7 @@ export function ReceiptRegisterScreen() {
                 <X className="w-5 h-5 text-[#3D3D3D]" />
               </button>
             </div>
-            
+
             <div className="p-[24px]">
               {/* Receipt Details */}
               <div className="bg-[#F8F8F8] rounded-[12px] p-[16px] mb-6">
@@ -946,12 +953,12 @@ export function ReceiptRegisterScreen() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Audit Events */}
               <h4 className="text-[14px] font-semibold text-[#0D0D0D] mb-3">
                 Activity Timeline
               </h4>
-              
+
               <div className="space-y-3">
                 <div className="flex gap-3">
                   <div className="w-8 h-8 rounded-full bg-[#E8F5E9] flex items-center justify-center flex-shrink-0">
@@ -969,7 +976,7 @@ export function ReceiptRegisterScreen() {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-3">
                   <div className="w-8 h-8 rounded-full bg-[#E3F2FD] flex items-center justify-center flex-shrink-0">
                     <Mail className="w-4 h-4 text-[#1976D2]" />
@@ -986,7 +993,7 @@ export function ReceiptRegisterScreen() {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-3">
                   <div className="w-8 h-8 rounded-full bg-[#E3F2FD] flex items-center justify-center flex-shrink-0">
                     <MessageSquare className="w-4 h-4 text-[#1976D2]" />

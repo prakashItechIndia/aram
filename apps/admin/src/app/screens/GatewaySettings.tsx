@@ -277,11 +277,10 @@ export function GatewaySettings() {
                 </h3>
                 <div className="flex items-center gap-[8px] mt-[4px]">
                   <span
-                    className={`px-[8px] py-[2px] rounded-[4px] text-[13px] leading-[18px] font-medium ${
-                      razorpayEnabled
-                        ? 'bg-[#D4F4DD] text-[#0E6027]'
-                        : 'bg-[#F3F3F3] text-[#6E6E6E]'
-                    }`}
+                    className={`px-[8px] py-[2px] rounded-[4px] text-[13px] leading-[18px] font-medium ${razorpayEnabled
+                      ? 'bg-[#D4F4DD] text-[#0E6027]'
+                      : 'bg-[#F3F3F3] text-[#6E6E6E]'
+                      }`}
                   >
                     {razorpayEnabled ? 'Enabled' : 'Disabled'}
                   </span>
@@ -330,11 +329,10 @@ export function GatewaySettings() {
                 </h3>
                 <div className="flex items-center gap-[8px] mt-[4px]">
                   <span
-                    className={`px-[8px] py-[2px] rounded-[4px] text-[13px] leading-[18px] font-medium ${
-                      paytmEnabled
-                        ? 'bg-[#D4F4DD] text-[#0E6027]'
-                        : 'bg-[#F3F3F3] text-[#6E6E6E]'
-                    }`}
+                    className={`px-[8px] py-[2px] rounded-[4px] text-[13px] leading-[18px] font-medium ${paytmEnabled
+                      ? 'bg-[#D4F4DD] text-[#0E6027]'
+                      : 'bg-[#F3F3F3] text-[#6E6E6E]'
+                      }`}
                   >
                     {paytmEnabled ? 'Enabled' : 'Disabled'}
                   </span>
@@ -379,11 +377,10 @@ export function GatewaySettings() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as TabType)}
-              className={`px-[16px] h-[44px] rounded-[8px] text-[14px] leading-[20px] font-medium whitespace-nowrap transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-[#FEF1EE] text-[#F36A4F]'
-                  : 'text-[#6E6E6E] hover:bg-[#F3F3F3]'
-              }`}
+              className={`px-[16px] h-[44px] rounded-[8px] text-[14px] leading-[20px] font-medium whitespace-nowrap transition-colors ${activeTab === tab.id
+                ? 'bg-[#FEF1EE] text-[#F36A4F]'
+                : 'text-[#6E6E6E] hover:bg-[#F3F3F3]'
+                }`}
             >
               {tab.label}
             </button>
@@ -403,21 +400,19 @@ export function GatewaySettings() {
                 <div className="flex items-center gap-[12px]">
                   <button
                     onClick={() => handleEnvironmentSwitch('test')}
-                    className={`px-[24px] h-[44px] rounded-[999px] text-[16px] leading-[24px] font-medium transition-colors ${
-                      environment === 'test'
-                        ? 'bg-[#F36A4F] text-white'
-                        : 'bg-white border border-[#DBDBDB] text-[#3D3D3D] hover:bg-[#F3F3F3]'
-                    }`}
+                    className={`px-[24px] h-[44px] rounded-[999px] text-[16px] leading-[24px] font-medium transition-colors ${environment === 'test'
+                      ? 'bg-[#F36A4F] text-white'
+                      : 'bg-white border border-[#DBDBDB] text-[#3D3D3D] hover:bg-[#F3F3F3]'
+                      }`}
                   >
                     Test
                   </button>
                   <button
                     onClick={() => handleEnvironmentSwitch('live')}
-                    className={`px-[24px] h-[44px] rounded-[999px] text-[16px] leading-[24px] font-medium transition-colors ${
-                      environment === 'live'
-                        ? 'bg-[#F36A4F] text-white'
-                        : 'bg-white border border-[#DBDBDB] text-[#3D3D3D] hover:bg-[#F3F3F3]'
-                    }`}
+                    className={`px-[24px] h-[44px] rounded-[999px] text-[16px] leading-[24px] font-medium transition-colors ${environment === 'live'
+                      ? 'bg-[#F36A4F] text-white'
+                      : 'bg-white border border-[#DBDBDB] text-[#3D3D3D] hover:bg-[#F3F3F3]'
+                      }`}
                   >
                     Live
                   </button>
@@ -439,14 +434,12 @@ export function GatewaySettings() {
                         setRazorpayEnabled(!razorpayEnabled);
                         setHasChanges(true);
                       }}
-                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                        razorpayEnabled ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                      }`}
+                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${razorpayEnabled ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
+                        }`}
                     >
                       <div
-                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                          razorpayEnabled ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                        }`}
+                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${razorpayEnabled ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                          }`}
                       />
                     </button>
                   </div>
@@ -460,14 +453,12 @@ export function GatewaySettings() {
                         setPaytmEnabled(!paytmEnabled);
                         setHasChanges(true);
                       }}
-                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                        paytmEnabled ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                      }`}
+                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${paytmEnabled ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
+                        }`}
                     >
                       <div
-                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                          paytmEnabled ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                        }`}
+                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${paytmEnabled ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                          }`}
                       />
                     </button>
                   </div>
@@ -516,14 +507,12 @@ export function GatewaySettings() {
                         setAutoFallback(!autoFallback);
                         setHasChanges(true);
                       }}
-                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                        autoFallback ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                      }`}
+                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${autoFallback ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
+                        }`}
                     >
                       <div
-                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                          autoFallback ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                        }`}
+                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${autoFallback ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                          }`}
                       />
                     </button>
                   </div>
@@ -776,14 +765,12 @@ export function GatewaySettings() {
                           setAllowedMethods((prev) => ({ ...prev, [key]: !value }));
                           setHasChanges(true);
                         }}
-                        className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                          value ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                        }`}
+                        className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${value ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
+                          }`}
                       >
                         <div
-                          className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                            value ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                          }`}
+                          className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${value ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                            }`}
                         />
                       </button>
                     </div>
@@ -957,14 +944,12 @@ export function GatewaySettings() {
                           setAllowedMethods((prev) => ({ ...prev, [key]: !value }));
                           setHasChanges(true);
                         }}
-                        className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                          value ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                        }`}
+                        className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${value ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
+                          }`}
                       >
                         <div
-                          className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                            value ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                          }`}
+                          className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${value ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                            }`}
                         />
                       </button>
                     </div>
@@ -1054,11 +1039,10 @@ export function GatewaySettings() {
                         </td>
                         <td className="px-[16px] py-[12px]">
                           <span
-                            className={`px-[8px] py-[2px] rounded-[4px] text-[13px] leading-[18px] font-medium ${
-                              event.status === 'success'
-                                ? 'bg-[#D4F4DD] text-[#0E6027]'
-                                : 'bg-[#FFE5E5] text-[#C41E3A]'
-                            }`}
+                            className={`px-[8px] py-[2px] rounded-[4px] text-[13px] leading-[18px] font-medium ${event.status === 'success'
+                              ? 'bg-[#D4F4DD] text-[#0E6027]'
+                              : 'bg-[#FFE5E5] text-[#C41E3A]'
+                              }`}
                           >
                             {event.status}
                           </span>
@@ -1119,9 +1103,11 @@ export function GatewaySettings() {
                           type="number"
                           value={razorpayFeePercent}
                           onChange={(e) => {
-                            setRazorpayFeePercent(e.target.value);
+                            const val = e.target.value;
+                            setRazorpayFeePercent(val === '' ? '' : Math.max(0, parseFloat(val)).toString());
                             setHasChanges(true);
                           }}
+                          min="0"
                           step="0.01"
                           className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
                         />
@@ -1134,9 +1120,11 @@ export function GatewaySettings() {
                           type="number"
                           value={razorpayFixedFee}
                           onChange={(e) => {
-                            setRazorpayFixedFee(e.target.value);
+                            const val = e.target.value;
+                            setRazorpayFixedFee(val === '' ? '' : Math.max(0, parseFloat(val)).toString());
                             setHasChanges(true);
                           }}
+                          min="0"
                           className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
                         />
                       </div>
@@ -1150,9 +1138,11 @@ export function GatewaySettings() {
                         type="number"
                         value={razorpayTaxPercent}
                         onChange={(e) => {
-                          setRazorpayTaxPercent(e.target.value);
+                          const val = e.target.value;
+                          setRazorpayTaxPercent(val === '' ? '' : Math.max(0, parseFloat(val)).toString());
                           setHasChanges(true);
                         }}
+                        min="0"
                         className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
                       />
                     </div>
@@ -1166,16 +1156,14 @@ export function GatewaySettings() {
                           setRazorpayFoundationAbsorbs(!razorpayFoundationAbsorbs);
                           setHasChanges(true);
                         }}
-                        className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                          razorpayFoundationAbsorbs ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                        }`}
+                        className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${razorpayFoundationAbsorbs ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
+                          }`}
                       >
                         <div
-                          className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                            razorpayFoundationAbsorbs
-                              ? 'translate-x-[22px]'
-                              : 'translate-x-[2px]'
-                          }`}
+                          className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${razorpayFoundationAbsorbs
+                            ? 'translate-x-[22px]'
+                            : 'translate-x-[2px]'
+                            }`}
                         />
                       </button>
                     </div>
@@ -1197,9 +1185,11 @@ export function GatewaySettings() {
                           type="number"
                           value={paytmFeePercent}
                           onChange={(e) => {
-                            setPaytmFeePercent(e.target.value);
+                            const val = e.target.value;
+                            setPaytmFeePercent(val === '' ? '' : Math.max(0, parseFloat(val)).toString());
                             setHasChanges(true);
                           }}
+                          min="0"
                           step="0.01"
                           className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
                         />
@@ -1212,9 +1202,11 @@ export function GatewaySettings() {
                           type="number"
                           value={paytmFixedFee}
                           onChange={(e) => {
-                            setPaytmFixedFee(e.target.value);
+                            const val = e.target.value;
+                            setPaytmFixedFee(val === '' ? '' : Math.max(0, parseFloat(val)).toString());
                             setHasChanges(true);
                           }}
+                          min="0"
                           className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
                         />
                       </div>
@@ -1228,9 +1220,11 @@ export function GatewaySettings() {
                         type="number"
                         value={paytmTaxPercent}
                         onChange={(e) => {
-                          setPaytmTaxPercent(e.target.value);
+                          const val = e.target.value;
+                          setPaytmTaxPercent(val === '' ? '' : Math.max(0, parseFloat(val)).toString());
                           setHasChanges(true);
                         }}
+                        min="0"
                         className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
                       />
                     </div>
@@ -1244,16 +1238,14 @@ export function GatewaySettings() {
                           setPaytmFoundationAbsorbs(!paytmFoundationAbsorbs);
                           setHasChanges(true);
                         }}
-                        className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                          paytmFoundationAbsorbs ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                        }`}
+                        className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${paytmFoundationAbsorbs ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
+                          }`}
                       >
                         <div
-                          className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                            paytmFoundationAbsorbs
-                              ? 'translate-x-[22px]'
-                              : 'translate-x-[2px]'
-                          }`}
+                          className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${paytmFoundationAbsorbs
+                            ? 'translate-x-[22px]'
+                            : 'translate-x-[2px]'
+                            }`}
                         />
                       </button>
                     </div>
@@ -1278,7 +1270,11 @@ export function GatewaySettings() {
                       <input
                         type="number"
                         value={feePreviewAmount}
-                        onChange={(e) => setFeePreviewAmount(e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFeePreviewAmount(val === '' ? '' : Math.max(0, parseFloat(val)).toString());
+                        }}
+                        min="0"
                         className="w-full h-[44px] pl-[32px] pr-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
                       />
                     </div>
@@ -1353,14 +1349,12 @@ export function GatewaySettings() {
                         setAutoRetry(!autoRetry);
                         setHasChanges(true);
                       }}
-                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                        autoRetry ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                      }`}
+                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${autoRetry ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
+                        }`}
                     >
                       <div
-                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                          autoRetry ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                        }`}
+                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${autoRetry ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                          }`}
                       />
                     </button>
                   </div>
@@ -1375,7 +1369,8 @@ export function GatewaySettings() {
                           type="number"
                           value={maxRetryAttempts}
                           onChange={(e) => {
-                            setMaxRetryAttempts(parseInt(e.target.value));
+                            const val = e.target.value;
+                            setMaxRetryAttempts(val === '' ? '' : Math.max(0, Math.min(5, parseInt(val))));
                             setHasChanges(true);
                           }}
                           min="0"
@@ -1445,14 +1440,12 @@ export function GatewaySettings() {
                         setSuggestAlternate(!suggestAlternate);
                         setHasChanges(true);
                       }}
-                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                        suggestAlternate ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                      }`}
+                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${suggestAlternate ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
+                        }`}
                     >
                       <div
-                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                          suggestAlternate ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                        }`}
+                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${suggestAlternate ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                          }`}
                       />
                     </button>
                   </div>
@@ -1529,9 +1522,11 @@ export function GatewaySettings() {
                         type="number"
                         value={refundThreshold}
                         onChange={(e) => {
-                          setRefundThreshold(e.target.value);
+                          const val = e.target.value;
+                          setRefundThreshold(val === '' ? '' : Math.max(0, parseFloat(val)).toString());
                           setHasChanges(true);
                         }}
+                        min="0"
                         className="w-full h-[44px] pl-[32px] pr-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
                       />
                     </div>
@@ -1549,14 +1544,12 @@ export function GatewaySettings() {
                         setPartialRefundsAllowed(!partialRefundsAllowed);
                         setHasChanges(true);
                       }}
-                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                        partialRefundsAllowed ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                      }`}
+                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${partialRefundsAllowed ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
+                        }`}
                     >
                       <div
-                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                          partialRefundsAllowed ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                        }`}
+                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${partialRefundsAllowed ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                          }`}
                       />
                     </button>
                   </div>
@@ -1569,9 +1562,11 @@ export function GatewaySettings() {
                       type="number"
                       value={refundWindow}
                       onChange={(e) => {
-                        setRefundWindow(e.target.value);
+                        const val = e.target.value;
+                        setRefundWindow(val === '' ? '' : Math.max(0, parseFloat(val)).toString());
                         setHasChanges(true);
                       }}
+                      min="0"
                       className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
                     />
                     <p className="text-[13px] leading-[18px] text-[#6E6E6E] mt-[6px]">
@@ -1588,14 +1583,12 @@ export function GatewaySettings() {
                         setAutoUpdateReceipt(!autoUpdateReceipt);
                         setHasChanges(true);
                       }}
-                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                        autoUpdateReceipt ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                      }`}
+                      className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${autoUpdateReceipt ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
+                        }`}
                     >
                       <div
-                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                          autoUpdateReceipt ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                        }`}
+                        className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${autoUpdateReceipt ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                          }`}
                       />
                     </button>
                   </div>
