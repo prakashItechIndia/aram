@@ -74,18 +74,36 @@ export function Dashboard() {
     fetchDonations();
   }, [apiAuth?.accessToken, page, limit]);
 
-  // Calculate stats from all donations (not just current page)
-  const totalDonated = donations.reduce((sum: number, d: Donation) => sum + d.amount, 0);
-  const donationCount = total;
-  const lastDonation = donations[0];
-  const eligible80G = donations.filter((d: Donation) => d.eligible80G).reduce((sum: number, d: Donation) => sum + d.amount, 0);
+  // Calculate Financial Year
+  const getFYDates = () => {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth(); // 0-11
+    
+    // If month is Jan(0), Feb(1), Mar(2), then FY started in previous year
+    const startYear = currentMonth < 3 ? currentYear - 1 : currentYear;
+    const endYear = startYear + 1;
+    
+    const startDate = new Date(`${startYear}-04-01`);
+    const endDate = new Date(`${endYear}-03-31`);
+    
+    return { startDate, endDate, label: `${startYear}-${endYear.toString().slice(-2)}` };
+  };
 
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const startItem = total === 0 ? 0 : (page - 1) * limit + 1;
-  const endItem = Math.min(page * limit, total);
+  const { startDate, endDate, label: fyLabel } = getFYDates();
+
+  const totalDonated = donations.reduce((sum, d) => sum + d.amount, 0);
+  const donationCount = donations.length;
+  const lastDonationDate = donations.length > 0 ? donations[0].date : 'N/A';
+  
+  const eligible80G = donations
+    .filter(d => {
+      const dDate = new Date(d.date);
+      return d.eligible80G && dDate >= startDate && dDate <= endDate;
+    })
+    .reduce((sum, d) => sum + d.amount, 0);
 
   const handleDownloadReceipt = (donation: Donation) => {
-
     generateReceiptPDF(
       {
         receiptNo: donation.receiptNo,
@@ -104,9 +122,6 @@ export function Dashboard() {
     );
   };
 
-  const handleDonateClick = () => {
-    onDonateNow();
-  };
 
   return (
     <div className="flex flex-col gap-[24px]">
@@ -164,7 +179,7 @@ export function Dashboard() {
         <AramCard>
           <div className="flex flex-col gap-[8px]">
             <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E', fontWeight: 500 }}>
-              80G Eligible (FY 2024-25)
+              80G Eligible (FY {fyLabel})
             </span>
             <span style={{ fontSize: '28px', lineHeight: '36px', fontWeight: 700, color: '#734F48' }}>
               ₹{eligible80G.toLocaleString()}
