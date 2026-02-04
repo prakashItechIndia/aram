@@ -9,6 +9,7 @@ import { DonationFormSettingsService } from '../donation-form-settings/donation-
 export interface CountryOption {
   value: string;
   label: string;
+  code: string;
 }
 
 @Injectable()
@@ -16,7 +17,7 @@ export class CountriesService {
   constructor(
     @Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>,
     private donationFormSettingsService: DonationFormSettingsService,
-  ) {}
+  ) { }
 
   /**
    * Get countries based on donation form settings
@@ -30,7 +31,7 @@ export class CountriesService {
 
     // If multiCountry is disabled, return only India
     if (!multiCountry) {
-      return [{ value: 'india', label: 'India' }];
+      return [{ value: 'india', label: 'India', code: '+91' }];
     }
 
     // Fetch all countries from database
@@ -40,6 +41,7 @@ export class CountriesService {
     return countries.map((country) => ({
       value: country.countryName?.toLowerCase().replace(/\s+/g, '-') || '',
       label: country.countryName || '',
+      code: country.countryNumber || '',
     }));
   }
 }

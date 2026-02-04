@@ -7,10 +7,10 @@ export function Toaster() {
       richColors
       toastOptions={{
         style: {
-          borderRadius: '16px',
+          borderRadius: '12px',
           padding: '16px',
           fontSize: '14px',
-          lineHeight: '20px',
+          fontWeight: 500,
         },
       }}
     />
