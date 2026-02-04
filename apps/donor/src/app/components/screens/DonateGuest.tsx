@@ -25,8 +25,6 @@ const donationTypes = [
   { value: 'sairam-sap', label: 'Sairam SAP' },
 ];
 
-const amountPresets = [500, 1000, 2500, 5000];
-
 export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -39,7 +37,7 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
   const [country, setCountry] = useState('india');
   const [errors, setErrors] = useState<any>({});
   const [submitting, setSubmitting] = useState(false);
-  const { checkAndNotify, panRequired, panThreshold } = useDonationFormStatus();
+  const { checkAndNotify, panRequired, panThreshold, addressRequired, presetAmounts, minAmount, maxAmount } = useDonationFormStatus();
   const { countries, loading: countriesLoading } = useCountries();
 
   // Calculate if PAN field should be shown
@@ -91,8 +89,6 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
   };
 
   const amount = selectedPreset || Number(customAmount) || 0;
-  const MIN_AMOUNT = 100;
-  const MAX_AMOUNT = 50000;
 
   const validateForm = (): boolean => {
     const formData = {
@@ -110,11 +106,14 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
       name: validationRules.name,
       email: validationRules.email,
       mobile: getMobileValidation(country),
-      address: validationRules.address,
-      amount: validationRules.amount,
+      amount: { required: true, min: minAmount, max: maxAmount },
       donationType: { required: true },
       country: { required: true },
     };
+
+    if (addressRequired) {
+      fieldRules.address = validationRules.address;
+    }
 
     // Only require PAN if it should be shown
     if (shouldShowPAN) {
@@ -125,11 +124,18 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
       name: validationMessages.name,
       email: validationMessages.email,
       mobile: validationMessages.mobile,
-      address: validationMessages.address,
-      amount: validationMessages.amount,
+      amount: { 
+        required: 'Amount is required', 
+        min: `Minimum donation amount is ₹${minAmount}`, 
+        max: `Maximum donation amount is ₹${maxAmount}` 
+      },
       donationType: { required: 'Please select a donation type' },
       country: { required: 'Country is required' },
     };
+
+    if (addressRequired) {
+      fieldMessages.address = validationMessages.address;
+    }
 
     // Only add PAN messages if it should be shown
     if (shouldShowPAN) {
@@ -275,17 +281,19 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
               />
             </div>
 
-            <AramTextarea
-              label="Address"
-              placeholder="Enter your complete address"
-              value={address}
-              onChange={(val) => setAddress(val.slice(0, 250))}
-              required
-              error={errors.address}
-              rows={3}
-              maxLength={250}
-              helperText={`${address.length}/250 characters`}
-            />
+            {addressRequired && (
+              <AramTextarea
+                label="Address"
+                placeholder="Enter your complete address"
+                value={address}
+                onChange={(val) => setAddress(val.slice(0, 250))}
+                required
+                error={errors.address}
+                rows={3}
+                maxLength={250}
+                helperText={`${address.length}/250 characters`}
+              />
+            )}
           </div>
 
           {/* Donation Details */}
@@ -298,12 +306,13 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
                 Donation Amount <span className="text-[#F36A4F]">*</span>
               </label>
               <div className="flex flex-wrap gap-[12px]">
-                {amountPresets.map((preset) => (
+                {presetAmounts.map((preset) => (
                   <button
                     key={preset}
                     onClick={() => {
                       setSelectedPreset(preset);
                       setCustomAmount('');
+                      setPanNumber(''); // Clear PAN on amount change
                     }}
                     className={`h-[44px] px-[24px] rounded-[999px] border transition-colors ${selectedPreset === preset
                       ? 'border-[#F36A4F] bg-[#FEF1EE] text-[#F36A4F]'
@@ -322,11 +331,12 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
                   if (/^\d*$/.test(val)) {
                     setCustomAmount(val);
                     setSelectedPreset(null);
+                    setPanNumber(''); // Clear PAN on amount change
                   }
                 }}
                 type="number"
                 error={errors.amount}
-                helperText={`Min: ₹${MIN_AMOUNT}, Max: ₹${MAX_AMOUNT}`}
+                helperText={`Min: ₹${minAmount}, Max: ₹${maxAmount}`}
               />
             </div>
 
@@ -378,7 +388,7 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
 
           {/* Action Buttons */}
           <div className="flex gap-[12px]">
-            <AramButton onClick={handlePay} variant="primary" className="flex-1 cursor-pointer" disabled={amount < MIN_AMOUNT || submitting}>
+            <AramButton onClick={handlePay} variant="primary" className="flex-1 cursor-pointer" disabled={amount < minAmount || submitting}>
               {submitting ? 'Please wait...' : `Pay ₹${amount.toLocaleString()}`}
             </AramButton>
             <AramButton onClick={handleReset} variant="secondary" className="cursor-pointer">

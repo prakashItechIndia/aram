@@ -35,8 +35,6 @@ const donationTypes = [
   { value: 'sairam-sap', label: 'Sairam SAP' },
 ];
 
-const amountPresets = [500, 1000, 2500, 5000];
-
 // Helper functions for localStorage
 const DONATION_PREFS_KEY = 'aram_last_donation_prefs';
 const getLastDonationPrefs = () => {
@@ -68,7 +66,7 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
   const [displayName, setDisplayName] = useState(userName);
   const [displayEmail, setDisplayEmail] = useState(userEmail);
   const [displayPhone, setDisplayPhone] = useState(userPhone);
-  const { checkAndNotify, panRequired, panThreshold } = useDonationFormStatus();
+  const { checkAndNotify, panRequired, panThreshold, addressRequired, presetAmounts, minAmount, maxAmount } = useDonationFormStatus();
   const { countries, loading: countriesLoading } = useCountries();
 
   // Calculate if PAN field should be shown
@@ -115,7 +113,7 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
           if (donor.donationAmount) {
             const amount = Number(donor.donationAmount);
             // Check if it matches a preset
-            const matchingPreset = amountPresets.find(p => p === amount);
+            const matchingPreset = presetAmounts.find(p => p === amount);
             if (matchingPreset) {
               setSelectedPreset(matchingPreset);
               setCustomAmount('');
@@ -138,7 +136,7 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
         // Delay slightly for smoother transition if it's too fast
         setTimeout(() => setProfileLoaded(true), 500);
       });
-  }, [api?.donorsApi]);
+  }, [api?.donorsApi, presetAmounts]);
 
   // Restore last donation preferences on mount
   useEffect(() => {
@@ -146,7 +144,7 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
     if (lastPrefs) {
       const { amount, donationType: lastType } = lastPrefs;
       // Check if the amount matches a preset
-      const matchingPreset = amountPresets.find(p => p === amount);
+      const matchingPreset = presetAmounts.find(p => p === amount);
       if (matchingPreset) {
         setSelectedPreset(matchingPreset);
       } else {
@@ -156,18 +154,19 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
         setDonationType(lastType);
       }
     }
-  }, []);
+  }, [presetAmounts]);
 
   const amount = selectedPreset || Number(customAmount) || 0;
-  const MIN_AMOUNT = 100;
-  const MAX_AMOUNT = 50000;
 
   const validateForm = () => {
     const newErrors: any = {};
 
-    if (amount < MIN_AMOUNT) newErrors.amount = `Minimum donation amount is ₹${MIN_AMOUNT}`;
-    if (amount > MAX_AMOUNT) newErrors.amount = `Maximum donation amount is ₹${MAX_AMOUNT}`;
-    if (!address.trim()) newErrors.address = 'Address is required';
+    if (amount < minAmount) newErrors.amount = `Minimum donation amount is ₹${minAmount}`;
+    if (amount > maxAmount) newErrors.amount = `Maximum donation amount is ₹${maxAmount}`;
+    
+    if (addressRequired && !address.trim()) {
+      newErrors.address = 'Address is required';
+    }
     
     // Only validate PAN if it should be shown
     if (shouldShowPAN) {
@@ -193,7 +192,7 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
 
       onPay({
         amount,
-        address,
+        address: addressRequired ? address : '',
         panNumber: shouldShowPAN ? panNumber.toUpperCase() : '',
         donationType,
         country,
@@ -278,7 +277,7 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
               Donation Amount <span className="text-[#F36A4F]">*</span>
             </label>
             <div className="flex flex-wrap gap-[12px]">
-              {amountPresets.map((preset) => (
+              {presetAmounts.map((preset) => (
                 <button
                   key={preset}
                   onClick={() => {
@@ -312,7 +311,7 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
               }}
               type="number"
               error={errors.amount}
-              helperText={`Min: ₹${MIN_AMOUNT}, Max: ₹${MAX_AMOUNT}`}
+              helperText={`Min: ₹${minAmount}, Max: ₹${maxAmount}`}
             />
           </div>
 
@@ -340,17 +339,19 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
           </div>
 
           {/* Address */}
-          <AramTextarea
-            label="Address"
-            placeholder="Enter your complete address for receipt generation"
-            value={address}
-            onChange={(val) => setAddress(val.slice(0, 250))}
-            required
-            error={errors.address}
-            rows={3}
-            maxLength={250}
-            helperText={`${address.length}/250 characters`}
-          />
+          {addressRequired && (
+            <AramTextarea
+              label="Address"
+              placeholder="Enter your complete address for receipt generation"
+              value={address}
+              onChange={(val) => setAddress(val.slice(0, 250))}
+              required
+              error={errors.address}
+              rows={3}
+              maxLength={250}
+              helperText={`${address.length}/250 characters`}
+            />
+          )}
 
           {/* Info Messages */}
           <div className="flex flex-col gap-[8px] p-[16px] bg-[#FEF1EE] rounded-[16px] border border-[#FCD9D3]">
@@ -366,7 +367,7 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
 
           {/* Action Buttons */}
           <div className="flex gap-[16px]">
-            <AramButton onClick={handlePay} variant="primary" className="flex-1 h-[56px] text-[16px]" disabled={amount < MIN_AMOUNT}>
+            <AramButton onClick={handlePay} variant="primary" className="flex-1 h-[56px] text-[16px]" disabled={amount < minAmount}>
               Pay ₹{amount.toLocaleString()}
             </AramButton>
             <AramButton onClick={handleReset} variant="secondary" className="px-[32px]">

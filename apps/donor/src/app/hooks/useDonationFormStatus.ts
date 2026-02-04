@@ -6,6 +6,10 @@ interface DonationFormStatus {
   maintenanceMessage: string;
   panRequired?: 'always' | 'threshold' | 'optional' | 'never';
   panThreshold?: number;
+  addressRequired?: boolean;
+  presetAmounts?: number[];
+  minAmount?: number;
+  maxAmount?: number;
 }
 
 interface UseDonationFormStatusReturn {
@@ -16,6 +20,10 @@ interface UseDonationFormStatusReturn {
   refetch: () => Promise<void>;
   panRequired: 'always' | 'threshold' | 'optional' | 'never';
   panThreshold: number;
+  addressRequired: boolean;
+  presetAmounts: number[];
+  minAmount: number;
+  maxAmount: number;
 }
 
 // Cache for the form status
@@ -32,6 +40,10 @@ export function useDonationFormStatus(): UseDonationFormStatusReturn {
     maintenanceMessage: '',
     panRequired: 'threshold',
     panThreshold: 2000,
+    addressRequired: true,
+    presetAmounts: [500, 1000, 2500, 5000, 10000],
+    minAmount: 100,
+    maxAmount: 1000000,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -61,6 +73,10 @@ export function useDonationFormStatus(): UseDonationFormStatusReturn {
         maintenanceMessage: data.maintenanceMessage ?? '',
         panRequired: data.panRequired ?? 'threshold',
         panThreshold: data.config?.panThreshold ?? 2000,
+        addressRequired: data.addressRequired ?? true,
+        presetAmounts: data.config?.presetAmounts ?? [500, 1000, 2500, 5000, 10000],
+        minAmount: data.config?.minAmount ?? 100,
+        maxAmount: data.config?.maxAmount ?? 1000000,
       };
       
       // Update cache
@@ -78,6 +94,10 @@ export function useDonationFormStatus(): UseDonationFormStatusReturn {
         maintenanceMessage: '',
         panRequired: 'threshold',
         panThreshold: 2000,
+        addressRequired: true,
+        presetAmounts: [500, 1000, 2500, 5000, 10000],
+        minAmount: 100,
+        maxAmount: 1000000,
       });
     } finally {
       setIsLoading(false);
@@ -109,5 +129,9 @@ export function useDonationFormStatus(): UseDonationFormStatusReturn {
     refetch: fetchStatus,
     panRequired: status.panRequired ?? 'threshold',
     panThreshold: status.panThreshold ?? 2000,
+    addressRequired: status.addressRequired ?? true,
+    presetAmounts: status.presetAmounts ?? [500, 1000, 2500, 5000, 10000],
+    minAmount: status.minAmount ?? 100,
+    maxAmount: status.maxAmount ?? 1000000,
   };
 }
