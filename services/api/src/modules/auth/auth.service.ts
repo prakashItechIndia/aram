@@ -20,7 +20,7 @@ import * as schema from '../../database/schema';
 import { EmailService } from '../email/email.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { generateStrongPassword } from '../../common/utils/password.util';
-import { donors } from '../../database/models/donors.model';
+// import { donors } from '../../database/models/donors.model';
 import { eChallans } from '../../database/models/e-challans.model';
 import { donationCategories } from '../../database/models/donation-categories.model';
 import { SmsService } from '../sms/sms.service';

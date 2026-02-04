@@ -23,7 +23,7 @@ function getDateRangeBounds(value: string): { dateFrom?: string; dateTo?: string
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MOBILE_REGEX = /^\+?[\d\s-]{10,15}$/;
+const MOBILE_REGEX = /^\d{10}$/;
 
 interface User {
   id: number;
@@ -128,10 +128,42 @@ export function UsersScreen() {
     if (!formName.trim()) err.name = 'User name is required';
     if (!formEmail.trim()) err.email = 'Email is required';
     else if (!EMAIL_REGEX.test(formEmail.trim())) err.email = 'Please enter a valid email address';
-    if (formMobile.trim() && !MOBILE_REGEX.test(formMobile.trim())) err.mobile = 'Please enter a valid mobile number (10–15 digits, optional +)';
+    if (!formMobile.trim()) err.mobile = 'Mobile number is required';
+    else if (!MOBILE_REGEX.test(formMobile.trim())) err.mobile = 'Please enter a valid 10-digit mobile number';
     if (!formRoleName.trim()) err.role = 'Role is required';
     setFieldErrors(err);
     return Object.keys(err).length === 0;
+  };
+
+  const closeAdd = () => {
+    setShowAddModal(false);
+    setFormName('');
+    setFormEmail('');
+    setFormMobile('');
+    setFormRoleName('');
+    setFormProfileImageUrl('');
+    setFormProfilePreview(null);
+    setFieldErrors({});
+    setError(null);
+  };
+
+  const closeEdit = () => {
+    setShowEditModal(false);
+    setSelectedUser(null);
+    setFormName('');
+    setFormEmail('');
+    setFormMobile('');
+    setFormRoleName('');
+    setFormProfileImageUrl('');
+    setFormProfilePreview(null);
+    setFieldErrors({});
+    setError(null);
+  };
+
+  const closeDelete = () => {
+    setShowDeleteModal(false);
+    setSelectedUser(null);
+    setError(null);
   };
 
   const openAdd = () => {
@@ -332,48 +364,48 @@ export function UsersScreen() {
           </button>
         </div>
         <div className="flex flex-wrap items-end gap-4">
-        <div>
-          <label className="block text-[12px] font-medium text-[#6E6E6E] mb-1">Role</label>
-          <select
-            value={filterRole}
-            onChange={(e) => setFilterRole(e.target.value)}
-            className="h-[44px] px-[12px] min-w-[140px] border border-[#DBDBDB] rounded-[12px] text-[14px] text-[#0D0D0D] bg-white focus:outline-none focus:border-[#F36A4F]"
+          <div>
+            <label className="block text-[12px] font-medium text-[#6E6E6E] mb-1">Role</label>
+            <select
+              value={filterRole}
+              onChange={(e) => setFilterRole(e.target.value)}
+              className="h-[44px] px-[12px] min-w-[140px] border border-[#DBDBDB] rounded-[12px] text-[14px] text-[#0D0D0D] bg-white focus:outline-none focus:border-[#F36A4F]"
+            >
+              <option value="">All Roles</option>
+              {roles.map((r) => (
+                <option key={r.id} value={r.name}>{r.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[12px] font-medium text-[#6E6E6E] mb-1">Date Range</label>
+            <select
+              value={filterDateRange}
+              onChange={(e) => setFilterDateRange(e.target.value)}
+              className="h-[44px] px-[12px] min-w-[140px] border border-[#DBDBDB] rounded-[12px] text-[14px] text-[#0D0D0D] bg-white focus:outline-none focus:border-[#F36A4F]"
+            >
+              {DATE_RANGES.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[12px] font-medium text-[#6E6E6E] mb-1">Search</label>
+            <input
+              type="text"
+              value={filterSearch}
+              onChange={(e) => setFilterSearch(e.target.value)}
+              placeholder="Name or email..."
+              className="h-[44px] px-[12px] min-w-[200px] border border-[#DBDBDB] rounded-[12px] text-[14px] text-[#0D0D0D] bg-white focus:outline-none focus:border-[#F36A4F]"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={applyFilters}
+            className="h-[44px] px-[20px] bg-[#F36A4F] text-white rounded-[12px] text-[14px] font-medium hover:bg-[#E55A3F] transition-colors"
           >
-            <option value="">All Roles</option>
-            {roles.map((r) => (
-              <option key={r.id} value={r.name}>{r.name}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-[12px] font-medium text-[#6E6E6E] mb-1">Date Range</label>
-          <select
-            value={filterDateRange}
-            onChange={(e) => setFilterDateRange(e.target.value)}
-            className="h-[44px] px-[12px] min-w-[140px] border border-[#DBDBDB] rounded-[12px] text-[14px] text-[#0D0D0D] bg-white focus:outline-none focus:border-[#F36A4F]"
-          >
-            {DATE_RANGES.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-[12px] font-medium text-[#6E6E6E] mb-1">Search</label>
-          <input
-            type="text"
-            value={filterSearch}
-            onChange={(e) => setFilterSearch(e.target.value)}
-            placeholder="Name or email..."
-            className="h-[44px] px-[12px] min-w-[200px] border border-[#DBDBDB] rounded-[12px] text-[14px] text-[#0D0D0D] bg-white focus:outline-none focus:border-[#F36A4F]"
-          />
-        </div>
-        <button
-          type="button"
-          onClick={applyFilters}
-          className="h-[44px] px-[20px] bg-[#F36A4F] text-white rounded-[12px] text-[14px] font-medium hover:bg-[#E55A3F] transition-colors"
-        >
-          Apply Filters
-        </button>
+            Apply Filters
+          </button>
         </div>
       </div>
 
@@ -559,12 +591,16 @@ export function UsersScreen() {
                 {fieldErrors.email && <p className="mt-[6px] text-[12px] leading-[16px] text-[#F36A4F]">{fieldErrors.email}</p>}
               </div>
               <div>
-                <label className="block text-[14px] leading-[20px] font-medium text-[#3D3D3D] mb-[8px]">Mobile number</label>
+                <label className="block text-[14px] leading-[20px] font-medium text-[#3D3D3D] mb-[8px]">Mobile number <span className="text-[#F36A4F]">*</span></label>
                 <input
                   type="tel"
                   value={formMobile}
-                  onChange={(e) => { setFormMobile(e.target.value); setFieldErrors((prev) => ({ ...prev, mobile: undefined })); }}
-                  placeholder="Enter mobile number (optional)"
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                    setFormMobile(val);
+                    setFieldErrors((prev) => ({ ...prev, mobile: undefined }));
+                  }}
+                  placeholder="Enter mobile number"
                   className={`w-full h-[44px] px-[16px] text-[16px] leading-[24px] bg-white border rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20 ${fieldErrors.mobile ? 'border-[#F36A4F]' : 'border-[#DBDBDB]'}`}
                 />
                 {fieldErrors.mobile && <p className="mt-[6px] text-[12px] leading-[16px] text-[#F36A4F]">{fieldErrors.mobile}</p>}
@@ -665,12 +701,16 @@ export function UsersScreen() {
                 {fieldErrors.email && <p className="mt-[6px] text-[12px] leading-[16px] text-[#F36A4F]">{fieldErrors.email}</p>}
               </div>
               <div>
-                <label className="block text-[14px] leading-[20px] font-medium text-[#3D3D3D] mb-[8px]">Mobile number</label>
+                <label className="block text-[14px] leading-[20px] font-medium text-[#3D3D3D] mb-[8px]">Mobile number <span className="text-[#F36A4F]">*</span></label>
                 <input
                   type="tel"
                   value={formMobile}
-                  onChange={(e) => { setFormMobile(e.target.value); setFieldErrors((prev) => ({ ...prev, mobile: undefined })); }}
-                  placeholder="Enter mobile number (optional)"
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                    setFormMobile(val);
+                    setFieldErrors((prev) => ({ ...prev, mobile: undefined }));
+                  }}
+                  placeholder="Enter mobile number"
                   className={`w-full h-[44px] px-[16px] text-[16px] leading-[24px] bg-white border rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20 ${fieldErrors.mobile ? 'border-[#F36A4F]' : 'border-[#DBDBDB]'}`}
                 />
                 {fieldErrors.mobile && <p className="mt-[6px] text-[12px] leading-[16px] text-[#F36A4F]">{fieldErrors.mobile}</p>}
