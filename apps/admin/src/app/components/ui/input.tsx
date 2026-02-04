@@ -8,7 +8,7 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   (props, ref) => {
-    const { label, error, helperText, className = '', ...rest } = props;
+    const { label, error, helperText, required, className = '', ...rest } = props;
     const { type, min, onChange, ...inputProps } = rest as any;
 
     return (
