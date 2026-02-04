@@ -1,13 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AramButton } from '@/app/components/aram/AramButton';
 import { AramCard } from '@/app/components/aram/AramCard';
 
-interface EntryPageProps {
-  onLoginToDonate: () => void;
-  onGuestDonate: () => void;
-}
+export function EntryPage() {
+  const navigate = useNavigate();
 
-export function EntryPage({ onLoginToDonate, onGuestDonate }: EntryPageProps) {
   return (
     <div className="min-h-screen bg-[#FFFFFF] flex items-center justify-center p-[24px]">
       <AramCard className="w-full max-w-[520px]">
@@ -24,10 +22,10 @@ export function EntryPage({ onLoginToDonate, onGuestDonate }: EntryPageProps) {
 
           {/* CTA Buttons */}
           <div className="flex flex-col gap-[16px]">
-            <AramButton onClick={onLoginToDonate} variant="primary" className="w-full">
+            <AramButton onClick={() => navigate('/signin')} variant="primary" className="w-full">
               Login to Donate
             </AramButton>
-            <AramButton onClick={onGuestDonate} variant="secondary" className="w-full">
+            <AramButton onClick={() => navigate('/donate-guest')} variant="secondary" className="w-full">
               Donate without Signup
             </AramButton>
           </div>

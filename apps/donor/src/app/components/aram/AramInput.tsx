@@ -47,10 +47,15 @@ export function AramInput({
         <input
           type={type}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (type === 'number' && val !== '' && parseFloat(val) < 0) return;
+            onChange(val);
+          }}
           placeholder={placeholder}
           disabled={disabled}
           maxLength={maxLength}
+          min={type === 'number' ? '0' : undefined}
           className={`h-[44px] w-full py-[12px] rounded-[16px] border ${error ? 'border-[#F36A4F]' : 'border-[#DBDBDB]'
             } bg-white focus:outline-none focus:border-[#F36A4F] disabled:bg-[#F3F3F3] disabled:cursor-not-allowed`}
           style={{
@@ -63,12 +68,12 @@ export function AramInput({
         />
       </div>
       {error && (
-        <span style={{ fontSize: '12px', lineHeight: '16px', color: '#F36A4F' }}>
+        <span style={{ fontSize: '13px', lineHeight: '18px', color: '#F36A4F' }}>
           {error}
         </span>
       )}
       {helperText && !error && (
-        <span style={{ fontSize: '12px', lineHeight: '16px', color: '#6E6E6E' }}>
+        <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E' }}>
           {helperText}
         </span>
       )}

@@ -9,7 +9,7 @@ export function Reconciliation() {
   const [receiptMissingThreshold, setReceiptMissingThreshold] = useState('10');
   const [webhookMissingThreshold, setWebhookMissingThreshold] = useState('10');
   const [manualApprovalRequired, setManualApprovalRequired] = useState(true);
-  
+
   const [showReasonModal, setShowReasonModal] = useState(false);
   const [saveReason, setSaveReason] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
@@ -87,14 +87,12 @@ export function Reconciliation() {
                 setAutoFetchSettlements(!autoFetchSettlements);
                 markChange();
               }}
-              className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                autoFetchSettlements ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-              }`}
+              className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${autoFetchSettlements ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
+                }`}
             >
               <div
-                className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                  autoFetchSettlements ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                }`}
+                className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${autoFetchSettlements ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                  }`}
               />
             </button>
           </div>
@@ -114,14 +112,12 @@ export function Reconciliation() {
                 setAutoMatchSettlements(!autoMatchSettlements);
                 markChange();
               }}
-              className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                autoMatchSettlements ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-              }`}
+              className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${autoMatchSettlements ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
+                }`}
             >
               <div
-                className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                  autoMatchSettlements ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                }`}
+                className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${autoMatchSettlements ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                  }`}
               />
             </button>
           </div>
@@ -164,7 +160,8 @@ export function Reconciliation() {
                 type="number"
                 value={mismatchTolerance}
                 onChange={(e) => {
-                  setMismatchTolerance(e.target.value);
+                  const val = e.target.value;
+                  setMismatchTolerance(val === '' ? '' : Math.max(0, parseInt(val)).toString());
                   markChange();
                 }}
                 min="0"
@@ -201,10 +198,11 @@ export function Reconciliation() {
                 type="number"
                 value={receiptMissingThreshold}
                 onChange={(e) => {
-                  setReceiptMissingThreshold(e.target.value);
+                  const val = e.target.value;
+                  setReceiptMissingThreshold(val === '' ? '' : Math.max(0, parseInt(val)).toString());
                   markChange();
                 }}
-                min="1"
+                min="0"
                 step="1"
                 className="w-[120px] h-[44px] px-[16px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
               />
@@ -225,10 +223,11 @@ export function Reconciliation() {
                 type="number"
                 value={webhookMissingThreshold}
                 onChange={(e) => {
-                  setWebhookMissingThreshold(e.target.value);
+                  const val = e.target.value;
+                  setWebhookMissingThreshold(val === '' ? '' : Math.max(0, parseInt(val)).toString());
                   markChange();
                 }}
-                min="1"
+                min="0"
                 step="1"
                 className="w-[120px] h-[44px] px-[16px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
               />
@@ -275,14 +274,12 @@ export function Reconciliation() {
                 setManualApprovalRequired(!manualApprovalRequired);
                 markChange();
               }}
-              className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${
-                manualApprovalRequired ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-              }`}
+              className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${manualApprovalRequired ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
+                }`}
             >
               <div
-                className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${
-                  manualApprovalRequired ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                }`}
+                className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${manualApprovalRequired ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                  }`}
               />
             </button>
           </div>

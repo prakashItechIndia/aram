@@ -1,29 +1,30 @@
-import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { BadRequestException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DRIZZLE } from '../../database/database.module';
-import { tUser } from '../../database/models/t-user.model';
-import { donors } from '../../database/models/donors.model';
-import { and, eq, or, inArray, desc } from 'drizzle-orm';
+import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
-import { AdminLoginDto } from './dto/admin-login.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
-import { UpdateProfileDto } from './dto/update-profile.dto';
-import { setResetToken, getAndConsumeResetToken } from './admin-reset-token.store';
+import { and, desc, eq, inArray, or } from 'drizzle-orm';
 import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';
+import { generateStrongPassword } from '../../common/utils/password.util';
+import { DRIZZLE } from '../../database/database.module';
+import { donors } from '../../database/models/donors.model';
+import { tUser } from '../../database/models/t-user.model';
+import { eChallans } from '../../database/models/e-challans.model';
+import { donationCategories } from '../../database/models/donation-categories.model';
 import * as schema from '../../database/schema';
 import { EmailService } from '../email/email.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { generateStrongPassword } from '../../common/utils/password.util';
-import { eChallans } from '../../database/models/e-challans.model';
-import { donationCategories } from '../../database/models/donation-categories.model';
-import { SmsService } from '../sms/sms.service';
+import { getAndConsumeResetToken, setResetToken } from './admin-reset-token.store';
+import { AdminLoginDto } from './dto/admin-login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+
 import { userOtp } from '../../database/models/user-otp.model';
+import { SmsService } from '../sms/sms.service';
 
 const ADMIN_USER_TYPES = ['Admin', 'Super Admin'] as const;
 
@@ -197,17 +198,17 @@ export class AuthService {
 
           const lastDonation = await this.db
             .select({
-              amount: schema.eChallans.amount,
-              typeCode: schema.donationCategories.categoryCode,
+              amount: eChallans.amount,
+              typeCode: donationCategories.categoryCode,
             })
             .top(1)
-            .from(schema.eChallans)
+            .from(eChallans)
             .leftJoin(
-              schema.donationCategories,
-              eq(schema.eChallans.categoryId, schema.donationCategories.id),
+              donationCategories,
+              eq(eChallans.categoryId, donationCategories.id),
             )
-            .where(eq(schema.eChallans.donorId, donor.id))
-            .orderBy(desc(schema.eChallans.id));
+            .where(eq(eChallans.donorId, donor.id))
+            .orderBy(desc(eChallans.id));
 
           const last = lastDonation[0];
           if (last) {

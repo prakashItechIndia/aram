@@ -184,18 +184,16 @@ export function EChallanEntryScreen() {
             <div key={s.id} className="flex items-center">
               <div className="flex flex-col items-center">
                 <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                    step === s.id
+                  className={`w-12 h-12 rounded-full flex items-center justify-center ${step === s.id
                       ? 'bg-[#F36A4F] text-white'
                       : 'bg-[#F3F3F3] text-[#6E6E6E]'
-                  }`}
+                    }`}
                 >
                   <s.icon className="w-5 h-5" />
                 </div>
                 <p
-                  className={`text-[13px] mt-2 ${
-                    step === s.id ? 'text-[#F36A4F] font-semibold' : 'text-[#6E6E6E]'
-                  }`}
+                  className={`text-[13px] mt-2 ${step === s.id ? 'text-[#F36A4F] font-semibold' : 'text-[#6E6E6E]'
+                    }`}
                 >
                   {s.label}
                 </p>
@@ -410,10 +408,13 @@ export function EChallanEntryScreen() {
                     <input
                       type="number"
                       value={amount}
-                      onChange={(e) => handleAmountChange(e.target.value)}
-                      className={`w-full h-[44px] pl-[36px] pr-[12px] rounded-[12px] border ${
-                        showAmountWarning ? 'border-[#C62828]' : 'border-[#DBDBDB]'
-                      } text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]`}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        handleAmountChange(isNaN(val) ? '' : Math.max(0, val).toString());
+                      }}
+                      min="0"
+                      className={`w-full h-[44px] pl-[36px] pr-[12px] rounded-[12px] border ${showAmountWarning ? 'border-[#C62828]' : 'border-[#DBDBDB]'
+                        } text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]`}
                       placeholder="0.00"
                     />
                   </div>
@@ -495,21 +496,18 @@ export function EChallanEntryScreen() {
                   <button
                     key={mode}
                     onClick={() => setPaymentMode(mode)}
-                    className={`h-[80px] rounded-[12px] border-2 ${
-                      paymentMode === mode
+                    className={`h-[80px] rounded-[12px] border-2 ${paymentMode === mode
                         ? 'border-[#F36A4F] bg-[#FEF1EE]'
                         : 'border-[#DBDBDB] bg-white'
-                    } hover:border-[#F36A4F] transition-colors flex flex-col items-center justify-center gap-2`}
+                      } hover:border-[#F36A4F] transition-colors flex flex-col items-center justify-center gap-2`}
                   >
                     <CreditCard
-                      className={`w-5 h-5 ${
-                        paymentMode === mode ? 'text-[#F36A4F]' : 'text-[#6E6E6E]'
-                      }`}
+                      className={`w-5 h-5 ${paymentMode === mode ? 'text-[#F36A4F]' : 'text-[#6E6E6E]'
+                        }`}
                     />
                     <span
-                      className={`text-[13px] font-medium ${
-                        paymentMode === mode ? 'text-[#F36A4F]' : 'text-[#3D3D3D]'
-                      }`}
+                      className={`text-[13px] font-medium ${paymentMode === mode ? 'text-[#F36A4F]' : 'text-[#3D3D3D]'
+                        }`}
                     >
                       {mode}
                     </span>

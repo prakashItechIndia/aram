@@ -311,9 +311,8 @@ export function EnquiriesScreen() {
               <button
                 key={enquiry.id}
                 onClick={() => setSelectedEnquiry(enquiry)}
-                className={`w-full p-[16px] text-left hover:bg-[#F8F8F8] transition-colors ${
-                  selectedEnquiry?.id === enquiry.id ? 'bg-[#FEF1EE]' : ''
-                }`}
+                className={`w-full p-[16px] text-left hover:bg-[#F8F8F8] transition-colors ${selectedEnquiry?.id === enquiry.id ? 'bg-[#FEF1EE]' : ''
+                  }`}
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
@@ -656,6 +655,14 @@ export function EnquiriesScreen() {
                     <input
                       type="number"
                       defaultValue="48"
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val !== '') {
+                          const parsed = parseInt(val);
+                          if (!isNaN(parsed)) e.target.value = Math.max(0, parsed).toString();
+                        }
+                      }}
+                      min="0"
                       className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
                     />
                   </div>
@@ -666,6 +673,14 @@ export function EnquiriesScreen() {
                     <input
                       type="number"
                       defaultValue="2"
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val !== '') {
+                          const parsed = parseInt(val);
+                          if (!isNaN(parsed)) e.target.value = Math.max(0, parsed).toString();
+                        }
+                      }}
+                      min="0"
                       className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
                     />
                   </div>

@@ -507,6 +507,14 @@ export function AutomationScreen() {
                         <input
                           type="number"
                           placeholder="₹ 0"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val !== '') {
+                              const parsed = parseFloat(val);
+                              if (!isNaN(parsed)) e.target.value = Math.max(0, parsed).toString();
+                            }
+                          }}
+                          min="0"
                           className="w-full h-[40px] px-[10px] rounded-[8px] border border-[#DBDBDB] text-[13px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
                         />
                       </div>
@@ -630,6 +638,14 @@ export function AutomationScreen() {
                           <input
                             type="number"
                             defaultValue="1"
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val !== '') {
+                                const parsed = parseInt(val);
+                                if (!isNaN(parsed)) e.target.value = Math.max(0, parsed).toString();
+                              }
+                            }}
+                            min="0"
                             className="w-20 h-[40px] px-[10px] rounded-[8px] border border-[#DBDBDB] text-[13px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
                           />
                           <select className="flex-1 h-[40px] px-[10px] rounded-[8px] border border-[#DBDBDB] text-[13px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]">
@@ -797,9 +813,8 @@ export function AutomationScreen() {
                           <XCircle className="w-4 h-4 text-[#C62828]" />
                         )}
                         <span
-                          className={`text-[12px] font-medium ${
-                            log.status === 'Sent' ? 'text-[#2E7D32]' : 'text-[#C62828]'
-                          }`}
+                          className={`text-[12px] font-medium ${log.status === 'Sent' ? 'text-[#2E7D32]' : 'text-[#C62828]'
+                            }`}
                         >
                           {log.status}
                         </span>

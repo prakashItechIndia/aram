@@ -16,13 +16,12 @@ import { useDonationFormStatus } from '../../hooks/useDonationFormStatus';
 import { useCountries } from '../../hooks/useCountries';
 import { getCountryPhonePrefix } from '../../utils/countryPhonePrefixes';
 
-interface CreateAccountProps {
-  onCreateAccount: (data: any) => void;
-  onSignIn: () => void;
-  onBack: () => void;
-}
+import { useNavigate } from 'react-router-dom';
+import { useApi } from '@/app/context/ApiContext';
 
-export function CreateAccount({ onCreateAccount, onSignIn, onBack }: CreateAccountProps) {
+export function CreateAccount() {
+  const navigate = useNavigate();
+  const { register } = useApi();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -115,13 +114,25 @@ export function CreateAccount({ onCreateAccount, onSignIn, onBack }: CreateAccou
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!agreeTerms) {
       toast.error('You should accept the Terms of Service and Privacy Policy');
       return;
     }
     if (validateForm()) {
-      onCreateAccount({ name, email, phone, password });
+      const result = await register({
+        name,
+        email,
+        password,
+        phone,
+      });
+
+      if (result.success) {
+        toast.success('Account created successfully!');
+        navigate('/dashboard');
+      } else {
+        toast.error(result.error ?? 'Registration failed');
+      }
     }
   };
 
@@ -131,7 +142,7 @@ export function CreateAccount({ onCreateAccount, onSignIn, onBack }: CreateAccou
         <div className="flex flex-col gap-[24px]">
           {/* Back Button */}
           <button
-            onClick={onBack}
+            onClick={() => navigate('/')}
             className="flex items-center gap-[8px] text-[#6E6E6E] hover:text-[#3D3D3D] transition-colors w-fit"
             style={{ fontSize: '14px', fontWeight: 600 }}
           >
@@ -332,7 +343,7 @@ export function CreateAccount({ onCreateAccount, onSignIn, onBack }: CreateAccou
             </AramButton>
             <div className="text-center">
               <button
-                onClick={onSignIn}
+                onClick={() => navigate('/signin')}
                 style={{ fontSize: '14px', lineHeight: '20px', color: '#F36A4F' }}
               >
                 Already have an account? Sign in

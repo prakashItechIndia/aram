@@ -24,7 +24,7 @@ export * from '../models/t-cfg-recipients.model';
 /* New/upcoming tables (also use T_ naming in DB when created) */
 export * from '../models/user-roles.model';
 export * from '../models/role-permissions.model';
-export * from '../models/users.model'; /* stub: maps to T_USER; no separate users table */
+// export * from '../models/users.model'; /* stub: maps to T_USER; no separate users table */
 export * from '../models/donors.model';
 export * from '../models/donor-notes.model';
 export * from '../models/donation-categories.model';

@@ -116,20 +116,20 @@ export function GalleryScreen() {
         setFilterLoading(true);
       }
       setError(null);
-      
+
       // Build query params for images
       const params = new URLSearchParams();
       if (filterAlbum) params.append('albumId', filterAlbum);
       if (filterTag) params.append('tag', filterTag);
       if (filterVisibility) params.append('visibility', filterVisibility);
       if (filterSearch) params.append('search', filterSearch);
-      
+
       const queryString = params.toString();
       const url = `/website/gallery${queryString ? `?${queryString}` : ''}`;
-      
+
       const imgRes = await apiFetch(url);
       if (!imgRes.ok) throw new Error('Failed to fetch gallery');
-      
+
       const imgList = await imgRes.json();
       setImages(Array.isArray(imgList) ? imgList.map((row: Record<string, unknown>) => mapApiToImage(row)) : []);
 
@@ -528,226 +528,240 @@ export function GalleryScreen() {
         <div className="py-12 text-center text-[14px] text-[#6E6E6E]">Loading gallery...</div>
       ) : (
         <>
-      {/* Summary Cards */}
-      <div className="grid grid-cols-4 gap-[16px] mb-[24px]">
-        <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
-          <p className="text-[13px] text-[#6E6E6E] mb-1">Total Images</p>
-          <p className="text-[24px] font-semibold text-[#0D0D0D]">{images.length}</p>
-        </div>
+          {/* Summary Cards */}
+          <div className="grid grid-cols-4 gap-[16px] mb-[24px]">
+            <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
+              <p className="text-[13px] text-[#6E6E6E] mb-1">Total Images</p>
+              <p className="text-[24px] font-semibold text-[#0D0D0D]">{images.length}</p>
+            </div>
 
-        <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
-          <p className="text-[13px] text-[#6E6E6E] mb-1">Albums</p>
-          <p className="text-[24px] font-semibold text-[#0D0D0D]">{albums.length}</p>
-        </div>
+            <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
+              <p className="text-[13px] text-[#6E6E6E] mb-1">Albums</p>
+              <p className="text-[24px] font-semibold text-[#0D0D0D]">{albums.length}</p>
+            </div>
 
-        <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
-          <p className="text-[13px] text-[#6E6E6E] mb-1">Public Images</p>
-          <p className="text-[24px] font-semibold text-[#2E7D32]">
-            {images.filter((img) => img.visibility === 'Public').length}
-          </p>
-        </div>
+            <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
+              <p className="text-[13px] text-[#6E6E6E] mb-1">Public Images</p>
+              <p className="text-[24px] font-semibold text-[#2E7D32]">
+                {images.filter((img) => img.visibility === 'Public').length}
+              </p>
+            </div>
 
-        <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
-          <p className="text-[13px] text-[#6E6E6E] mb-1">Storage Used</p>
-          <p className="text-[24px] font-semibold text-[#0D0D0D]">—</p>
-        </div>
-      </div>
+            <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
+              <p className="text-[13px] text-[#6E6E6E] mb-1">Storage Used</p>
+              <p className="text-[24px] font-semibold text-[#0D0D0D]">—</p>
+            </div>
+          </div>
 
-      {/* Toolbar */}
-      <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px] mb-[16px]">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {selectedImages.length > 0 && (
-              <>
-                <p className="text-[13px] text-[#3D3D3D]">
-                  {selectedImages.length} selected
-                </p>
-                <button className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
-                  Move to Album
-                </button>
-                <button className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
-                  Apply Tag
-                </button>
-                <button className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
-                  Set Visibility
+          {/* Toolbar */}
+          <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px] mb-[16px]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {selectedImages.length > 0 && (
+                  <>
+                    <p className="text-[13px] text-[#3D3D3D]">
+                      {selectedImages.length} selected
+                    </p>
+                    <button className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
+                      Move to Album
+                    </button>
+                    <button className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
+                      Apply Tag
+                    </button>
+                    <button className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
+                      Set Visibility
+                    </button>
+                    <button
+                      onClick={handleBulkDelete}
+                      className="text-[13px] text-[#C62828] hover:text-[#B71C1C] font-medium"
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg ${viewMode === 'grid' ? 'bg-[#FEF1EE] text-[#F36A4F]' : 'text-[#6E6E6E] hover:bg-[#F3F3F3]'
+                    }`}
+                >
+                  <Grid3x3 className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={handleBulkDelete}
-                  className="text-[13px] text-[#C62828] hover:text-[#B71C1C] font-medium"
+                  onClick={() => setViewMode('list')}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg ${viewMode === 'list' ? 'bg-[#FEF1EE] text-[#F36A4F]' : 'text-[#6E6E6E] hover:bg-[#F3F3F3]'
+                    }`}
                 >
-                  Delete
+                  <List className="w-4 h-4" />
                 </button>
-              </>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`w-8 h-8 flex items-center justify-center rounded-lg ${
-                viewMode === 'grid' ? 'bg-[#FEF1EE] text-[#F36A4F]' : 'text-[#6E6E6E] hover:bg-[#F3F3F3]'
-              }`}
-            >
-              <Grid3x3 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`w-8 h-8 flex items-center justify-center rounded-lg ${
-                viewMode === 'list' ? 'bg-[#FEF1EE] text-[#F36A4F]' : 'text-[#6E6E6E] hover:bg-[#F3F3F3]'
-              }`}
-            >
-              <List className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Images Grid/List */}
-      <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[24px]">
-        {filterLoading ? (
-          <div className="text-center py-12">
-            <div className="inline-block w-8 h-8 border-4 border-[#F36A4F] border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-[14px] text-[#6E6E6E] mt-4">Loading...</p>
-          </div>
-        ) : images.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-[14px] text-[#6E6E6E]">No images found matching your filters.</p>
-            {(filterAlbum || filterTag || filterVisibility || filterSearch) && (
-              <button 
-                onClick={resetFilters}
-                className="mt-2 text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium"
-              >
-                Clear all filters
-              </button>
-            )}
-          </div>
-        ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-4 gap-[16px]">
-            {images.map((image) => (
-              <div
-                key={image.id}
-                className="relative group cursor-pointer rounded-[12px] overflow-hidden border border-[#DBDBDB] hover:border-[#F36A4F] transition-colors"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedImages.includes(image.id)}
-                  onChange={() => toggleImageSelection(image.id)}
-                  className="absolute top-2 left-2 w-4 h-4 accent-[#F36A4F] z-10"
-                />
-
-                <img
-                  src={galleryAssetUrl(image.thumbnail)}
-                  alt={image.altText}
-                  className="w-full h-48 object-cover cursor-pointer"
-                  onClick={() => handlePreview(image)}
-                />
-
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-[12px]">
-                  <p className="text-[13px] font-semibold text-white mb-1">{image.title}</p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(image);
-                      }}
-                      className="flex items-center gap-1 text-[11px] text-white hover:text-[#F36A4F]"
-                    >
-                      <Edit className="w-3 h-3" />
-                      Edit
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownload(image);
-                      }}
-                      className="flex items-center gap-1 text-[11px] text-white hover:text-[#F36A4F]"
-                    >
-                      <Download className="w-3 h-3" />
-                      Download
-                    </button>
-                  </div>
-                </div>
-
-                <div className="p-[12px] bg-white">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-[#6E6E6E]">{image.album}</span>
-                    {image.visibility === 'Public' ? (
-                      <Eye className="w-3 h-3 text-[#2E7D32]" />
-                    ) : (
-                      <EyeOff className="w-3 h-3 text-[#6E6E6E]" />
-                    )}
-                  </div>
-                </div>
               </div>
-            ))}
+            </div>
           </div>
-        ) : (
-          <div className="space-y-2">
-            {images.map((image) => (
-              <div
-                key={image.id}
-                className="flex items-center gap-4 p-[12px] rounded-[12px] border border-[#DBDBDB] hover:bg-[#F8F8F8]"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedImages.includes(image.id)}
-                  onChange={() => toggleImageSelection(image.id)}
-                  className="w-4 h-4 accent-[#F36A4F]"
-                />
 
-                <img
-                  src={galleryAssetUrl(image.thumbnail)}
-                  alt={image.altText}
-                  className="w-16 h-16 object-cover rounded-[8px] cursor-pointer"
-                  onClick={() => handlePreview(image)}
-                />
+          {/* Images Grid/List */}
+          <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[24px]">
+            {filterLoading ? (
+              <div className="text-center py-12">
+                <div className="inline-block w-8 h-8 border-4 border-[#F36A4F] border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-[14px] text-[#6E6E6E] mt-4">Loading...</p>
+              </div>
+            ) : images.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-[14px] text-[#6E6E6E]">No images found matching your filters.</p>
+                {(filterAlbum || filterTag || filterVisibility || filterSearch) && (
+                  <button
+                    onClick={resetFilters}
+                    className="mt-2 text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium"
+                  >
+                    Clear all filters
+                  </button>
+                )}
+              </div>
+            ) : viewMode === 'grid' ? (
+              <div className="grid grid-cols-4 gap-[16px]">
+                {images.map((image) => (
+                  <div
+                    key={image.id}
+                    className="relative group cursor-pointer rounded-[12px] overflow-hidden border border-[#DBDBDB] hover:border-[#F36A4F] transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedImages.includes(image.id)}
+                      onChange={() => toggleImageSelection(image.id)}
+                      className="absolute top-2 left-2 w-4 h-4 accent-[#F36A4F] z-10"
+                    />
 
-                <div className="flex-1">
-                  <p className="text-[14px] font-semibold text-[#0D0D0D]">{image.title}</p>
-                  <p className="text-[12px] text-[#6E6E6E]">{image.caption}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    {image.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-0.5 bg-[#F3F3F3] text-[10px] text-[#3D3D3D] rounded"
+                    <img
+                      src={galleryAssetUrl(image.thumbnail)}
+                      alt={image.altText}
+                      className="w-full h-48 object-cover cursor-pointer"
+                      onClick={() => handlePreview(image)}
+                    />
+
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-[12px]">
+                      <p className="text-[13px] font-semibold text-white mb-2">{image.title}</p>
+                    </div>
+
+                    <div className="p-[12px] bg-white group-hover:bg-[#5E5E5E] transition-colors border-t border-[#F0F0F0] relative h-[48px] flex items-center">
+                      {/* Default State: Title */}
+                      <div className="flex items-center justify-between w-full group-hover:opacity-0 transition-opacity">
+                        <p className="text-[13px] font-medium text-[#6E6E6E] truncate pr-8" title={image.title}>
+                          {image.title}
+                        </p>
+                        <div className="absolute right-3">
+                          {image.visibility === 'Public' ? (
+                            <Eye className="w-4 h-4 text-[#2E7D32]" />
+                          ) : (
+                            <EyeOff className="w-4 h-4 text-[#6E6E6E]" />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Hover State: Actions */}
+                      <div className="absolute inset-0 px-[12px] flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-4">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(image);
+                            }}
+                            className="flex items-center gap-1.5 text-[12px] text-white hover:text-white/80"
+                          >
+                            <Edit className="w-4 h-4" />
+                            Edit
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownload(image);
+                            }}
+                            className="flex items-center gap-1.5 text-[12px] text-white hover:text-white/80"
+                          >
+                            <Download className="w-4 h-4" />
+                            Download
+                          </button>
+                        </div>
+                        <div>
+                          {image.visibility === 'Public' ? (
+                            <Eye className="w-4 h-4 text-[#2E7D32]" />
+                          ) : (
+                            <EyeOff className="w-4 h-4 text-[#FFFFFF]/60" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {images.map((image) => (
+                  <div
+                    key={image.id}
+                    className="flex items-center gap-4 p-[12px] rounded-[12px] border border-[#DBDBDB] hover:bg-[#F8F8F8]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedImages.includes(image.id)}
+                      onChange={() => toggleImageSelection(image.id)}
+                      className="w-4 h-4 accent-[#F36A4F]"
+                    />
+
+                    <img
+                      src={galleryAssetUrl(image.thumbnail)}
+                      alt={image.altText}
+                      className="w-16 h-16 object-cover rounded-[8px] cursor-pointer"
+                      onClick={() => handlePreview(image)}
+                    />
+
+                    <div className="flex-1">
+                      <p className="text-[14px] font-semibold text-[#0D0D0D]">{image.title}</p>
+                      <p className="text-[12px] text-[#6E6E6E]">{image.caption}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {image.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-2 py-0.5 bg-[#F3F3F3] text-[10px] text-[#3D3D3D] rounded"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="text-right text-[12px] text-[#6E6E6E]">
+                      <p>{image.album}</p>
+                      <p className="text-[11px]">{image.fileSize}</p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {image.visibility === 'Public' ? (
+                        <Eye className="w-4 h-4 text-[#2E7D32]" />
+                      ) : (
+                        <EyeOff className="w-4 h-4 text-[#6E6E6E]" />
+                      )}
+                      <button
+                        onClick={() => handleDownload(image)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
+                        title="Download"
                       >
-                        {tag}
-                      </span>
-                    ))}
+                        <Download className="w-4 h-4 text-[#3D3D3D]" />
+                      </button>
+                      <button
+                        onClick={() => handleEdit(image)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
+                        title="Edit"
+                      >
+                        <Edit className="w-4 h-4 text-[#3D3D3D]" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-
-                <div className="text-right text-[12px] text-[#6E6E6E]">
-                  <p>{image.album}</p>
-                  <p className="text-[11px]">{image.fileSize}</p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {image.visibility === 'Public' ? (
-                    <Eye className="w-4 h-4 text-[#2E7D32]" />
-                  ) : (
-                    <EyeOff className="w-4 h-4 text-[#6E6E6E]" />
-                  )}
-                  <button
-                    onClick={() => handleDownload(image)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
-                    title="Download"
-                  >
-                    <Download className="w-4 h-4 text-[#3D3D3D]" />
-                  </button>
-                  <button
-                    onClick={() => handleEdit(image)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
-                    title="Edit"
-                  >
-                    <Edit className="w-4 h-4 text-[#3D3D3D]" />
-                  </button>
-                </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </div>
         </>
       )}
 
@@ -1191,7 +1205,7 @@ export function GalleryScreen() {
 
       {/* Preview Modal */}
       {showPreview && previewImage && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/90 flex items-center justify-center z-[70] p-[24px]"
           onClick={() => setShowPreview(false)}
         >
@@ -1208,7 +1222,7 @@ export function GalleryScreen() {
               alt={previewImage.altText}
               className="max-w-full max-h-[calc(90vh-120px)] object-contain rounded-[12px]"
             />
-            
+
             <div className="bg-white/10 backdrop-blur-md rounded-[12px] p-[16px] mt-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
@@ -1236,7 +1250,7 @@ export function GalleryScreen() {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <button
                     onClick={(e) => {

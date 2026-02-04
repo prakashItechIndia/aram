@@ -8,53 +8,43 @@ import { Download, FileText, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateGenericPDF, generateReceiptPDF } from '@/app/utils/pdfGenerator';
 
-interface ReportsProps {
-  user: {
-    name: string;
-    email: string;
-    phone: string;
-    pan?: string;
-    address?: string;
-  };
-}
+export function Reports() {
+  const { user: apiAuth, user } = useApi();
+  interface Receipt {
+    id: number;
+    date: string;
+    receiptNo: string;
+    type: string;
+    amount: number;
+    eligible80G: boolean;
+  }
 
-interface Receipt {
-  id: number;
-  date: string;
-  receiptNo: string;
-  type: string;
-  amount: number;
-  eligible80G: boolean;
-}
+  interface TaxDoc {
+    id: number;
+    year: string;
+    generatedDate: string;
+    totalAmount: number;
+    fileName: string;
+    type?: string;
+  }
 
-interface TaxDoc {
-  id: number;
-  year: string;
-  generatedDate: string;
-  totalAmount: number;
-  fileName: string;
-  type?: string;
-}
+  const fyOptions = [
+    { value: 'fy2025-26', label: 'FY 2025-26' },
+    { value: 'fy2024-25', label: 'FY 2024-25' },
+    { value: 'fy2023-24', label: 'FY 2023-24' },
+    { value: 'fy2022-23', label: 'FY 2022-23' },
+  ];
 
-const fyOptions = [
-  { value: 'fy2025-26', label: 'FY 2025-26' },
-  { value: 'fy2024-25', label: 'FY 2024-25' },
-  { value: 'fy2023-24', label: 'FY 2023-24' },
-  { value: 'fy2022-23', label: 'FY 2022-23' },
-];
+  const donationTypeOptions = [
+    { value: '', label: 'All Types' },
+    { value: 'aram-sei', label: 'Aram Sei Fund' },
+    { value: 'building', label: 'Building Fund' },
+    { value: 'education', label: 'Education Fund' },
+    { value: 'general', label: 'General Fund' },
+    { value: 'medical', label: 'Medical Fund' },
+    { value: 'sairam-sap', label: 'Sairam SAP' },
+  ];
 
-const donationTypeOptions = [
-  { value: '', label: 'All Types' },
-  { value: 'aram-sei', label: 'Aram Sei Fund' },
-  { value: 'building', label: 'Building Fund' },
-  { value: 'education', label: 'Education Fund' },
-  { value: 'general', label: 'General Fund' },
-  { value: 'medical', label: 'Medical Fund' },
-  { value: 'sairam-sap', label: 'Sairam SAP' },
-];
-
-export function Reports({ user }: ReportsProps) {
-  const { user: apiAuth } = useApi();
   const [activeTab, setActiveTab] = useState<'receipts' | '80g' | 'tax'>('receipts');
 
   // Data States
@@ -141,7 +131,17 @@ export function Reports({ user }: ReportsProps) {
 
   const handleDownloadReceipt = (receipt: Receipt) => {
     try {
-      generateReceiptPDF(receipt, user);
+      if (user) {
+        // Map user context to format expected by PDF generator
+        const userInfo = {
+          name: user.name || '',
+          email: user.email || '',
+          phone: (user as any).mobileNumber || user.phone || '', // Handle different naming conventions
+          pan: user.pan || '',
+          address: user.address || (user as any).location || ''
+        };
+        generateReceiptPDF(receipt, userInfo);
+      }
     } catch (error) {
       console.error('PDF Generation Error:', error);
       toast.error('Failed to generate PDF');
@@ -157,7 +157,10 @@ export function Reports({ user }: ReportsProps) {
         'This summary contains details of all donations eligible for 80G exemption.',
       ],
       `80G_Summary_${fy}.pdf`,
-      user,
+      user ? {
+        name: user.name || '',
+        pan: user.pan || ''
+      } : { name: '', pan: '' },
       {
         head: [['Date', 'Receipt No', 'Amount']],
         body: receipts
@@ -184,7 +187,10 @@ export function Reports({ user }: ReportsProps) {
         'Thank you for your generous contribution.',
       ],
       doc.fileName,
-      user
+      user ? {
+        name: user.name || '',
+        pan: user.pan || ''
+      } : { name: '', pan: '' }
     );
   };
 
@@ -197,7 +203,10 @@ export function Reports({ user }: ReportsProps) {
         'Consolidated statement for tax filing purposes.',
       ],
       `Tax_Summary_${fy}.pdf`,
-      user
+      user ? {
+        name: user.name || '',
+        pan: user.pan || ''
+      } : { name: '', pan: '' }
     );
   };
 
@@ -211,7 +220,10 @@ export function Reports({ user }: ReportsProps) {
         'Please consult your tax advisor for filing details.',
       ],
       doc.fileName,
-      user
+      user ? {
+        name: user.name || '',
+        pan: user.pan || ''
+      } : { name: '', pan: '' }
     );
   };
 
