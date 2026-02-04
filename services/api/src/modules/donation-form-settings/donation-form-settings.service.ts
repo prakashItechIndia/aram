@@ -48,6 +48,17 @@ export class DonationFormSettingsService {
   constructor(@Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>) {}
 
   /**
+   * Get public donation form status (no auth required)
+   */
+  async getPublicStatus() {
+    const current = await this.getCurrentSettings();
+    return {
+      formEnabled: current.formEnabled ?? true,
+      maintenanceMessage: current.maintenanceMessage ?? 'Donation form is currently under maintenance. Please try again later.',
+    };
+  }
+
+  /**
    * Get the current active settings
    */
   async getCurrentSettings() {

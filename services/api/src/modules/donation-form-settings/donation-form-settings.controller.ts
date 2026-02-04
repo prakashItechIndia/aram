@@ -20,6 +20,12 @@ import { AdminGuard } from '../auth/guards/admin.guard';
 export class DonationFormSettingsController {
   constructor(private readonly service: DonationFormSettingsService) {}
 
+  @Get('status')
+  @ApiOperation({ summary: 'Get public donation form status (no auth required)' })
+  getPublicStatus() {
+    return this.service.getPublicStatus();
+  }
+
   @Get('current')
   @ApiOperation({ summary: 'Get current active donation form settings' })
   getCurrentSettings() {

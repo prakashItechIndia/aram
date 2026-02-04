@@ -175,7 +175,9 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
         {/* Profile Menu */}
         <div className="relative">
           <button
-            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            onClick={() => {
+              setShowProfileMenu(!showProfileMenu)
+            }}
             className="h-[40px] px-[12px] rounded-[999px] border border-[#DBDBDB] flex items-center gap-[8px] hover:bg-[#F3F3F3] transition-colors"
           >
             <div className="w-[24px] h-[24px] rounded-full bg-[#F36A4F] flex items-center justify-center overflow-hidden">

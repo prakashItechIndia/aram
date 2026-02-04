@@ -22,11 +22,11 @@ export class CreateGuestDonorDto {
   @IsString()
   address: string;
 
-  @ApiProperty({ description: 'PAN in format AAAAA0000A' })
-  @IsNotEmpty()
+  @ApiPropertyOptional({ description: 'PAN in format AAAAA0000A' })
+  @IsOptional()
   @IsString()
   @Matches(/^[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}$/, { message: 'Invalid PAN format (e.g. AAAAA0000A)' })
-  pan: string;
+  pan?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
