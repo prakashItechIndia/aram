@@ -67,7 +67,8 @@ type ApiContextValue = {
   register: (data: { name: string; email: string; password: string; phone: string }) => Promise<{ success: boolean; error?: string }>;
   changePassword: (data: any) => Promise<{ success: boolean; error?: string; message?: string }>;
   uploadProfileImage: (file: File) => Promise<{ success: boolean; url?: string; error?: string }>;
-  updateProfile: (data: { name?: string; mobileNumber?: string }) => Promise<{ success: boolean; message?: string; error?: string }>;
+  updateProfile: (data: { name?: string; mobileNumber?: string; phone?: string; pan?: string; address?: string; activityStatus?: boolean }) => Promise<{ success: boolean; message?: string; error?: string }>;
+  enableAccount: (emailOrPhone: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   logout: () => void;
   setUser: (user: AuthUser) => void;
   forgotPassword: (email: string) => Promise<{ success: boolean; error?: string; message?: string }>;
@@ -524,7 +525,30 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  const updateProfile = useCallback(async (data: { name?: string; mobileNumber?: string }) => {
+  const enableAccount = useCallback(async (emailOrPhone: string) => {
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/auth/enable-account`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ emailOrPhone }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to enable account');
+      }
+
+      const resData = await res.json();
+      return { success: true, message: resData.message };
+    } catch (err: unknown) {
+      return { success: false, error: (err as Error).message };
+    }
+  }, []);
+
+  const updateProfile = useCallback(async (data: { name?: string; mobileNumber?: string; phone?: string; pan?: string; address?: string; activityStatus?: boolean }) => {
     try {
       const baseUrl = getApiBaseUrl();
       const res = await fetch(`${baseUrl}/auth/profile`, {
@@ -543,8 +567,8 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
 
       const resData = await res.json();
 
-      // Update local user state if successful
-      if (user) {
+      // Update local user state if successful and not disabling the account
+      if (user && data.activityStatus !== false) {
         const updatedUser = {
           ...user,
           name: data.name ?? user.name,
@@ -576,6 +600,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       changePassword,
       uploadProfileImage,
       updateProfile,
+      enableAccount,
       logout,
       setUser,
       forgotPassword,

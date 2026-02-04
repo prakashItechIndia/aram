@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 export function OtpScreen() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { sendOtp, verifyOtp } = useApi();
+    const { sendOtp, verifyOtp, enableAccount } = useApi();
 
     // Get phone number from navigation state
     const phoneNumber = location.state?.phone || '';
@@ -74,13 +74,38 @@ export function OtpScreen() {
         try {
             const res = await verifyOtp(phoneNumber, fullOtp);
             if (res.success) {
-                toast.success('Verified successfully');
+                toast.success('Logged in successfully');
                 navigate('/dashboard');
             } else {
-                toast.error(res.error || 'Verification failed');
+                if (res.error?.toLowerCase().includes('disabled')) {
+                    toast('Your account is disabled', {
+                        description: 'Click Okay to enable your account',
+                        action: {
+                            label: 'Okay',
+                            onClick: async () => {
+                                const enableRes = await enableAccount(phoneNumber);
+                                if (enableRes.success) {
+                                    toast.success('Account enabled! Verifying again...');
+                                    handleVerify();
+                                } else {
+                                    toast.error(enableRes.error || 'Failed to enable account');
+                                }
+                            }
+                        },
+                        cancel: {
+                            label: 'Cancel',
+                            onClick: () => {
+                                toast.error('Verification cancelled');
+                            }
+                        }
+                    })
+                } else {
+                    toast.error(res.error || 'Verification failed');
+                }
             }
-        } catch (error) {
-            toast.error('An error occurred during verification');
+        } catch (error: any) {
+            const errorMsg = error?.response?.data?.message || error?.message || 'Verification failed';
+            toast.error(errorMsg);
         } finally {
             setIsLoading(false);
         }

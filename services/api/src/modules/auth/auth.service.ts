@@ -52,15 +52,16 @@ export class AuthService {
       .top(1)
       .from(tUser)
       .where(
-        and(
-          or(eq(tUser.eMail, normalizedInput), eq(tUser.mobileNumber, normalizedInput)),
-          eq(tUser.isActive, true) // Ensure active
-        )
+        or(eq(tUser.eMail, normalizedInput), eq(tUser.mobileNumber, normalizedInput))
       );
 
     const user = rows[0];
     if (!user) {
       throw new NotFoundException('User not Registered');
+    }
+
+    if (user.isActive === false) {
+      throw new UnauthorizedException('Your account is disabled. Please click Okay to enable it.');
     }
 
     // Check match against bcrypt, plain text, or base64 (legacy)
@@ -80,9 +81,13 @@ export class AuthService {
     const rows = await this.db
       .select()
       .from(tUser)
-      .where(and(eq(tUser.mobileNumber, mobileNumber.trim()), eq(tUser.isActive, true)));
+      .where(eq(tUser.mobileNumber, mobileNumber.trim()));
 
-    return { registered: rows.length > 0 };
+    const user = rows[0];
+    return {
+      registered: !!user,
+      disabled: user ? user.isActive === false : false
+    };
   }
 
   async sendOtp(mobileNumber: string) {
@@ -92,7 +97,7 @@ export class AuthService {
     const users = await this.db
       .select()
       .from(tUser)
-      .where(and(eq(tUser.mobileNumber, mobileNumber.trim()), eq(tUser.isActive, true)));
+      .where(eq(tUser.mobileNumber, mobileNumber.trim()));
 
     const user = users[0];
     if (!user) {
@@ -160,6 +165,10 @@ export class AuthService {
 
     const user = users[0];
     if (!user) throw new NotFoundException('User not found');
+
+    if (user.isActive === false) {
+      throw new UnauthorizedException('Your account is disabled. Please click Okay to enable it.');
+    }
 
     const payload = { email: user.eMail, sub: user.id };
     return {
@@ -405,34 +414,64 @@ export class AuthService {
     if (dto.name) updateData.name = dto.name;
     if (dto.mobileNumber) updateData.mobileNumber = dto.mobileNumber;
     if (dto.address) updateData.location = dto.address;
+    if (dto.activityStatus !== undefined) updateData.isActive = dto.activityStatus;
 
     if (Object.keys(updateData).length > 0) {
-      await this.db
+      console.log(`[AuthService] EXECUTING UPDATE for T_USER ID: ${userId} with:`, JSON.stringify(updateData));
+      const updateResult = await this.db
         .update(tUser)
         .set(updateData)
         .where(eq(tUser.id, userId));
+      console.log(`[AuthService] Update result:`, updateResult);
     }
 
-    // Also update donors table if exists
-    const user = await this.findUserById(userId);
-    if (user?.eMail) {
-      const email = user.eMail.trim().toLowerCase();
-      const donorUpdate: any = {};
-      if (dto.name) donorUpdate.name = dto.name;
-      if (dto.mobileNumber) donorUpdate.mobile = dto.mobileNumber;
-      if (dto.address) donorUpdate.address = dto.address;
-      if (dto.pan) donorUpdate.pan = dto.pan;
+    // For disable account, skip donors table update to improve performance
+    // The donors table will be updated when user tries to donate again
+    if (dto.activityStatus === undefined) {
+      // Only update donors table for non-activity status changes
+      const user = await this.findUserById(userId);
+      if (user?.eMail) {
+        const email = user.eMail.trim().toLowerCase();
+        const donorUpdate: any = {};
+        if (dto.name) donorUpdate.name = dto.name;
+        if (dto.mobileNumber) donorUpdate.mobile = dto.mobileNumber;
+        if (dto.address) donorUpdate.address = dto.address;
+        if (dto.pan) donorUpdate.pan = dto.pan;
 
-      if (Object.keys(donorUpdate).length > 0) {
-        donorUpdate.updatedAt = new Date();
-        await this.db
-          .update(donors)
-          .set(donorUpdate)
-          .where(eq(donors.email, email));
+        if (Object.keys(donorUpdate).length > 0) {
+          donorUpdate.updatedAt = new Date();
+          await this.db
+            .update(donors)
+            .set(donorUpdate)
+            .where(eq(donors.email, email));
+        }
       }
     }
 
     return { message: 'Profile updated successfully' };
+  }
+
+  async enableAccount(identifier: string) {
+    if (!this.db) throw new Error('Database not initialized');
+    const normalized = (identifier || '').trim().toLowerCase();
+
+    // Find the user first
+    const rows = await this.db
+      .select()
+      .from(tUser)
+      .where(or(eq(tUser.eMail, normalized), eq(tUser.mobileNumber, normalized)));
+
+    const user = rows[0];
+    if (!user) {
+      throw new NotFoundException('Account not found');
+    }
+
+    await this.db
+      .update(tUser)
+      .set({ isActive: true })
+      .where(eq(tUser.id, user.id));
+
+    return { success: true, message: 'Account enabled successfully' };
   }
 
   private generateTemporaryPassword(length = 10): string {

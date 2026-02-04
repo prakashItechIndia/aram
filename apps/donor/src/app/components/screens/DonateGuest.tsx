@@ -35,7 +35,7 @@ const amountPresets = [500, 1000, 2500, 5000];
 
 export function DonateGuest() {
   const navigate = useNavigate();
-  const { api } = useApi();
+  const { api, enableAccount } = useApi();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
@@ -177,7 +177,7 @@ export function DonateGuest() {
         // The API now returns the confirmed donation details
         // We can navigate directly to success state or let PaymentProcessing show it
         // Since we already called the API and it succeeded, valid flow is to go to success.
-        
+
         const data = (response as any).data;
 
         // Navigate to payment processing -> success
@@ -198,13 +198,40 @@ export function DonateGuest() {
             }
           }
         });
-      } catch (err: unknown) {
-        const res = (err as { response?: { status?: number; data?: { message?: string } } })?.response;
-        if (res?.status === 409) {
-          toast.error(res.data?.message || 'User already exists. Please Login.');
+      } catch (err: any) {
+        const res = err?.response;
+        const errorMsg = res?.data?.message || err?.message || 'Something went wrong';
+
+        if (errorMsg.toLowerCase().includes('disabled')) {
+          toast('Your account is disabled', {
+            description: 'Click Okay to enable your account and continue',
+            action: {
+              label: 'Okay',
+              onClick: async () => {
+                const enableRes = await enableAccount(email.trim());
+                if (enableRes.success) {
+                  toast.success('Account enabled successfully!');
+                  navigate('/');
+                } else {
+                  toast.error(enableRes.error || 'Failed to enable account');
+                }
+              }
+            },
+            cancel: {
+              label: 'Cancel',
+              onClick: () => {
+                navigate('/');
+              }
+            }
+          });
           return;
         }
-        toast.error((res?.data?.message as string) || 'Something went wrong. Please try again.');
+
+        if (res?.status === 409) {
+          toast.error(errorMsg || 'User already exists. Please Login.');
+          return;
+        }
+        toast.error(errorMsg);
       } finally {
         setSubmitting(false);
       }

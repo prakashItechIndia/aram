@@ -11,7 +11,7 @@ import { useDonationFormStatus } from '@/app/hooks/useDonationFormStatus';
 
 export function SignIn() {
   const navigate = useNavigate();
-  const { login, sendOtp, isAuthenticated } = useApi();
+  const { login, sendOtp, isAuthenticated, enableAccount } = useApi();
   const { otpVerification, mobileRequired } = useDonationFormStatus();
 
   // Redirect if already authenticated
@@ -83,24 +83,51 @@ export function SignIn() {
       try {
         const result = await login(emailOrPhone.trim(), password);
         if (result.success) {
-          toast.success('Signed in successfully!');
+          toast.success('Logged in successfully');
           navigate('/donate');
         } else {
-          toast.error(result.error ?? 'Sign in failed');
+          if (result.error?.toLowerCase().includes('disabled')) {
+            toast('Your account is disabled', {
+              description: 'Click Okay to enable your account',
+              action: {
+                label: 'Okay',
+                onClick: async () => {
+                  const res = await enableAccount(emailOrPhone.trim());
+                  if (res.success) {
+                    toast.success('Account enabled successfully! Please sign in again.');
+                    handleSubmit();
+                  } else {
+                    toast.error(res.error || 'Failed to enable account');
+                  }
+                },
+              },
+              cancel: {
+                label: 'Cancel',
+                onClick: () => {
+                  toast.error('You cannot login while account is disabled');
+                }
+              }
+            });
+          } else {
+            toast.error(result.error ?? 'Sign in failed');
+          }
         }
+      } catch (err: any) {
+        const errorMsg = err?.response?.data?.message || err?.message || 'Sign in failed';
+        toast.error(errorMsg);
       } finally {
         setIsLoading(false);
       }
     }
   };
-  
+
   // Dynamic Label
   // If mobileRequired is true -> "Email or Phone" (or just "Phone" if strictly phone?)
   // User asked: "if disable means email label should come".
   // "if enable mobile number... email or mobile number label"
   const loginLabel = mobileRequired ? "Email or Mobile Number" : "Email Address";
   const loginPlaceholder = mobileRequired ? "Enter your email or mobile number" : "Enter your email address";
-  
+
   // Is password disabled? Only if using Mobile AND OTP is ON.
   const isPasswordDisabled = isMobile && otpVerification;
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AramButton } from '@/app/components/aram/AramButton';
 import { AramCard } from '@/app/components/aram/AramCard';
 import { AramInput } from '@/app/components/aram/AramInput';
@@ -10,7 +11,8 @@ import { generateDonationHistoryPDF } from '../../utils/pdfGenerator';
 import { toast } from 'sonner';
 
 export function Profile() {
-  const { user, updateProfile, changePassword, uploadProfileImage } = useApi();
+  const navigate = useNavigate();
+  const { user, updateProfile, changePassword, uploadProfileImage, logout } = useApi();
 
   const [name, setName] = useState(user?.name || '');
   const [phone, setPhone] = useState(user?.mobileNumber || user?.phone || '');
@@ -36,11 +38,11 @@ export function Profile() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { checkAndNotify } = useDonationFormStatus();
 
   const handleSaveProfile = async () => {
-
     const newErrors: any = {};
     const nameError = validateField(name, validationRules.name, validationMessages.name);
     if (nameError) newErrors.name = nameError;
@@ -56,8 +58,16 @@ export function Profile() {
       return;
     }
 
-    await updateProfile({ name, phone, pan, address });
-    setErrors({});
+    setIsUpdating(true);
+    try {
+      await updateProfile({ name, phone, pan, address });
+      toast.success('Profile updated successfully');
+      setErrors({});
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update profile');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleUpdatePassword = async () => {
@@ -125,20 +135,20 @@ export function Profile() {
     try {
       const baseUrl = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:3000/api';
       toast.info('Generating history report...', { duration: 2000 });
-      
+
       const res = await fetch(`${baseUrl}/donors/me/full-history`, {
         headers: {
           'Authorization': `Bearer ${user.accessToken}`
         }
       });
-      
+
       if (!res.ok) throw new Error('Failed to fetch history data');
-      
+
       const data = await res.json();
-      
+
       generateDonationHistoryPDF(
-        data.receipts, 
-        data.taxDocs, 
+        data.receipts,
+        data.taxDocs,
         {
           name: name,
           email: user.email,
@@ -148,8 +158,27 @@ export function Profile() {
         }
       );
     } catch (error) {
-       console.error(error);
-       toast.error('Failed to download history');
+      console.error(error);
+      toast.error('Failed to download history');
+    }
+  };
+
+  const handleDisableAccount = async () => {
+    setIsUpdating(true);
+    try {
+      const res = await updateProfile({ activityStatus: false });
+      if (res.success) {
+        setIsUpdating(false);
+        toast.success('Account disabled successfully');
+        logout();
+        navigate('/');
+      } else {
+        toast.error(res.error || 'Failed to disable account');
+        setIsUpdating(false);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'An unexpected error occurred');
+      setIsUpdating(false);
     }
   };
 
@@ -415,7 +444,7 @@ export function Profile() {
                 onClick={() => setShowDeleteWarning(!showDeleteWarning)}
                 style={{ fontSize: '14px', color: '#F36A4F', fontWeight: 600 }}
               >
-                Delete Account
+                Disable Account
               </button>
               {showDeleteWarning && (
                 <div className="mt-[12px] p-[16px] bg-[#FEF1EE] rounded-[16px] border border-[#FCD9D3] flex gap-[12px]">
@@ -423,16 +452,16 @@ export function Profile() {
                   <AlertTriangle size={20} color="#F36A4F" className="flex-shrink-0 mt-[2px]" />
                   <div>
                     <p style={{ fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>
-                      Are you sure you want to delete your account?
+                      Are you sure you want to disable your account?
                     </p>
                     <p style={{ fontSize: '13px', color: '#6E6E6E', marginTop: '4px' }}>
-                      This action cannot be undone. All your data, including donation history, will be permanently deleted.
+                      This action cannot be undone. All your data, including donation history, will be permanently disabled.
                     </p>
                     <div className="flex gap-[12px] mt-[12px]">
-                      <AramButton variant="danger">
-                        Yes, Delete Account
+                      <AramButton variant="danger" onClick={handleDisableAccount} disabled={isUpdating}>
+                        {isUpdating ? 'Disabling...' : 'Yes, Disable Account'}
                       </AramButton>
-                      <AramButton variant="secondary" onClick={() => setShowDeleteWarning(false)}>
+                      <AramButton variant="secondary" onClick={() => setShowDeleteWarning(false)} disabled={isUpdating}>
                         Cancel
                       </AramButton>
                     </div>

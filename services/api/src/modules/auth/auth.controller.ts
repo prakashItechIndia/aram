@@ -93,6 +93,15 @@ export class AuthController {
     return this.authService.updateProfile(req.user.userId, dto);
   }
 
+  @Post('enable-account')
+  @ApiOperation({ summary: 'Re-enable a disabled account' })
+  async enableAccount(@Body() dto: { emailOrPhone: string }) {
+    if (!dto.emailOrPhone) {
+      throw new BadRequestException('Email or Phone is required');
+    }
+    return this.authService.enableAccount(dto.emailOrPhone);
+  }
+
   @Post('profile/image')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
