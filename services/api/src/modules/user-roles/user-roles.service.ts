@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, like, desc, sql } from 'drizzle-orm';
 import { DRIZZLE } from '../../database/database.module';
 import { userRoles } from '../../database/models/user-roles.model';
 import { rolePermissions } from '../../database/models/role-permissions.model';
@@ -10,6 +10,7 @@ import { MENU_KEYS, DEFAULT_ROLES } from './constants/menu-keys';
 import type { CreateRoleDto } from './dto/create-role.dto';
 import type { UpdateRoleDto } from './dto/update-role.dto';
 import type { UpdatePermissionsDto } from './dto/update-permissions.dto';
+import { QueryRolesDto } from './dto/query-roles.dto';
 
 @Injectable()
 export class UserRolesService {
@@ -33,13 +34,41 @@ export class UserRolesService {
     return userRows.length;
   }
 
-  async findAll() {
-    let roles = await this.db.select().from(userRoles).orderBy(userRoles.id);
-    if (roles.length === 0) {
-      await this.ensureDefaultRoles();
-      roles = await this.db.select().from(userRoles).orderBy(userRoles.id);
+  async findAll(query?: QueryRolesDto) {
+    const page = Math.max(1, query?.page ?? 1);
+    const limit = Math.min(100, Math.max(1, query?.limit ?? 10));
+    const offset = (page - 1) * limit;
+
+    const conditions = [];
+    if (query?.search?.trim()) {
+      conditions.push(like(userRoles.name, `%${query.search.trim()}%`));
     }
-    const result = await Promise.all(
+    const whereClause = conditions.length ? and(...conditions) : undefined;
+
+    // Count total for pagination
+    const countResult = await this.db
+      .select({ count: sql<number>`count_big(*)` })
+      .from(userRoles)
+      .where(whereClause);
+    const total = Number(countResult[0]?.count ?? 0);
+
+    let allRoles = await this.db
+      .select()
+      .from(userRoles)
+      .where(whereClause)
+      .orderBy(desc(userRoles.id));
+
+    if (allRoles.length === 0 && !query?.search) {
+      await this.ensureDefaultRoles();
+      allRoles = await this.db
+        .select()
+        .from(userRoles)
+        .orderBy(desc(userRoles.id));
+    }
+
+    const roles = allRoles.slice(offset, offset + limit);
+
+    const items = await Promise.all(
       roles.map(async (r) => {
         const userCount = await this.getUserCountByRoleId(r.id);
         return {
@@ -50,7 +79,8 @@ export class UserRolesService {
         };
       }),
     );
-    return result;
+
+    return { items, total, page, limit };
   }
 
   async ensureDefaultRoles() {
