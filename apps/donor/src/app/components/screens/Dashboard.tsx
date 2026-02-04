@@ -1,21 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AramButton } from '@/app/components/aram/AramButton';
 import { AramCard } from '@/app/components/aram/AramCard';
 import { Heart, Download, Calendar } from 'lucide-react';
 import { useApi } from '@/app/context/ApiContext';
 import { generateReceiptPDF } from '@/app/utils/pdfGenerator';
-
-interface DashboardProps {
-  onDonateNow: () => void;
-  userName: string;
-  user: {
-    name: string;
-    email: string;
-    phone: string;
-    pan?: string;
-    address?: string;
-  };
-}
 
 interface Donation {
   id: number;
@@ -32,13 +21,16 @@ const mockEvents = [
   { id: 2, title: 'Education Scholarship Drive', date: '2025-03-01', description: 'Help students achieve their dreams' },
 ];
 
-export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
+export function Dashboard() {
+  const navigate = useNavigate();
   const { user: apiAuth } = useApi();
   const [donations, setDonations] = useState<Donation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Fetch donations when component mounts
+  const user = {
+    name: apiAuth?.name || 'Donor',
+  };
+
   useEffect(() => {
     const fetchDonations = async () => {
       if (!apiAuth?.accessToken) {
@@ -48,7 +40,6 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
 
       try {
         setIsLoading(true);
-        setError(null);
         const baseUrl = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:3000/api';
         const response = await fetch(`${baseUrl}/donors/me/donations`, {
           headers: {
@@ -62,7 +53,6 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
         setDonations(sortedData);
       } catch (err) {
         console.error('Failed to fetch donations:', err);
-        setError('Failed to load donations');
         setDonations([]);
       } finally {
         setIsLoading(false);
@@ -72,11 +62,10 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
     fetchDonations();
   }, [apiAuth?.accessToken]);
 
-  // Calculate stats from real donations
-  const totalDonated = donations.reduce((sum: number, d: Donation) => sum + d.amount, 0);
+  const totalDonated = donations.reduce((sum, d) => sum + d.amount, 0);
   const donationCount = donations.length;
-  const lastDonation = donations[0];
-  const eligible80G = donations.filter((d: Donation) => d.eligible80G).reduce((sum: number, d: Donation) => sum + d.amount, 0);
+  const lastDonationDate = donations.length > 0 ? donations[0].date : 'N/A';
+  const eligible80G = donations.filter(d => d.eligible80G).reduce((sum, d) => sum + d.amount, 0);
 
   const handleDownloadReceipt = (donation: Donation) => {
     generateReceiptPDF(
@@ -87,7 +76,13 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
         type: donation.type,
         amount: donation.amount,
       },
-      user
+      {
+        name: apiAuth?.name || '',
+        email: apiAuth?.email || '',
+        phone: apiAuth?.mobileNumber || apiAuth?.phone || '',
+        pan: apiAuth?.pan,
+        address: apiAuth?.address || apiAuth?.location,
+      }
     );
   };
 
@@ -97,12 +92,12 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
       <AramCard>
         <div className="flex flex-col md:flex-row items-center justify-between gap-[24px]">
           <div>
-            <h2>Welcome back, {userName}!</h2>
+            <h2 className="text-[22px] font-bold text-[#0D0D0D]">Welcome back, {user.name}!</h2>
             <p style={{ fontSize: '16px', lineHeight: '24px', color: '#3D3D3D', marginTop: '8px' }}>
               Your contributions are making a real difference in our community
             </p>
           </div>
-          <AramButton onClick={onDonateNow} variant="primary" className="whitespace-nowrap">
+          <AramButton onClick={() => navigate('/donate')} variant="primary" className="whitespace-nowrap">
             <Heart size={18} className="inline mr-2" />
             Donate Now
           </AramButton>
@@ -110,95 +105,66 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
       </AramCard>
 
       {/* Summary Cards */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[24px]">
-          {[1, 2, 3, 4].map((i) => (
-            <AramCard key={i}>
-              <div className="flex flex-col gap-[8px] animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-24"></div>
-                <div className="h-8 bg-gray-200 rounded w-32"></div>
-              </div>
-            </AramCard>
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[24px]">
-          <AramCard>
-            <div className="flex flex-col gap-[8px]">
-              <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E', fontWeight: 500 }}>
-                Total Donated
-              </span>
-              <span style={{ fontSize: '28px', lineHeight: '36px', fontWeight: 700, color: '#F36A4F' }}>
-                ₹{totalDonated.toLocaleString()}
-              </span>
-            </div>
-          </AramCard>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[24px]">
+        <AramCard>
+          <div className="flex flex-col gap-[8px]">
+            <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E', fontWeight: 500 }}>
+              Total Donated
+            </span>
+            <span style={{ fontSize: '28px', lineHeight: '36px', fontWeight: 700, color: '#F36A4F' }}>
+              ₹{totalDonated.toLocaleString()}
+            </span>
+          </div>
+        </AramCard>
 
-          <AramCard>
-            <div className="flex flex-col gap-[8px]">
-              <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E', fontWeight: 500 }}>
-                Donations Count
-              </span>
-              <span style={{ fontSize: '28px', lineHeight: '36px', fontWeight: 700, color: '#0D0D0D' }}>
-                {donationCount}
-              </span>
-            </div>
-          </AramCard>
+        <AramCard>
+          <div className="flex flex-col gap-[8px]">
+            <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E', fontWeight: 500 }}>
+              Donations Count
+            </span>
+            <span style={{ fontSize: '28px', lineHeight: '36px', fontWeight: 700, color: '#0D0D0D' }}>
+              {donationCount}
+            </span>
+          </div>
+        </AramCard>
 
-          <AramCard>
-            <div className="flex flex-col gap-[8px]">
-              <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E', fontWeight: 500 }}>
-                Last Donation Date
-              </span>
-              <span style={{ fontSize: '18px', lineHeight: '26px', fontWeight: 600, color: '#0D0D0D' }}>
-                {lastDonation?.date || 'N/A'}
-              </span>
-            </div>
-          </AramCard>
+        <AramCard>
+          <div className="flex flex-col gap-[8px]">
+            <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E', fontWeight: 500 }}>
+              Last Donation Date
+            </span>
+            <span style={{ fontSize: '18px', lineHeight: '26px', fontWeight: 600, color: '#0D0D0D' }}>
+              {lastDonationDate}
+            </span>
+          </div>
+        </AramCard>
 
-          <AramCard>
-            <div className="flex flex-col gap-[8px]">
-              <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E', fontWeight: 500 }}>
-                80G Eligible (FY 2024-25)
-              </span>
-              <span style={{ fontSize: '28px', lineHeight: '36px', fontWeight: 700, color: '#734F48' }}>
-                ₹{eligible80G.toLocaleString()}
-              </span>
-            </div>
-          </AramCard>
-        </div>
-      )}
+        <AramCard>
+          <div className="flex flex-col gap-[8px]">
+            <span style={{ fontSize: '13px', lineHeight: '18px', color: '#6E6E6E', fontWeight: 500 }}>
+              80G Eligible (FY 2024-25)
+            </span>
+            <span style={{ fontSize: '28px', lineHeight: '36px', fontWeight: 700, color: '#734F48' }}>
+              ₹{eligible80G.toLocaleString()}
+            </span>
+          </div>
+        </AramCard>
+      </div>
 
       {/* My Donations Table */}
       <AramCard noPadding>
         <div className="p-[24px] border-b border-[#DBDBDB]">
-          <h3>My Donations</h3>
+          <h3 className="text-[18px] font-semibold text-[#0D0D0D]">My Donations</h3>
         </div>
+
         {isLoading ? (
-          <div className="p-[48px] text-center">
-            <div className="flex items-center justify-center gap-4">
-              <div className="w-8 h-8 border-4 border-[#F36A4F] border-t-transparent rounded-full animate-spin"></div>
-              <p style={{ fontSize: '16px', color: '#6E6E6E' }}>Loading donations...</p>
-            </div>
-          </div>
-        ) : error ? (
-          <div className="p-[48px] text-center">
-            <p style={{ fontSize: '16px', color: '#F36A4F' }}>{error}</p>
-            <AramButton onClick={() => window.location.reload()} variant="primary" className="mt-[16px]">
-              Retry
-            </AramButton>
-          </div>
+          <div className="p-[48px] text-center text-[#6E6E6E]">Loading donations...</div>
         ) : donations.length === 0 ? (
-          <div className="p-[48px] text-center">
-            <p style={{ fontSize: '16px', color: '#6E6E6E' }}>No donations yet</p>
-            <AramButton onClick={onDonateNow} variant="primary" className="mt-[16px]">
-              Make your first donation
-            </AramButton>
-          </div>
+          <div className="p-[48px] text-center text-[#6E6E6E]">No donations found</div>
         ) : (
-          <div className="overflow-x-auto" style={donations.length > 10 ? { maxHeight: '570px', overflowY: 'auto' } : {}}>
-            <table className="w-full border-collapse">
-              <thead className="sticky top-0 z-10 shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
                 <tr style={{ height: '48px', backgroundColor: '#F3F3F3' }}>
                   <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Date</th>
                   <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Receipt No</th>
@@ -209,7 +175,7 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
                 </tr>
               </thead>
               <tbody>
-                {donations.map((donation: Donation) => (
+                {donations.slice(0, 5).map((donation) => (
                   <tr key={donation.id} style={{ height: '52px', borderBottom: '1px solid #DBDBDB' }}>
                     <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.date}</td>
                     <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{donation.receiptNo}</td>
@@ -224,14 +190,13 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
                         fontSize: '13px',
                         fontWeight: 500
                       }}>
-                        {donation.status}
+                        Success
                       </span>
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <button
-                        className="flex items-center gap-[8px]"
-                        style={{ color: '#F36A4F' }}
                         onClick={() => handleDownloadReceipt(donation)}
+                        className="flex items-center gap-[8px]" style={{ color: '#F36A4F' }}
                       >
                         <Download size={16} />
                         <span style={{ fontSize: '14px' }}>Receipt</span>
@@ -248,35 +213,31 @@ export function Dashboard({ onDonateNow, userName, user }: DashboardProps) {
       {/* Upcoming Events */}
       <AramCard>
         <div className="flex flex-col gap-[16px]">
-          <h3>Upcoming Special Events / Donation Requests</h3>
-          {mockEvents.length === 0 ? (
-            <p style={{ fontSize: '16px', color: '#6E6E6E' }}>No upcoming events</p>
-          ) : (
-            <div className="flex flex-col gap-[16px]">
-              {mockEvents.map((event) => (
-                <div key={event.id} className="flex items-start justify-between gap-[16px] p-[16px] bg-[#FEF7F6] rounded-[16px] border border-[#FCD9D3]">
-                  <div className="flex-1">
-                    <h4 style={{ fontSize: '16px', fontWeight: 600, color: '#0D0D0D' }}>{event.title}</h4>
-                    <div className="flex items-center gap-[8px] mt-[4px]">
-                      <Calendar size={14} color="#6E6E6E" />
-                      <span style={{ fontSize: '14px', color: '#6E6E6E' }}>{event.date}</span>
-                    </div>
-                    <p style={{ fontSize: '14px', color: '#3D3D3D', marginTop: '8px' }}>{event.description}</p>
+          <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Upcoming Special Events / Donation Requests</h3>
+          <div className="flex flex-col gap-[16px]">
+            {mockEvents.map((event) => (
+              <div key={event.id} className="flex items-start justify-between gap-[16px] p-[16px] bg-[#FEF7F6] rounded-[16px] border border-[#FCD9D3]">
+                <div className="flex-1">
+                  <h4 style={{ fontSize: '16px', fontWeight: 600, color: '#0D0D0D' }}>{event.title}</h4>
+                  <div className="flex items-center gap-[8px] mt-[4px]">
+                    <Calendar size={14} color="#6E6E6E" />
+                    <span style={{ fontSize: '14px', color: '#6E6E6E' }}>{event.date}</span>
                   </div>
-                  <AramButton onClick={onDonateNow} variant="primary">
-                    Donate
-                  </AramButton>
+                  <p style={{ fontSize: '14px', color: '#3D3D3D', marginTop: '8px' }}>{event.description}</p>
                 </div>
-              ))}
-            </div>
-          )}
+                <AramButton onClick={() => navigate('/donate')} variant="primary">
+                  Donate
+                </AramButton>
+              </div>
+            ))}
+          </div>
         </div>
       </AramCard>
 
       {/* Impact Section */}
       <AramCard>
         <div className="flex flex-col gap-[16px]">
-          <h3>Impact / Funds Utilized</h3>
+          <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Impact / Funds Utilized</h3>
           <p style={{ fontSize: '16px', color: '#3D3D3D' }}>
             Your contributions have helped us serve the community across multiple programs.
           </p>

@@ -8,7 +8,7 @@ export function AuthenticatedLayout() {
   return (
     <div className="min-h-screen bg-[#F3F3F3]">
       <Sidebar user={user} />
-      <Header onLogout={logout} userName={user?.name} profilePicture={user?.profilePicture} />
+      <Header onLogout={logout} userName={user?.name} userEmail={user?.email} profilePicture={user?.profilePicture} />
       <div className="ml-[280px] mt-[72px] p-[24px]">
         <Outlet />
       </div>

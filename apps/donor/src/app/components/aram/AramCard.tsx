@@ -8,7 +8,7 @@ interface AramCardProps {
 
 export function AramCard({ children, className = '', noPadding = false }: AramCardProps) {
   return (
-    <div 
+    <div
       className={`bg-white rounded-[16px] border border-[#DBDBDB] ${noPadding ? '' : 'p-[24px]'} ${className}`}
     >
       {children}

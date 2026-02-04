@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AramButton } from '../aram/AramButton';
 import { AramCard } from '../aram/AramCard';
 import { AramInput } from '../aram/AramInput';
 import { ArrowLeft } from 'lucide-react';
 import { validateField, sanitizeInput, validationRules, validationMessages } from '../../utils/validations';
+import { useApi } from '@/app/context/ApiContext';
 
-interface ForgotPasswordProps {
-    onSubmit: (email: string) => Promise<{ success: boolean; error?: string; resetLink?: string }>;
-    onBack: () => void;
-}
-
-export function ForgotPassword({ onSubmit, onBack }: ForgotPasswordProps) {
+export function ForgotPassword() {
+    const navigate = useNavigate();
+    const { forgotPassword } = useApi();
     const [email, setEmail] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [sent, setSent] = useState(false);
@@ -33,11 +32,12 @@ export function ForgotPassword({ onSubmit, onBack }: ForgotPasswordProps) {
         }
 
         try {
-            const result = await onSubmit(email);
+            const result = await forgotPassword(email);
             if (result.success) {
                 setSent(true);
                 toast.success('Reset link sent to your email!');
-                if (result.resetLink) setResetLink(result.resetLink);
+                // Note: resetLink is usually not returned in prod for security, removing dev link logic or checking if api returns it
+                if ((result as any).resetLink) setResetLink((result as any).resetLink);
             } else {
                 toast.error(result.error ?? 'Request failed');
             }
@@ -71,7 +71,7 @@ export function ForgotPassword({ onSubmit, onBack }: ForgotPasswordProps) {
                             </p>
                         )}
                     </div>
-                    <AramButton type="button" className="w-full" variant="secondary" onClick={onBack}>
+                    <AramButton type="button" className="w-full" variant="secondary" onClick={() => navigate('/signin')}>
                         Back to login
                     </AramButton>
                 </AramCard>
@@ -83,7 +83,7 @@ export function ForgotPassword({ onSubmit, onBack }: ForgotPasswordProps) {
         <div className="min-h-screen bg-[#F3F3F3] flex items-center justify-center p-4">
             <AramCard className="w-full max-w-[480px]">
                 <button
-                    onClick={onBack}
+                    onClick={() => navigate('/signin')}
                     className="flex items-center gap-2 text-[#6E6E6E] hover:text-[#0D0D0D] mb-[32px] transition-colors"
                 >
                     <ArrowLeft size={20} />

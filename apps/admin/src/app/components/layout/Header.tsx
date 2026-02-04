@@ -12,10 +12,11 @@ interface HeaderProps {
   onSearch?: (query: string) => void;
   onLogout?: () => void;
   userName?: string;
+  userEmail?: string;
   profilePicture?: string;
 }
 
-export function Header({ onSearch, onLogout, userName, profilePicture }: HeaderProps) {
+export function Header({ onSearch, onLogout, userName, userEmail, profilePicture }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -127,6 +128,10 @@ export function Header({ onSearch, onLogout, userName, profilePicture }: HeaderP
 
           {showProfileMenu && (
             <div className="absolute top-full right-0 mt-2 w-[200px] bg-white border border-[#DBDBDB] rounded-[16px] shadow-lg overflow-hidden">
+              <div className="px-[16px] py-[12px] border-b border-[#DBDBDB] bg-[#F9FAFB]">
+                <p className="text-[14px] font-medium text-[#0D0D0D] truncate">{userName || 'Super Admin'}</p>
+                <p className="text-[12px] text-[#6E6E6E] truncate">{userEmail || 'admin@aram.org'}</p>
+              </div>
               <button className="w-full flex items-center gap-3 px-[16px] py-[12px] hover:bg-[#FEF7F6] text-left">
                 <User className="w-4 h-4 text-[#6E6E6E]" />
                 <span className="text-[14px] leading-[20px] text-[#3D3D3D]">Profile</span>

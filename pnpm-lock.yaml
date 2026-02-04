@@ -366,6 +366,9 @@ importers:
       react-responsive-masonry:
         specifier: 2.7.1
         version: 2.7.1
+      react-router-dom:
+        specifier: ^6.30.3
+        version: 6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-slick:
         specifier: 0.31.0
         version: 0.31.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -5519,6 +5522,7 @@ packages:
   tar@7.5.6:
     resolution: {integrity: sha512-xqUeu2JAIJpXyvskvU3uvQW8PAmHrtXp2KDuMJwQqW8Sqq0CaZBAQ+dKS3RBXVhU4wC5NjAdKrmh84241gO9cA==}
     engines: {node: '>=18'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exhorbitant rates) by contacting i@izs.me
 
   tarn@3.0.2:
     resolution: {integrity: sha512-51LAVKUSZSVfI05vjPESNc5vwqqZpbXCsU+/+wxlOrUjk2SnFTt97v9ZgQrD4YmxYW1Px6w2KjaDitCfkvgxMQ==}
