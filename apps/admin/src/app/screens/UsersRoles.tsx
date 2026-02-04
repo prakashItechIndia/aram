@@ -288,13 +288,9 @@ export function UsersRoles() {
                   {!showEditPermissions ? (
                     <button
                       onClick={openEditPermissions}
-                      disabled={selectedRoleData.name === 'Super Admin'}
+                      disabled={false}
                       className="h-[40px] px-[16px] border border-[#DBDBDB] rounded-[999px] flex items-center gap-2 hover:bg-[#F3F3F3] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title={
-                        selectedRoleData.name === 'Super Admin'
-                          ? 'Super Admin permissions cannot be modified'
-                          : 'Edit Permissions'
-                      }
+                      title="Edit Permissions"
                     >
                       <Edit2 className="w-4 h-4 text-[#6E6E6E]" />
                       <span className="text-[14px] leading-[20px] font-medium text-[#3D3D3D]">
@@ -322,9 +318,13 @@ export function UsersRoles() {
                     <button
                       onClick={() => handleDeleteRole(selectedRoleData)}
                       // disabled={(selectedRoleData.userCount ?? 0) > 0}
-                      disabled={false}
+                      disabled={selectedRoleData.name === 'Super Admin'}
                       className="h-[40px] px-[16px] border border-[#DBDBDB] rounded-[999px] flex items-center gap-2 hover:bg-[#FEF1EE] hover:border-[#F36A4F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Delete Role"
+                      title={
+                        selectedRoleData.name === 'Super Admin'
+                          ? 'Super Admin role cannot be deleted'
+                          : 'Delete Role'
+                      }
                     >
                       <Trash2 className="w-4 h-4 text-[#6E6E6E]" />
                       <span className="text-[14px] leading-[20px] font-medium text-[#3D3D3D]">

@@ -114,13 +114,24 @@ export class DonorsService {
   /**
    * Fetch all donations for a logged-in user from e_challans table.
    * Returns formatted donation history with receipt numbers, amounts, dates, etc.
+   * Supports filtering by receipt number, financial year, and donation type.
+   * Supports pagination with page and limit parameters.
    */
-  async findDonationsByUserId(userId: number) {
+  async findDonationsByUserId(
+    userId: number,
+    query?: {
+      searchReceipt?: string;
+      financialYear?: string;
+      donationType?: string;
+      page?: number;
+      limit?: number;
+    }
+  ) {
     try {
       // First get the user's email to find their donor profile
       const userRows = await this.db.select().from(tUser).where(eq(tUser.id, userId));
       const user = userRows[0];
-      if (!user?.eMail) return [];
+      if (!user?.eMail) return { data: [], total: 0 };
 
       const email = user.eMail.trim().toLowerCase();
 
@@ -130,11 +141,47 @@ export class DonorsService {
         .from(donors)
         .where(eq(donors.email, email));
 
-      if (!donorRows[0]) return [];
+      if (!donorRows[0]) return { data: [], total: 0 };
       const donorId = donorRows[0].id;
 
-      // Fetch all donations (e_challans) for this donor
-      const donations = await this.db
+      // Build WHERE conditions
+      const conditions: any[] = [eq(schema.eChallans.donorId, donorId)];
+
+      // Filter by receipt number (search)
+      if (query?.searchReceipt) {
+        conditions.push(sql`${schema.eChallans.challanNumber} LIKE ${`%${query.searchReceipt}%`}`);
+      }
+
+      // Filter by financial year
+      if (query?.financialYear) {
+        const [startYearStr] = query.financialYear.replace('fy', '').split('-');
+        const startYear = parseInt(startYearStr, 10);
+        const fyStart = new Date(`${startYear}-04-01`);
+        const fyEnd = new Date(`${startYear + 1}-03-31T23:59:59`);
+        conditions.push(sql`${schema.eChallans.donationDate} >= ${fyStart}`);
+        conditions.push(sql`${schema.eChallans.donationDate} <= ${fyEnd}`);
+      }
+
+      // Filter by donation type (categoryCode)
+      if (query?.donationType) {
+        // First get the category ID from the code
+        const catRows = await this.db
+          .select()
+          .from(schema.donationCategories)
+          .where(eq(schema.donationCategories.categoryCode, query.donationType));
+
+        if (catRows[0]) {
+          conditions.push(eq(schema.eChallans.categoryId, catRows[0].id));
+        }
+      }
+
+      // Calculate pagination
+      const page = query?.page || 1;
+      const limit = query?.limit || 10;
+      const offset = (page - 1) * limit;
+
+      // Fetch donations with filters applied (all results for count)
+      const allDonations = await this.db
         .select({
           id: schema.eChallans.id,
           challanNumber: schema.eChallans.challanNumber,
@@ -149,11 +196,16 @@ export class DonorsService {
           schema.donationCategories,
           eq(schema.eChallans.categoryId, schema.donationCategories.id),
         )
-        .where(eq(schema.eChallans.donorId, donorId))
+        .where(and(...conditions))
         .orderBy(sql`${schema.eChallans.donationDate} DESC`);
 
+      const total = allDonations.length;
+
+      // Apply pagination in memory
+      const paginatedDonations = allDonations.slice(offset, offset + limit);
+
       // Format for frontend
-      return donations.map((d) => ({
+      const data = paginatedDonations.map((d) => ({
         id: d.id,
         receiptNo: d.challanNumber,
         amount: parseFloat(d.amount as any) || 0,
@@ -162,9 +214,11 @@ export class DonorsService {
         status: 'Success',
         eligible80G: true, // Assuming all donations are 80G eligible
       }));
+
+      return { data, total };
     } catch (err) {
       console.error('Error fetching donations:', err);
-      return [];
+      return { data: [], total: 0 };
     }
   }
   /**
@@ -172,7 +226,7 @@ export class DonorsService {
    * Used for 80G and Tax Document reports.
    */
   async getDonationSummaries(userId: number) {
-    const donations = await this.findDonationsByUserId(userId);
+    const { data: donations } = await this.findDonationsByUserId(userId);
 
     // Group by FY
     const summaries: Record<string, { totalAmount: number; count: number }> = {};

@@ -1,0 +1,53 @@
+[33madaf09d[m[33m ([m[1;36mHEAD -> [m[1;32mfeature/Admin_UsersRoles[m[33m, [m[1;31morigin/feature/Admin_UsersRoles[m[33m)[m HEAD@{0}: commit (merge): user and roles updated
+[33m1bd34ad[m HEAD@{1}: commit: user and roles updated
+[33mb5aa14e[m[33m ([m[1;32mdevelopment[m[33m)[m HEAD@{2}: checkout: moving from development to feature/Admin_UsersRoles
+[33mb5aa14e[m[33m ([m[1;32mdevelopment[m[33m)[m HEAD@{3}: pull origin development: Fast-forward
+[33m111aecc[m HEAD@{4}: checkout: moving from feature/Dashboard_Page to development
+[33m68f25f4[m[33m ([m[1;31morigin/feature/Dashboard_Page[m[33m, [m[1;32mfeature/Dashboard_Page[m[33m)[m HEAD@{5}: commit (merge): fixed bugs
+[33me2cf274[m HEAD@{6}: commit: fixed bugs
+[33mb14affb[m HEAD@{7}: pull origin development: Fast-forward
+[33m51e57b0[m HEAD@{8}: pull origin development: Merge made by the 'ort' strategy.
+[33mf1ba2a1[m HEAD@{9}: commit: Otp verifcation
+[33m16cd26b[m HEAD@{10}: pull origin development: Fast-forward
+[33m8d80735[m HEAD@{11}: commit: Profile page work
+[33me75c402[m HEAD@{12}: pull origin development: Merge made by the 'ort' strategy.
+[33md4c58fa[m HEAD@{13}: commit: Profile page work
+[33m03d5278[m HEAD@{14}: commit: Profile page work
+[33mdfc6f24[m HEAD@{15}: commit: Profile page work
+[33m0b196c5[m HEAD@{16}: pull origin development: Fast-forward
+[33maab28c7[m HEAD@{17}: pull origin development: Fast-forward
+[33mbf68527[m HEAD@{18}: commit: Fixed download and notification red dot removed
+[33m28cd8c2[m HEAD@{19}: commit (merge): conflict resolved
+[33mc1b15cb[m HEAD@{20}: commit: fixed ui changes
+[33m111aecc[m HEAD@{21}: checkout: moving from development to feature/Dashboard_Page
+[33m111aecc[m HEAD@{22}: pull --tags origin development: Fast-forward
+[33m64adf76[m HEAD@{23}: checkout: moving from feature/Dashboard to development
+[33mb8e4a7a[m[33m ([m[1;31morigin/feature/Dashboard[m[33m, [m[1;31morigin/Aram_Donor_Side[m[33m, [m[1;32mfeature/Dashboard[m[33m)[m HEAD@{24}: pull origin Aram_Donor_Side: Fast-forward
+[33mc47d989[m HEAD@{25}: pull origin Aram_Donor_Side: Fast-forward
+[33m1af9fb9[m HEAD@{26}: checkout: moving from feature/loginFlow to feature/Dashboard
+[33mf7de32d[m[33m ([m[1;31morigin/feature/loginFlow[m[33m, [m[1;32mfeature/loginFlow[m[33m)[m HEAD@{27}: commit (merge): fixed error
+[33m267e8fe[m HEAD@{28}: commit (merge): fixed error
+[33m09da15f[m HEAD@{29}: checkout: moving from feature/Dashboard to feature/loginFlow
+[33m1af9fb9[m HEAD@{30}: pull origin development: Merge made by the 'ort' strategy.
+[33m8e60ee4[m HEAD@{31}: commit: fixed error
+[33m1258e9d[m HEAD@{32}: commit (merge): Fixed download it support
+[33m993c289[m HEAD@{33}: commit: Fixed download it support
+[33m64adf76[m HEAD@{34}: checkout: moving from development to feature/Dashboard
+[33m64adf76[m HEAD@{35}: checkout: moving from feature/loginFlow to development
+[33m09da15f[m HEAD@{36}: commit (merge): fixed
+[33m625d390[m HEAD@{37}: checkout: moving from development to feature/loginFlow
+[33m64adf76[m HEAD@{38}: pull origin development: Fast-forward
+[33mcc44420[m HEAD@{39}: checkout: moving from feature/loginFlow to development
+[33m625d390[m HEAD@{40}: pull origin Aram_Donor_Side: Merge made by the 'ort' strategy.
+[33m77de2e2[m HEAD@{41}: commit: password set
+[33m7fcde47[m HEAD@{42}: pull origin Aram_Donor_Side: Merge made by the 'ort' strategy.
+[33m2c9a9ac[m HEAD@{43}: commit: background issue fixed
+[33m735f357[m HEAD@{44}: checkout: moving from development to feature/loginFlow
+[33mcc44420[m HEAD@{45}: checkout: moving from feature/loginFlow to development
+[33m735f357[m HEAD@{46}: pull origin Aram_Donor_Side: Merge made by the 'ort' strategy.
+[33m97a819c[m HEAD@{47}: commit: Fixed screen
+[33m7aa485e[m HEAD@{48}: commit: Validations set
+[33mdf1d80f[m HEAD@{49}: pull origin development: Merge made by the 'ort' strategy.
+[33mc7e0a01[m HEAD@{50}: commit: Validations set
+[33m563dd3f[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{51}: checkout: moving from main to feature/loginFlow
+[33m563dd3f[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{52}: clone: from https://github.com/prakashItechIndia/aram.git

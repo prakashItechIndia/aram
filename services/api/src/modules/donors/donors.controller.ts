@@ -1,14 +1,15 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DonorsService } from './donors.service';
 import { CreateGuestDonorDto } from './dto/create-guest-donor.dto';
 import { ProcessDonationDto } from './dto/process-donation.dto';
+import { QueryDonationsDto } from './dto/query-donations.dto';
 
 @ApiTags('donors')
 @Controller('donors')
 export class DonorsController {
-  constructor(private readonly donorsService: DonorsService) {}
+  constructor(private readonly donorsService: DonorsService) { }
 
   @Get()
   findAll() {
@@ -26,8 +27,8 @@ export class DonorsController {
   @Get('me/donations')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  async getMyDonations(@Request() req: any) {
-    return this.donorsService.findDonationsByUserId(req.user.userId);
+  async getMyDonations(@Request() req: any, @Query() query: QueryDonationsDto) {
+    return this.donorsService.findDonationsByUserId(req.user.userId, query);
   }
 
   @Get('me/tax-summaries')
