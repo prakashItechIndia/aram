@@ -38,8 +38,7 @@ export function Profile() {
   const { checkAndNotify } = useDonationFormStatus();
 
   const handleSaveProfile = async () => {
-    if (!checkAndNotify()) return;
-    
+
     const newErrors: any = {};
     const nameError = validateField(name, validationRules.name, validationMessages.name);
     if (nameError) newErrors.name = nameError;
@@ -60,8 +59,7 @@ export function Profile() {
   };
 
   const handleUpdatePassword = async () => {
-    if (!checkAndNotify()) return;
-    
+
     const newErrors: any = {};
 
     if (!currentPassword) {
@@ -109,8 +107,7 @@ export function Profile() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!checkAndNotify()) return;
-    
+
     const file = e.target.files?.[0];
     if (file) {
       uploadProfileImage(file);
@@ -118,12 +115,10 @@ export function Profile() {
   };
 
   const handleThemeChange = (newTheme: 'light' | 'dark') => {
-    if (!checkAndNotify()) return;
     setTheme(newTheme);
   };
 
   const handleDownloadHistory = () => {
-    if (!checkAndNotify()) return;
     // Download logic would go here
   };
 

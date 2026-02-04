@@ -13,7 +13,7 @@ import type { UpdatePermissionsDto } from './dto/update-permissions.dto';
 
 @Injectable()
 export class UserRolesService {
-  constructor(@Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>) {}
+  constructor(@Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>) { }
 
   /** Count admin users (T_USER) assigned to this role (by User_Type = role name). */
   async getUserCountByRoleId(roleId: number): Promise<number> {
@@ -116,11 +116,12 @@ export class UserRolesService {
   async update(id: number, dto: UpdateRoleDto) {
     const role = await this.findById(id);
     const userCount = role.userCount as number;
-    if (userCount > 0) {
-      throw new BadRequestException(
-        `This role is assigned to ${userCount} user(s). Reassign or remove those users before editing the role.`,
-      );
-    }
+    // const allowedRoles = ['Super Admin', 'Admin', 'Finance Manager', 'Operator'];
+    // if (userCount > 0 && !allowedRoles.includes(role.name)) {
+    //   throw new BadRequestException(
+    //     `This role is assigned to ${userCount} user(s). Reassign or remove those users before editing the role.`,
+    //   );
+    // }
     const name = dto.name?.trim();
     if (name) {
       const existing = await this.db.select().top(1).from(userRoles).where(eq(userRoles.name, name));
@@ -137,11 +138,12 @@ export class UserRolesService {
   async delete(id: number) {
     const role = await this.findById(id);
     const userCount = role.userCount as number;
-    if (userCount > 0) {
-      throw new BadRequestException(
-        `This role is assigned to ${userCount} user(s). Reassign or remove those users before deleting the role.`,
-      );
-    }
+    // const allowedRoles = ['Admin', 'Finance Manager', 'Operator'];
+    // if (userCount > 0 && !allowedRoles.includes(role.name)) {
+    //   throw new BadRequestException(
+    //     `This role is assigned to ${userCount} user(s). Reassign or remove those users before deleting the role.`,
+    //   );
+    // }
     await this.db.delete(rolePermissions).where(eq(rolePermissions.roleId, id));
     await this.db.delete(userRoles).where(eq(userRoles.id, id));
     return { success: true };
@@ -165,11 +167,12 @@ export class UserRolesService {
   async updatePermissions(roleId: number, dto: UpdatePermissionsDto) {
     const role = await this.findById(roleId);
     const userCount = role.userCount as number;
-    if (userCount > 0) {
-      throw new BadRequestException(
-        `This role is assigned to ${userCount} user(s). Reassign or remove those users before editing permissions.`,
-      );
-    }
+    // const allowedRoles = ['Super Admin', 'Admin', 'Finance Manager', 'Operator'];
+    // if (userCount > 0 && !allowedRoles.includes(role.name)) {
+    //   throw new BadRequestException(
+    //     `This role is assigned to ${userCount} user(s). Reassign or remove those users before editing permissions.`,
+    //   );
+    // }
     for (const item of dto.permissions) {
       const existing = await this.db
         .select()

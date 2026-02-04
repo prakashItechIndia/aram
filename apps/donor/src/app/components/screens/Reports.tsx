@@ -1,5 +1,5 @@
 import { useApi } from '@/app/context/ApiContext';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AramButton } from '@/app/components/aram/AramButton';
 import { AramCard } from '@/app/components/aram/AramCard';
 import { AramInput } from '@/app/components/aram/AramInput';
@@ -59,7 +59,14 @@ export function Reports() {
   const [selectedFY, setSelectedFY] = useState('fy2025-26');
   const [selectedType, setSelectedType] = useState('');
 
-  // Fetch data based on active tab
+  // Pagination States
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [total, setTotal] = useState(0);
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  // Fetch data based on active tab and filters
   useEffect(() => {
     if (!apiAuth?.accessToken) return;
 
@@ -70,11 +77,23 @@ export function Reports() {
         const headers = { 'Authorization': `Bearer ${apiAuth.accessToken}` };
 
         if (activeTab === 'receipts') {
-          const res = await fetch(`${baseUrl}/donors/me/donations`, { headers });
+          // Build query parameters for filtering and pagination
+          const params = new URLSearchParams();
+          params.set('page', String(page));
+          params.set('limit', String(limit));
+          if (searchReceipt) params.append('searchReceipt', searchReceipt);
+          if (selectedFY) params.append('financialYear', selectedFY);
+          if (selectedType) params.append('donationType', selectedType);
+
+          const queryString = params.toString();
+          const url = `${baseUrl}/donors/me/donations${queryString ? `?${queryString}` : ''}`;
+
+          const res = await fetch(url, { headers });
           if (res.ok) {
-            const data = await res.json();
-            const sortedData = (data || []).sort((a: Receipt, b: Receipt) => b.id - a.id);
+            const response = await res.json();
+            const sortedData = (response.data || []).sort((a: Receipt, b: Receipt) => b.id - a.id);
             setReceipts(sortedData);
+            setTotal(response.total || 0);
           }
         } else {
           // Both 80G and Tax tabs use the tax-summaries endpoint
@@ -93,41 +112,12 @@ export function Reports() {
     };
 
     fetchData();
-  }, [activeTab, apiAuth?.accessToken]);
+  }, [activeTab, apiAuth?.accessToken, searchReceipt, selectedFY, selectedType, page, limit]);
 
-  // Helper to map option values back to receipt type strings
-  const getPaymentTypeLabel = (value: string) => {
-    const option = donationTypeOptions.find((opt) => opt.value === value);
-    return option ? option.label : '';
-  };
-
-  const filteredReceipts = React.useMemo(() => {
-    return receipts.filter((receipt: Receipt) => {
-      // 1. Text Search (Receipt No)
-      const matchesSearch =
-        !searchReceipt ||
-        receipt.receiptNo.toLowerCase().includes(searchReceipt.toLowerCase());
-
-      // 2. Donation Type Filter
-      // Note: receipts from API use labels like 'Education Fund', options use values like 'education'
-      // We need to match the label if a type is selected.
-      const matchesType = !selectedType || receipt.type === getPaymentTypeLabel(selectedType);
-
-      // 3. Financial Year Filter
-      let matchesFY = true;
-      if (selectedFY) {
-        const receiptDate = new Date(receipt.date);
-        const [startYearStr] = selectedFY.replace('fy', '').split('-');
-        const startYear = parseInt(startYearStr, 10); // e.g., 2024
-        // FY is from April 1st of startYear to March 31st of startYear + 1
-        const fyStart = new Date(`${startYear}-04-01`);
-        const fyEnd = new Date(`${startYear + 1}-03-31T23:59:59`);
-        matchesFY = receiptDate >= fyStart && receiptDate <= fyEnd;
-      }
-
-      return matchesSearch && matchesType && matchesFY;
-    });
-  }, [receipts, searchReceipt, selectedFY, selectedType]);
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchReceipt, selectedFY, selectedType]);
 
   const handleDownloadReceipt = (receipt: Receipt) => {
     try {
@@ -304,7 +294,7 @@ export function Reports() {
                 </tr>
               </thead>
               <tbody>
-                {filteredReceipts.map((receipt) => (
+                {receipts.map((receipt) => (
                   <tr key={receipt.id} style={{ height: '52px', borderBottom: '1px solid #DBDBDB' }}>
                     <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{receipt.date}</td>
                     <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>{receipt.receiptNo}</td>
@@ -333,7 +323,37 @@ export function Reports() {
             </table>
           </div>
 
-          {filteredReceipts.length === 0 && (
+          {/* Pagination Controls */}
+          {total > limit && (
+            <div className="p-[16px] border-t border-[#DBDBDB] flex items-center justify-between flex-wrap gap-4">
+              <div className="text-[14px] text-[#6E6E6E]">
+                Showing {Math.min((page - 1) * limit + 1, total)} to {Math.min(page * limit, total)} of {total} receipts
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1 || isLoading}
+                  className="h-[40px] px-[16px] border border-[#DBDBDB] rounded-[8px] text-[14px] font-medium text-[#3D3D3D] bg-white hover:bg-[#F3F3F3] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <span className="px-4 text-[14px] text-[#3D3D3D]">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages || isLoading}
+                  className="h-[40px] px-[16px] border border-[#DBDBDB] rounded-[8px] text-[14px] font-medium text-[#3D3D3D] bg-white hover:bg-[#F3F3F3] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+
+          {receipts.length === 0 && (
             <div className="p-[48px] text-center">
               <FileText size={48} color="#DBDBDB" className="mx-auto mb-[16px]" />
               <p style={{ fontSize: '16px', color: '#6E6E6E' }}>No receipts available yet</p>

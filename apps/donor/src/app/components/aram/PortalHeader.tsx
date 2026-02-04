@@ -14,6 +14,7 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAllNotifications, setShowAllNotifications] = useState(false);
 
   // Use values from ApiContext user object
   const userName = user?.name || user?.email?.split('@')[0] || 'User';
@@ -102,7 +103,7 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
                 <div className="max-h-[420px] overflow-y-auto">
                   {notifications.length > 0 ? (
                     <div className="flex flex-col">
-                      {notifications.map((notif: Notification) => (
+                      {(showAllNotifications ? notifications : notifications.slice(0, 10)).map((notif: Notification) => (
                         <div
                           key={notif.id}
                           className={`p-[16px] border-b border-[#F3F3F3] last:border-0 hover:bg-[#F9F9F9] transition-colors relative group ${!notif.readAt ? 'bg-[#FFF9F8]' : ''}`}
@@ -157,13 +158,14 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
                   )}
                 </div>
 
-                {notifications.length > 0 && (
+                {notifications.length > 10 && (
                   <div className="p-[12px] bg-[#FAFAFA] border-t border-[#F3F3F3] text-center">
                     <button
+                      onClick={() => setShowAllNotifications(!showAllNotifications)}
                       className="text-[#6E6E6E] hover:text-[#3D3D3D]"
                       style={{ fontSize: '12px', fontWeight: 600 }}
                     >
-                      View All Notifications
+                      {showAllNotifications ? 'Show Less' : 'View All Notifications'}
                     </button>
                   </div>
                 )}

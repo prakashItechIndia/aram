@@ -134,10 +134,10 @@ export function DonateGuest() {
       name: validationMessages.name,
       email: validationMessages.email,
       mobile: validationMessages.mobile,
-      amount: { 
-        required: 'Amount is required', 
-        min: `Minimum donation amount is ₹${minAmount}`, 
-        max: `Maximum donation amount is ₹${maxAmount}` 
+      amount: {
+        required: 'Amount is required',
+        min: `Minimum donation amount is ₹${minAmount}`,
+        max: `Maximum donation amount is ₹${maxAmount}`
       },
       donationType: { required: 'Please select a donation type' },
       country: { required: 'Country is required' },
@@ -158,7 +158,6 @@ export function DonateGuest() {
   };
 
   const handlePay = async () => {
-    if (!checkAndNotify()) return;
     if (!validateForm()) return;
 
     if (api?.donorsApi) {

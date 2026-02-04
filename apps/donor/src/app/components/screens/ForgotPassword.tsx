@@ -116,7 +116,7 @@ export function ForgotPassword() {
                         <AramButton type="submit" className="w-full">
                             Send reset link
                         </AramButton>
-                        <AramButton type="button" variant="secondary" className="w-full" onClick={onBack}>
+                        <AramButton type="button" variant="secondary" className="w-full" onClick={() => navigate('/signin')}>
                             Cancel
                         </AramButton>
                     </div>

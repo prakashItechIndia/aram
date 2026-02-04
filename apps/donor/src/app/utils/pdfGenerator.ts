@@ -143,11 +143,11 @@ export const generateReceiptPDF = (receipt: ReceiptDetails, user: UserDetails) =
 
         // Total
         const finalY = (doc as any).lastAutoTable.finalY || 130;
-        doc.setFont(undefined, 'bold');
+        doc.setFont('helvetica', 'bold');
         doc.text(`Total Amount: INR ${receipt.amount.toLocaleString()}`, 190, finalY + 15, { align: 'right' });
 
         // Footer Note
-        doc.setFont(undefined, 'normal');
+        doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
         doc.setTextColor(100);
         const note = receipt.eligible80G
@@ -158,6 +158,65 @@ export const generateReceiptPDF = (receipt: ReceiptDetails, user: UserDetails) =
 
         doc.save(`Receipt_${receipt.receiptNo}.pdf`);
         toast.success('Receipt downloaded successfully');
+    } catch (error) {
+        console.error('PDF Generation Error:', error);
+        toast.error('Failed to generate PDF');
+    }
+};
+
+export const generateNotificationsPDF = (notifications: any[]) => {
+    try {
+        const doc = new jsPDF();
+
+        // Header
+        doc.setFontSize(22);
+        doc.setTextColor(243, 106, 79); // #F36A4F
+        doc.text('ARAM FOUNDATION', 105, 20, { align: 'center' });
+
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text('Tiruppur, Tamil Nadu, India', 105, 28, { align: 'center' });
+        doc.text('Email: info@aramfoundation.org | Web: www.aramfoundation.org', 105, 33, { align: 'center' });
+
+        doc.setDrawColor(219, 219, 219);
+        doc.line(20, 40, 190, 40);
+
+        // Title
+        doc.setFontSize(16);
+        doc.setTextColor(0);
+        doc.text('NOTIFICATIONS', 105, 50, { align: 'center' });
+
+        // Table
+        const tableBody = notifications.map(notif => [
+            new Date(notif.createdAt).toLocaleDateString(),
+            notif.title,
+            notif.message,
+            notif.type.toUpperCase()
+        ]);
+
+        autoTable(doc, {
+            startY: 60,
+            head: [['Date', 'Title', 'Message', 'Type']],
+            body: tableBody,
+            headStyles: { fillColor: [243, 106, 79], textColor: [255, 255, 255], halign: 'left' },
+            theme: 'striped',
+            styles: {
+                overflow: 'linebreak',
+                cellPadding: 4,
+                fontSize: 10,
+                valign: 'top'
+            },
+            columnStyles: {
+                0: { cellWidth: 28 }, // Date
+                1: { cellWidth: 38, fontStyle: 'bold' }, // Title
+                2: { cellWidth: 'auto' }, // Message
+                3: { cellWidth: 35, halign: 'center' } // Type
+            },
+            margin: { top: 60, left: 15, right: 15, bottom: 20 }
+        });
+
+        doc.save(`Notifications_${new Date().toISOString().split('T')[0]}.pdf`);
+        toast.success('Notifications downloaded successfully');
     } catch (error) {
         console.error('PDF Generation Error:', error);
         toast.error('Failed to generate PDF');
