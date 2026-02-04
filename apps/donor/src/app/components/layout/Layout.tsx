@@ -1,6 +1,7 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { PortalHeader } from '../aram/PortalHeader';
 import { useApi } from '@/app/context/ApiContext';
+import { toast } from 'sonner';
 
 export function Layout() {
     const location = useLocation();
@@ -16,12 +17,13 @@ export function Layout() {
 
     const handleLogout = () => {
         logout();
+        toast.success('Logout successfully');
         navigate('/');
     };
 
     return (
         <div className="min-h-screen bg-white">
-            <PortalHeader 
+            <PortalHeader
                 currentPage={currentPage}
                 onNavigate={handleNavigate}
                 onLogout={handleLogout}

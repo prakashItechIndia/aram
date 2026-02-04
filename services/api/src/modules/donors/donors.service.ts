@@ -439,6 +439,11 @@ export class DonorsService {
       .where(eq(tUser.mobileNumber, mobile));
 
     if (existingByMobile[0]) {
+      if (existingByMobile[0].isActive === false) {
+        throw new ConflictException(
+          'Your account is disabled. Please click Okay to enable your account.',
+        );
+      }
       throw new ConflictException(
         'An account with this mobile number already exists. Please use Login to Donate.',
       );
@@ -451,6 +456,11 @@ export class DonorsService {
       .from(tUser)
       .where(eq(tUser.eMail, email));
     if (existingByEmail[0]) {
+      if (existingByEmail[0].isActive === false) {
+        throw new ConflictException(
+          'Your account is disabled. Please click Okay to enable your account.',
+        );
+      }
       throw new ConflictException(
         'An account with this email already exists. Please use Login to Donate.',
       );
