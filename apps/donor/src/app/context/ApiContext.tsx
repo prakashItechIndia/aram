@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useMemo, useRef, useState } from 'react';
 import { createAramApi, type AramApiClient, type HttpClientMinState } from '@aram/shared';
 
-const getApiBaseUrl = (): string => {
+export const getApiBaseUrl = (): string => {
   try {
     const meta = import.meta as { env?: { VITE_API_URL?: string } };
     return meta?.env?.VITE_API_URL ?? 'http://localhost:3000/api';

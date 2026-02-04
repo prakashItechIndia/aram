@@ -13,13 +13,8 @@ import {
 import { ScrollArea } from '../ui/scroll-area';
 import { validateForm as globalValidateForm, validationRules, validationMessages, sanitizeInput, countryPhoneConfigs, getMobileValidation } from '../../utils/validations';
 import { useDonationFormStatus } from '../../hooks/useDonationFormStatus';
-
-const countries = [
-  { value: 'india', label: '+91' },
-  { value: 'usa', label: '+1' },
-  { value: 'uk', label: '+44' },
-  { value: 'canada', label: '+1' },
-];
+import { useCountries } from '../../hooks/useCountries';
+import { getCountryPhonePrefix } from '../../utils/countryPhonePrefixes';
 
 interface CreateAccountProps {
   onCreateAccount: (data: any) => void;
@@ -39,6 +34,13 @@ export function CreateAccount({ onCreateAccount, onSignIn, onBack }: CreateAccou
   const [country, setCountry] = useState('india');
   const [errors, setErrors] = useState<any>({});
   const { checkAndNotify } = useDonationFormStatus();
+  const { countries: countriesData, loading: countriesLoading } = useCountries();
+
+  // Map countries to show prefix for dropdown
+  const countries = countriesData.map(c => ({
+    value: c.value,
+    label: getCountryPhonePrefix(c.value)
+  }));
 
   // Terms & Privacy states
   const [showTerms, setShowTerms] = useState(false);
@@ -169,12 +171,7 @@ export function CreateAccount({ onCreateAccount, onSignIn, onBack }: CreateAccou
                 Phone Number <span className="text-[#F36A4F]">*</span>
               </label>
               <div className="flex gap-[8px]">
-                <AramSelect
-                  value={country}
-                  onChange={setCountry}
-                  options={countries}
-                  className="w-[80px]"
-                />
+                
                 <AramInput
                   type="tel"
                   placeholder={countryPhoneConfigs[country]?.maxLength === 10 ? 'Enter 10-digits Phone Number' : 'Enter 11-digits Phone Number'}

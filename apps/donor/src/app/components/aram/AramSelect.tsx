@@ -10,6 +10,7 @@ interface AramSelectProps {
   required?: boolean;
   error?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 export function AramSelect({
@@ -19,6 +20,7 @@ export function AramSelect({
   onChange,
   options,
   required = false,
+  disabled = false,
   error,
   className = ''
 }: AramSelectProps) {
@@ -34,9 +36,11 @@ export function AramSelect({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
           className={`h-[44px] w-full px-[14px] py-[12px] rounded-[16px] border ${
             error ? 'border-[#F36A4F]' : 'border-[#DBDBDB]'
-          } bg-white focus:outline-none focus:border-[#F36A4F] appearance-none pr-[40px]`}
+            
+          } bg-white focus:outline-none focus:border-[#F36A4F] appearance-none pr-[40px] disabled:bg-[#F3F3F3] disabled:cursor-not-allowed`}
           style={{ fontSize: '14px', lineHeight: '20px', fontWeight: 400, color: '#3D3D3D' }}
         >
           {placeholder && <option value="">{placeholder}</option>}

@@ -5,6 +5,7 @@ import { AramInput } from '@/app/components/aram/AramInput';
 import { AramTextarea } from '@/app/components/aram/AramTextarea';
 import { AramSelect } from '@/app/components/aram/AramSelect';
 import { useDonationFormStatus } from '@/app/hooks/useDonationFormStatus';
+import { useCountries } from '@/app/hooks/useCountries';
 
 interface DonorProfile {
   name?: string;
@@ -34,13 +35,6 @@ const donationTypes = [
   { value: 'sairam-sap', label: 'Sairam SAP' },
 ];
 
-const countries = [
-  { value: 'india', label: 'India' },
-  { value: 'usa', label: 'United States' },
-  { value: 'uk', label: 'United Kingdom' },
-  { value: 'canada', label: 'Canada' },
-];
-
 const amountPresets = [500, 1000, 2500, 5000];
 
 // Helper functions for localStorage
@@ -66,6 +60,7 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
   const [customAmount, setCustomAmount] = useState('');
   const [address, setAddress] = useState('');
   const [panNumber, setPanNumber] = useState('');
+  const [panFromProfile, setPanFromProfile] = useState(false); // Track if PAN came from profile
   const [donationType, setDonationType] = useState('');
   const [country, setCountry] = useState('india');
   const [errors, setErrors] = useState<any>({});
@@ -73,7 +68,22 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
   const [displayName, setDisplayName] = useState(userName);
   const [displayEmail, setDisplayEmail] = useState(userEmail);
   const [displayPhone, setDisplayPhone] = useState(userPhone);
-  const { checkAndNotify } = useDonationFormStatus();
+  const { checkAndNotify, panRequired, panThreshold } = useDonationFormStatus();
+  const { countries, loading: countriesLoading } = useCountries();
+
+  // Calculate if PAN field should be shown
+  const shouldShowPAN = React.useMemo(() => {
+    if (panRequired === 'never') return false;
+    if (panRequired === 'always') return true;
+    if (panRequired === 'threshold') {
+      const currentAmount = selectedPreset || Number(customAmount) || 0;
+      return currentAmount >= panThreshold;
+    }
+    if (panRequired === 'optional') {
+      return country === 'india';
+    }
+    return false;
+  }, [panRequired, panThreshold, selectedPreset, customAmount, country]);
 
   useEffect(() => {
     setDisplayName(userName);
@@ -92,7 +102,10 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
         const donor = (res as { data?: any })?.data;
         if (donor) {
           if (donor.location) setAddress(donor.location);
-          if (donor.pan) setPanNumber(donor.pan);
+          if (donor.pan) {
+            setPanNumber(donor.pan);
+            setPanFromProfile(true); // Mark that PAN came from profile
+          }
           if (donor.country) setCountry(donor.country.toLowerCase());
           if (donor.name) setDisplayName(donor.name);
           if (donor.email) setDisplayEmail(donor.email);
@@ -155,10 +168,15 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
     if (amount < MIN_AMOUNT) newErrors.amount = `Minimum donation amount is ₹${MIN_AMOUNT}`;
     if (amount > MAX_AMOUNT) newErrors.amount = `Maximum donation amount is ₹${MAX_AMOUNT}`;
     if (!address.trim()) newErrors.address = 'Address is required';
-    if (!panNumber.trim()) newErrors.panNumber = 'PAN number is required';
-    else if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panNumber.toUpperCase())) {
-      newErrors.panNumber = 'Invalid PAN format (e.g., AAAAA0000A)';
+    
+    // Only validate PAN if it should be shown
+    if (shouldShowPAN) {
+      if (!panNumber.trim()) newErrors.panNumber = 'PAN number is required';
+      else if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panNumber.toUpperCase())) {
+        newErrors.panNumber = 'Invalid PAN format (e.g., AAAAA0000A)';
+      }
     }
+    
     if (!donationType) newErrors.donationType = 'Please select a donation type';
     if (!country) newErrors.country = 'Country is required';
 
@@ -176,7 +194,7 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
       onPay({
         amount,
         address,
-        panNumber: panNumber.toUpperCase(),
+        panNumber: shouldShowPAN ? panNumber.toUpperCase() : '',
         donationType,
         country,
         name: displayName,
@@ -238,16 +256,18 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
               disabled
               helperText="Verified registered mobile"
             />
-            <AramInput
-              label="PAN Number"
-              placeholder="AAAAA0000A"
-              value={panNumber}
-              onChange={(val) => setPanNumber(val.toUpperCase())}
-              required
-              disabled={!!panNumber}
-              error={errors.panNumber}
-              helperText={panNumber ? "PAN from your profile" : "Format: AAAAA0000A"}
-            />
+            {shouldShowPAN && (
+              <AramInput
+                label="PAN Number"
+                placeholder="AAAAA0000A"
+                value={panNumber}
+                onChange={(val) => setPanNumber(val.toUpperCase())}
+                required
+                disabled={panFromProfile} // Only disable if PAN came from profile
+                error={errors.panNumber}
+                helperText={panFromProfile ? "PAN from your profile" : "Format: AAAAA0000A"}
+              />
+            )}
           </div>
 
           <hr className="border-[#DBDBDB]" />
@@ -264,6 +284,10 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
                   onClick={() => {
                     setSelectedPreset(preset);
                     setCustomAmount('');
+                    // Clear PAN only if it was manually entered (not from profile)
+                    if (!panFromProfile) {
+                      setPanNumber('');
+                    }
                   }}
                   className={`h-[44px] px-[24px] rounded-[16px] border transition-all ${selectedPreset === preset
                     ? 'border-[#F36A4F] bg-[#FEF1EE] text-[#F36A4F] scale-105 shadow-sm'
@@ -281,6 +305,10 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
               onChange={(val) => {
                 setCustomAmount(val);
                 setSelectedPreset(null);
+                // Clear PAN only if it was manually entered (not from profile)
+                if (!panFromProfile) {
+                  setPanNumber('');
+                }
               }}
               type="number"
               error={errors.amount}
@@ -306,7 +334,7 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
               value={country}
               onChange={setCountry}
               options={countries}
-              required
+              disabled
               error={errors.country}
             />
           </div>

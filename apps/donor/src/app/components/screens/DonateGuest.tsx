@@ -8,6 +8,8 @@ import { AramSelect } from '../aram/AramSelect';
 import { ArrowLeft } from 'lucide-react';
 import { validateForm as globalValidateForm, validationRules, validationMessages, sanitizeInput, countryPhoneConfigs, getMobileValidation } from '../../utils/validations';
 import { useDonationFormStatus } from '../../hooks/useDonationFormStatus';
+import { useCountries } from '../../hooks/useCountries';
+import { getCountryPhonePrefix } from '../../utils/countryPhonePrefixes';
 interface DonateGuestProps {
   onPay: (data: any) => void;
   onBack: () => void;
@@ -21,13 +23,6 @@ const donationTypes = [
   { value: 'general', label: 'General Fund' },
   { value: 'medical', label: 'Medical Fund' },
   { value: 'sairam-sap', label: 'Sairam SAP' },
-];
-
-const countries = [
-  { value: 'india', label: 'India' }
-  // { value: 'usa', label: 'United States' },
-  // { value: 'uk', label: 'United Kingdom' },
-  // { value: 'canada', label: 'Canada' },
 ];
 
 const amountPresets = [500, 1000, 2500, 5000];
@@ -44,7 +39,22 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
   const [country, setCountry] = useState('india');
   const [errors, setErrors] = useState<any>({});
   const [submitting, setSubmitting] = useState(false);
-  const { checkAndNotify } = useDonationFormStatus();
+  const { checkAndNotify, panRequired, panThreshold } = useDonationFormStatus();
+  const { countries, loading: countriesLoading } = useCountries();
+
+  // Calculate if PAN field should be shown
+  const shouldShowPAN = React.useMemo(() => {
+    if (panRequired === 'never') return false;
+    if (panRequired === 'always') return true;
+    if (panRequired === 'threshold') {
+      const currentAmount = selectedPreset || Number(customAmount) || 0;
+      return currentAmount >= panThreshold;
+    }
+    if (panRequired === 'optional') {
+      return country === 'india';
+    }
+    return false;
+  }, [panRequired, panThreshold, selectedPreset, customAmount, country]);
 
   // Erase mobile number when country changes
   React.useEffect(() => {
@@ -96,27 +106,35 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
       country,
     };
 
-    const fieldRules = {
+    const fieldRules: any = {
       name: validationRules.name,
       email: validationRules.email,
       mobile: getMobileValidation(country),
       address: validationRules.address,
-      panNumber: validationRules.panNumber,
       amount: validationRules.amount,
       donationType: { required: true },
       country: { required: true },
     };
 
-    const fieldMessages = {
+    // Only require PAN if it should be shown
+    if (shouldShowPAN) {
+      fieldRules.panNumber = validationRules.panNumber;
+    }
+
+    const fieldMessages: any = {
       name: validationMessages.name,
       email: validationMessages.email,
       mobile: validationMessages.mobile,
       address: validationMessages.address,
-      panNumber: validationMessages.panNumber,
       amount: validationMessages.amount,
       donationType: { required: 'Please select a donation type' },
       country: { required: 'Country is required' },
     };
+
+    // Only add PAN messages if it should be shown
+    if (shouldShowPAN) {
+      fieldMessages.panNumber = validationMessages.panNumber;
+    }
 
     const newErrors = globalValidateForm(formData, fieldRules, fieldMessages);
     setErrors(newErrors);
@@ -146,7 +164,7 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
           email: email.trim(),
           mobile: mobile.trim(),
           address: address.trim(),
-          pan: panNumber.trim().toUpperCase(),
+          pan: shouldShowPAN ? panNumber.trim().toUpperCase() : undefined,
           country: country || 'India',
           amount,
           donationType,
@@ -253,7 +271,7 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
                 onChange={handleMobileChange}
                 required
                 error={errors.mobile}
-                prefix={countryPhoneConfigs[country]?.prefix}
+                prefix={getCountryPhonePrefix(country)}
               />
             </div>
 
@@ -313,15 +331,17 @@ export function DonateGuest({ onPay, onBack, api }: DonateGuestProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
-              <AramInput
-                label="PAN Number"
-                placeholder="AAAAA0000A"
-                value={panNumber}
-                onChange={(value: string) => setPanNumber(sanitizeInput.panNumber(value))}
-                required
-                error={errors.panNumber}
-                helperText="Format: AAAAA0000A"
-              />
+              {shouldShowPAN && (
+                <AramInput
+                  label="PAN Number"
+                  placeholder="AAAAA0000A"
+                  value={panNumber}
+                  onChange={(value: string) => setPanNumber(sanitizeInput.panNumber(value))}
+                  required
+                  error={errors.panNumber}
+                  helperText="Format: AAAAA0000A"
+                />
+              )}
 
               <AramSelect
                 label="Country"
