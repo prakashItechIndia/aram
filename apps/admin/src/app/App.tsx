@@ -1,4 +1,4 @@
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createQueryClient } from '@aram/shared';
@@ -20,6 +20,7 @@ function getResetTokenFromUrl(): string | null {
 }
 
 function AppContent() {
+  const navigate = useNavigate();
   const { api, login: apiLogin, forgotPassword, resetPassword, logout: apiLogout, isAuthenticated, setUser, user } = useApi();
   const [authState, setAuthState] = useState<AuthState>(() => {
     if (isAuthenticated) return 'authenticated';
@@ -48,6 +49,7 @@ function AppContent() {
     const result = await apiLogin(email, password);
     if (result.success) {
       setAuthState('authenticated');
+      navigate('/dashboard');
     }
     return result;
   };
@@ -58,6 +60,7 @@ function AppContent() {
 
   const handleVerify2FA = (_code: string) => {
     setAuthState('authenticated');
+    navigate('/dashboard');
   };
 
   const handleResend = () => {

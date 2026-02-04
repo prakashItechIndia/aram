@@ -7,21 +7,29 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, className = '', ...props }, ref) => {
+  (props, ref) => {
+    const { label, error, helperText, required, className = '', ...rest } = props;
+    const { type, min, onChange, ...inputProps } = rest as any;
+
     return (
       <div className="w-full">
         {label && (
           <label className="block text-[13px] leading-[18px] font-medium text-[#6E6E6E] mb-[6px]">
             {label}
-            {props.required && <span className="text-[#F36A4F] ml-1">*</span>}
+            {required && <span className="text-[#F36A4F] ml-1">*</span>}
           </label>
         )}
         <input
           ref={ref}
-          className={`w-full h-[44px] px-[14px] py-[12px] text-[16px] leading-[24px] bg-white border ${
-            error ? 'border-[#F36A4F]' : 'border-[#DBDBDB]'
-          } rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20 disabled:bg-[#F3F3F3] disabled:cursor-not-allowed ${className}`}
-          {...props}
+          type={type}
+          min={type === 'number' ? (min ?? '0') : min}
+          onChange={(e) => {
+            if (type === 'number' && e.target.value !== '' && parseFloat(e.target.value) < 0) return;
+            onChange?.(e);
+          }}
+          className={`w-full h-[44px] px-[14px] py-[12px] text-[16px] leading-[24px] bg-white border ${error ? 'border-[#F36A4F]' : 'border-[#DBDBDB]'
+            } rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20 disabled:bg-[#F3F3F3] disabled:cursor-not-allowed ${className}`}
+          {...inputProps}
         />
         {error && (
           <p className="mt-1 text-[13px] leading-[18px] text-[#F36A4F]">{error}</p>

@@ -233,7 +233,6 @@ export const DonationFormSettings: React.FC = () => {
 
       const response = await apiFetch(`${baseUrl}/donation-form-settings/current`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
@@ -425,7 +424,10 @@ export const DonationFormSettings: React.FC = () => {
                     <input
                       type="number"
                       value={panThreshold}
-                      onChange={(e) => setPanThreshold(Number(e.target.value))}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setPanThreshold(val === '' ? '' : Math.max(0, parseInt(val)));
+                      }}
                       style={{ padding: '8px 12px', border: '1px solid #DBDBDB', borderRadius: '12px', fontSize: '14px', width: '120px' }}
                     />
                   </div>
@@ -470,7 +472,7 @@ export const DonationFormSettings: React.FC = () => {
             <div style={{ fontWeight: 500, color: '#0D0D0D' }}>Mobile OTP Verification</div>
             <div style={{ fontSize: '13px', color: '#6E6E6E' }}>Verify mobile number with OTP (currently disabled)</div>
           </div>
-          <Switch checked={otpVerification} onChange={() => {}} disabled />
+          <Switch checked={otpVerification} onChange={() => { }} disabled />
         </div>
       </div>
 
@@ -488,12 +490,10 @@ export const DonationFormSettings: React.FC = () => {
                   type="number"
                   value={amt}
                   onChange={(e) => {
-                    const v = parseInt(e.target.value, 10);
-                    if (!isNaN(v) && v > 0) {
-                      const next = [...presetAmounts];
-                      next[idx] = v;
-                      setPresetAmounts(next);
-                    }
+                    const val = e.target.value;
+                    const next = [...presetAmounts];
+                    next[idx] = val === '' ? '' : Math.max(0, parseInt(val));
+                    setPresetAmounts(next);
                   }}
                   style={{
                     padding: '8px 12px',
@@ -545,7 +545,10 @@ export const DonationFormSettings: React.FC = () => {
             <input
               type="number"
               value={minAmount}
-              onChange={(e) => setMinAmount(Number(e.target.value))}
+              onChange={(e) => {
+                const val = e.target.value;
+                setMinAmount(val === '' ? '' : Math.max(0, parseInt(val)));
+              }}
               style={{
                 padding: '12px 14px',
                 border: '1px solid #DBDBDB',
@@ -560,7 +563,10 @@ export const DonationFormSettings: React.FC = () => {
             <input
               type="number"
               value={maxAmount}
-              onChange={(e) => setMaxAmount(Number(e.target.value))}
+              onChange={(e) => {
+                const val = e.target.value;
+                setMaxAmount(val === '' ? '' : Math.max(0, parseInt(val)));
+              }}
               style={{
                 padding: '12px 14px',
                 border: '1px solid #DBDBDB',

@@ -8,6 +8,14 @@ import { AramTextarea } from '../aram/AramTextarea';
 import { AramSelect } from '../aram/AramSelect';
 import { ArrowLeft } from 'lucide-react';
 import { validateForm as globalValidateForm, validationRules, validationMessages, sanitizeInput, countryPhoneConfigs, getMobileValidation } from '../../utils/validations';
+import { useDonationFormStatus } from '../../hooks/useDonationFormStatus';
+import { useCountries } from '../../hooks/useCountries';
+import { getCountryPhonePrefix } from '../../utils/countryPhonePrefixes';
+interface DonateGuestProps {
+  onPay: (data: any) => void;
+  onBack: () => void;
+  api?: { donorsApi: { donorsControllerGuestDonate: (body: any) => Promise<{ data?: { donorId?: number }; response?: { status?: number; data?: { message?: string } } }> } };
+}
 import { useApi } from '@/app/context/ApiContext';
 
 const donationTypes = [
@@ -39,6 +47,22 @@ export function DonateGuest() {
   const [country, setCountry] = useState('india');
   const [errors, setErrors] = useState<any>({});
   const [submitting, setSubmitting] = useState(false);
+  const { checkAndNotify, panRequired, panThreshold, addressRequired, presetAmounts, minAmount, maxAmount } = useDonationFormStatus();
+  const { countries, loading: countriesLoading } = useCountries();
+
+  // Calculate if PAN field should be shown
+  const shouldShowPAN = React.useMemo(() => {
+    if (panRequired === 'never') return false;
+    if (panRequired === 'always') return true;
+    if (panRequired === 'threshold') {
+      const currentAmount = selectedPreset || Number(customAmount) || 0;
+      return currentAmount >= panThreshold;
+    }
+    if (panRequired === 'optional') {
+      return country === 'india';
+    }
+    return false;
+  }, [panRequired, panThreshold, selectedPreset, customAmount, country]);
 
   // Erase mobile number when country changes
   React.useEffect(() => {
@@ -75,8 +99,6 @@ export function DonateGuest() {
   };
 
   const amount = selectedPreset || Number(customAmount) || 0;
-  const MIN_AMOUNT = 100;
-  const MAX_AMOUNT = 50000;
 
   const validateForm = (): boolean => {
     const formData = {
@@ -90,27 +112,45 @@ export function DonateGuest() {
       country,
     };
 
-    const fieldRules = {
+    const fieldRules: any = {
       name: validationRules.name,
       email: validationRules.email,
       mobile: getMobileValidation(country),
-      address: validationRules.address,
-      panNumber: validationRules.panNumber,
-      amount: validationRules.amount,
+      amount: { required: true, min: minAmount, max: maxAmount },
       donationType: { required: true },
       country: { required: true },
     };
 
-    const fieldMessages = {
+    if (addressRequired) {
+      fieldRules.address = validationRules.address;
+    }
+
+    // Only require PAN if it should be shown
+    if (shouldShowPAN) {
+      fieldRules.panNumber = validationRules.panNumber;
+    }
+
+    const fieldMessages: any = {
       name: validationMessages.name,
       email: validationMessages.email,
       mobile: validationMessages.mobile,
-      address: validationMessages.address,
-      panNumber: validationMessages.panNumber,
-      amount: validationMessages.amount,
+      amount: { 
+        required: 'Amount is required', 
+        min: `Minimum donation amount is ₹${minAmount}`, 
+        max: `Maximum donation amount is ₹${maxAmount}` 
+      },
       donationType: { required: 'Please select a donation type' },
       country: { required: 'Country is required' },
     };
+
+    if (addressRequired) {
+      fieldMessages.address = validationMessages.address;
+    }
+
+    // Only add PAN messages if it should be shown
+    if (shouldShowPAN) {
+      fieldMessages.panNumber = validationMessages.panNumber;
+    }
 
     const newErrors = globalValidateForm(formData, fieldRules, fieldMessages);
     setErrors(newErrors);
@@ -118,6 +158,7 @@ export function DonateGuest() {
   };
 
   const handlePay = async () => {
+    if (!checkAndNotify()) return;
     if (!validateForm()) return;
 
     if (api?.donorsApi) {
@@ -128,7 +169,7 @@ export function DonateGuest() {
           email: email.trim(),
           mobile: mobile.trim(),
           address: address.trim(),
-          pan: panNumber.trim().toUpperCase(),
+          pan: shouldShowPAN ? panNumber.trim().toUpperCase() : undefined,
           country: country || 'India',
           amount,
           donationType,
@@ -222,21 +263,23 @@ export function DonateGuest() {
                 onChange={handleMobileChange}
                 required
                 error={errors.mobile}
-                prefix={countryPhoneConfigs[country]?.prefix}
+                prefix={getCountryPhonePrefix(country)}
               />
             </div>
 
-            <AramTextarea
-              label="Address"
-              placeholder="Enter your complete address"
-              value={address}
-              onChange={(val) => setAddress(val.slice(0, 250))}
-              required
-              error={errors.address}
-              rows={3}
-              maxLength={250}
-              helperText={`${address.length}/250 characters`}
-            />
+            {addressRequired && (
+              <AramTextarea
+                label="Address"
+                placeholder="Enter your complete address"
+                value={address}
+                onChange={(val) => setAddress(val.slice(0, 250))}
+                required
+                error={errors.address}
+                rows={3}
+                maxLength={250}
+                helperText={`${address.length}/250 characters`}
+              />
+            )}
           </div>
 
           {/* Donation Details */}
@@ -249,12 +292,13 @@ export function DonateGuest() {
                 Donation Amount <span className="text-[#F36A4F]">*</span>
               </label>
               <div className="flex flex-wrap gap-[12px]">
-                {amountPresets.map((preset) => (
+                {presetAmounts.map((preset) => (
                   <button
                     key={preset}
                     onClick={() => {
                       setSelectedPreset(preset);
                       setCustomAmount('');
+                      setPanNumber(''); // Clear PAN on amount change
                     }}
                     className={`h-[44px] px-[24px] rounded-[999px] border transition-colors ${selectedPreset === preset
                       ? 'border-[#F36A4F] bg-[#FEF1EE] text-[#F36A4F]'
@@ -273,24 +317,27 @@ export function DonateGuest() {
                   if (/^\d*$/.test(val)) {
                     setCustomAmount(val);
                     setSelectedPreset(null);
+                    setPanNumber(''); // Clear PAN on amount change
                   }
                 }}
                 type="number"
                 error={errors.amount}
-                helperText={`Min: ₹${MIN_AMOUNT}, Max: ₹${MAX_AMOUNT}`}
+                helperText={`Min: ₹${minAmount}, Max: ₹${maxAmount}`}
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
-              <AramInput
-                label="PAN Number"
-                placeholder="AAAAA0000A"
-                value={panNumber}
-                onChange={(value: string) => setPanNumber(sanitizeInput.panNumber(value))}
-                required
-                error={errors.panNumber}
-                helperText="Format: AAAAA0000A"
-              />
+              {shouldShowPAN && (
+                <AramInput
+                  label="PAN Number"
+                  placeholder="AAAAA0000A"
+                  value={panNumber}
+                  onChange={(value: string) => setPanNumber(sanitizeInput.panNumber(value))}
+                  required
+                  error={errors.panNumber}
+                  helperText="Format: AAAAA0000A"
+                />
+              )}
 
               <AramSelect
                 label="Country"
@@ -327,7 +374,7 @@ export function DonateGuest() {
 
           {/* Action Buttons */}
           <div className="flex gap-[12px]">
-            <AramButton onClick={handlePay} variant="primary" className="flex-1 cursor-pointer" disabled={amount < MIN_AMOUNT || submitting}>
+            <AramButton onClick={handlePay} variant="primary" className="flex-1 cursor-pointer" disabled={amount < minAmount || submitting}>
               {submitting ? 'Please wait...' : `Pay ₹${amount.toLocaleString()}`}
             </AramButton>
             <AramButton onClick={handleReset} variant="secondary" className="cursor-pointer">

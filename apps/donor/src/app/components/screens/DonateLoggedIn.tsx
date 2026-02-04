@@ -5,6 +5,8 @@ import { AramCard } from '@/app/components/aram/AramCard';
 import { AramInput } from '@/app/components/aram/AramInput';
 import { AramTextarea } from '@/app/components/aram/AramTextarea';
 import { AramSelect } from '@/app/components/aram/AramSelect';
+import { useDonationFormStatus } from '@/app/hooks/useDonationFormStatus';
+import { useCountries } from '@/app/hooks/useCountries';
 import { useApi } from '@/app/context/ApiContext';
 
 interface DonorProfile {
@@ -26,15 +28,6 @@ const donationTypes = [
   { value: 'medical', label: 'Medical Fund' },
   { value: 'sairam-sap', label: 'Sairam SAP' },
 ];
-
-const countries = [
-  { value: 'india', label: 'India' },
-  { value: 'usa', label: 'United States' },
-  { value: 'uk', label: 'United Kingdom' },
-  { value: 'canada', label: 'Canada' },
-];
-
-const amountPresets = [500, 1000, 2500, 5000];
 
 // Helper functions for localStorage
 const DONATION_PREFS_KEY = 'aram_last_donation_prefs';
@@ -66,6 +59,7 @@ export function DonateLoggedIn() {
   const [customAmount, setCustomAmount] = useState('');
   const [address, setAddress] = useState('');
   const [panNumber, setPanNumber] = useState('');
+  const [panFromProfile, setPanFromProfile] = useState(false); // Track if PAN came from profile
   const [donationType, setDonationType] = useState('');
   const [country, setCountry] = useState('india');
   const [errors, setErrors] = useState<any>({});
@@ -73,6 +67,22 @@ export function DonateLoggedIn() {
   const [displayName, setDisplayName] = useState(userName);
   const [displayEmail, setDisplayEmail] = useState(userEmail);
   const [displayPhone, setDisplayPhone] = useState(userPhone);
+  const { checkAndNotify, panRequired, panThreshold, addressRequired, presetAmounts, minAmount, maxAmount } = useDonationFormStatus();
+  const { countries, loading: countriesLoading } = useCountries();
+
+  // Calculate if PAN field should be shown
+  const shouldShowPAN = React.useMemo(() => {
+    if (panRequired === 'never') return false;
+    if (panRequired === 'always') return true;
+    if (panRequired === 'threshold') {
+      const currentAmount = selectedPreset || Number(customAmount) || 0;
+      return currentAmount >= panThreshold;
+    }
+    if (panRequired === 'optional') {
+      return country === 'india';
+    }
+    return false;
+  }, [panRequired, panThreshold, selectedPreset, customAmount, country]);
 
   useEffect(() => {
     setDisplayName(userName);
@@ -91,7 +101,10 @@ export function DonateLoggedIn() {
         const donor = (res as { data?: any })?.data;
         if (donor) {
           if (donor.location) setAddress(donor.location);
-          if (donor.pan) setPanNumber(donor.pan);
+          if (donor.pan) {
+            setPanNumber(donor.pan);
+            setPanFromProfile(true); // Mark that PAN came from profile
+          }
           if (donor.country) setCountry(donor.country.toLowerCase());
           if (donor.name) setDisplayName(donor.name);
           if (donor.email) setDisplayEmail(donor.email);
@@ -101,7 +114,7 @@ export function DonateLoggedIn() {
           if (donor.donationAmount) {
             const amount = Number(donor.donationAmount);
             // Check if it matches a preset
-            const matchingPreset = amountPresets.find(p => p === amount);
+            const matchingPreset = presetAmounts.find(p => p === amount);
             if (matchingPreset) {
               setSelectedPreset(matchingPreset);
               setCustomAmount('');
@@ -124,7 +137,7 @@ export function DonateLoggedIn() {
         // Delay slightly for smoother transition if it's too fast
         setTimeout(() => setProfileLoaded(true), 500);
       });
-  }, [api?.donorsApi]);
+  }, [api?.donorsApi, presetAmounts]);
 
   // Restore last donation preferences on mount
   useEffect(() => {
@@ -132,7 +145,7 @@ export function DonateLoggedIn() {
     if (lastPrefs) {
       const { amount, donationType: lastType } = lastPrefs;
       // Check if the amount matches a preset
-      const matchingPreset = amountPresets.find(p => p === amount);
+      const matchingPreset = presetAmounts.find(p => p === amount);
       if (matchingPreset) {
         setSelectedPreset(matchingPreset);
       } else {
@@ -142,22 +155,28 @@ export function DonateLoggedIn() {
         setDonationType(lastType);
       }
     }
-  }, []);
+  }, [presetAmounts]);
 
   const amount = selectedPreset || Number(customAmount) || 0;
-  const MIN_AMOUNT = 100;
-  const MAX_AMOUNT = 50000;
 
   const validateForm = () => {
     const newErrors: any = {};
 
-    if (amount < MIN_AMOUNT) newErrors.amount = `Minimum donation amount is ₹${MIN_AMOUNT}`;
-    if (amount > MAX_AMOUNT) newErrors.amount = `Maximum donation amount is ₹${MAX_AMOUNT}`;
-    if (!address.trim()) newErrors.address = 'Address is required';
-    if (!panNumber.trim()) newErrors.panNumber = 'PAN number is required';
-    else if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panNumber.toUpperCase())) {
-      newErrors.panNumber = 'Invalid PAN format (e.g., AAAAA0000A)';
+    if (amount < minAmount) newErrors.amount = `Minimum donation amount is ₹${minAmount}`;
+    if (amount > maxAmount) newErrors.amount = `Maximum donation amount is ₹${maxAmount}`;
+    
+    if (addressRequired && !address.trim()) {
+      newErrors.address = 'Address is required';
     }
+    
+    // Only validate PAN if it should be shown
+    if (shouldShowPAN) {
+      if (!panNumber.trim()) newErrors.panNumber = 'PAN number is required';
+      else if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panNumber.toUpperCase())) {
+        newErrors.panNumber = 'Invalid PAN format (e.g., AAAAA0000A)';
+      }
+    }
+    
     if (!donationType) newErrors.donationType = 'Please select a donation type';
     if (!country) newErrors.country = 'Country is required';
 
@@ -166,14 +185,16 @@ export function DonateLoggedIn() {
   };
 
   const handlePay = () => {
+    if (!checkAndNotify()) return;
+    
     if (validateForm()) {
       // Save donation preferences for next time
       saveLastDonationPrefs(amount, donationType);
 
       const donationData = {
         amount,
-        address,
-        panNumber: panNumber.toUpperCase(),
+        address: addressRequired ? address : '',
+        panNumber: shouldShowPAN ? panNumber.toUpperCase() : '',
         donationType,
         country,
         name: displayName,
@@ -248,16 +269,18 @@ export function DonateLoggedIn() {
               disabled
               helperText="Verified registered mobile"
             />
-            <AramInput
-              label="PAN Number"
-              placeholder="AAAAA0000A"
-              value={panNumber}
-              onChange={(val) => setPanNumber(val.toUpperCase())}
-              required
-              disabled={!!panNumber}
-              error={errors.panNumber}
-              helperText={panNumber ? "PAN from your profile" : "Format: AAAAA0000A"}
-            />
+            {shouldShowPAN && (
+              <AramInput
+                label="PAN Number"
+                placeholder="AAAAA0000A"
+                value={panNumber}
+                onChange={(val) => setPanNumber(val.toUpperCase())}
+                required
+                disabled={panFromProfile} // Only disable if PAN came from profile
+                error={errors.panNumber}
+                helperText={panFromProfile ? "PAN from your profile" : "Format: AAAAA0000A"}
+              />
+            )}
           </div>
 
           <hr className="border-[#DBDBDB]" />
@@ -268,12 +291,16 @@ export function DonateLoggedIn() {
               Donation Amount <span className="text-[#F36A4F]">*</span>
             </label>
             <div className="flex flex-wrap gap-[12px]">
-              {amountPresets.map((preset) => (
+              {presetAmounts.map((preset) => (
                 <button
                   key={preset}
                   onClick={() => {
                     setSelectedPreset(preset);
                     setCustomAmount('');
+                    // Clear PAN only if it was manually entered (not from profile)
+                    if (!panFromProfile) {
+                      setPanNumber('');
+                    }
                   }}
                   className={`h-[44px] px-[24px] rounded-[16px] border transition-all ${selectedPreset === preset
                     ? 'border-[#F36A4F] bg-[#FEF1EE] text-[#F36A4F] scale-105 shadow-sm'
@@ -291,10 +318,14 @@ export function DonateLoggedIn() {
               onChange={(val) => {
                 setCustomAmount(val);
                 setSelectedPreset(null);
+                // Clear PAN only if it was manually entered (not from profile)
+                if (!panFromProfile) {
+                  setPanNumber('');
+                }
               }}
               type="number"
               error={errors.amount}
-              helperText={`Min: ₹${MIN_AMOUNT}, Max: ₹${MAX_AMOUNT}`}
+              helperText={`Min: ₹${minAmount}, Max: ₹${maxAmount}`}
             />
           </div>
 
@@ -316,23 +347,25 @@ export function DonateLoggedIn() {
               value={country}
               onChange={setCountry}
               options={countries}
-              required
+              disabled
               error={errors.country}
             />
           </div>
 
           {/* Address */}
-          <AramTextarea
-            label="Address"
-            placeholder="Enter your complete address for receipt generation"
-            value={address}
-            onChange={(val) => setAddress(val.slice(0, 250))}
-            required
-            error={errors.address}
-            rows={3}
-            maxLength={250}
-            helperText={`${address.length}/250 characters`}
-          />
+          {addressRequired && (
+            <AramTextarea
+              label="Address"
+              placeholder="Enter your complete address for receipt generation"
+              value={address}
+              onChange={(val) => setAddress(val.slice(0, 250))}
+              required
+              error={errors.address}
+              rows={3}
+              maxLength={250}
+              helperText={`${address.length}/250 characters`}
+            />
+          )}
 
           {/* Info Messages */}
           <div className="flex flex-col gap-[8px] p-[16px] bg-[#FEF1EE] rounded-[16px] border border-[#FCD9D3]">
@@ -348,7 +381,7 @@ export function DonateLoggedIn() {
 
           {/* Action Buttons */}
           <div className="flex gap-[16px]">
-            <AramButton onClick={handlePay} variant="primary" className="flex-1 h-[56px] text-[16px]" disabled={amount < MIN_AMOUNT}>
+            <AramButton onClick={handlePay} variant="primary" className="flex-1 h-[56px] text-[16px]" disabled={amount < minAmount}>
               Pay ₹{amount.toLocaleString()}
             </AramButton>
             <AramButton onClick={handleReset} variant="secondary" className="px-[32px]">

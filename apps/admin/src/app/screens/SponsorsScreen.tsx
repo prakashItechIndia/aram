@@ -95,7 +95,7 @@ export function SponsorsScreen() {
         setFilterLoading(true);
       }
       setError(null);
-      
+
       // Build query params
       const params = new URLSearchParams();
       if (filterTier) params.append('tier', filterTier);
@@ -103,16 +103,16 @@ export function SponsorsScreen() {
       if (filterStatus) params.append('status', filterStatus);
       if (filterSearch) params.append('search', filterSearch);
       if (filterFeaturedOnly) params.append('featuredOnly', 'true');
-      
+
       const queryString = params.toString();
       const url = `/website/sponsors${queryString ? `?${queryString}` : ''}`;
-      
+
       const res = await apiFetch(url);
       if (!res.ok) throw new Error('Failed to fetch sponsors');
-      
+
       const list = await res.json();
       setSponsors(Array.isArray(list) ? list.map((row: Record<string, unknown>) => mapApiToSponsor(row)) : []);
-      
+
       if (isInitialLoad) {
         setIsInitialLoad(false);
       }
@@ -191,8 +191,8 @@ export function SponsorsScreen() {
       }
 
       // Use API base URL
-      const apiBase = window.location.origin.includes('5173') 
-        ? 'http://localhost:3000/api' 
+      const apiBase = window.location.origin.includes('5173')
+        ? 'http://localhost:3000/api'
         : '/api';
 
       const res = await fetch(`${apiBase}/website/sponsors/upload-logo`, {
@@ -241,7 +241,7 @@ export function SponsorsScreen() {
         showOnHomepage,
         addedBy: 'Admin', // You can replace with actual user info if available
       });
-      
+
       if (selectedSponsor) {
         const res = await apiFetch(`/website/sponsors/${selectedSponsor.id}`, { method: 'PATCH', body });
         if (!res.ok) throw new Error(await res.text());
@@ -356,452 +356,454 @@ export function SponsorsScreen() {
         <div className="py-12 text-center text-[14px] text-[#6E6E6E]">Loading sponsors...</div>
       ) : (
         <>
-      {/* Summary Cards */}
-      <div className="grid grid-cols-4 gap-[16px] mb-[24px]">
-        <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
-          <p className="text-[13px] text-[#6E6E6E] mb-1">Total Sponsors</p>
-          <p className="text-[24px] font-semibold text-[#0D0D0D]">{sponsors.length}</p>
-        </div>
-
-        <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
-          <p className="text-[13px] text-[#6E6E6E] mb-1">Active</p>
-          <p className="text-[24px] font-semibold text-[#2E7D32]">
-            {sponsors.filter((s) => s.active).length}
-          </p>
-        </div>
-
-        <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
-          <p className="text-[13px] text-[#6E6E6E] mb-1">Featured</p>
-          <p className="text-[24px] font-semibold text-[#F57F17]">
-            {sponsors.filter((s) => s.featured).length}
-          </p>
-        </div>
-
-        <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
-          <p className="text-[13px] text-[#6E6E6E] mb-1">Platinum Tier</p>
-          <p className="text-[24px] font-semibold text-[#424242]">
-            {sponsors.filter((s) => s.tier === 'Platinum').length}
-          </p>
-        </div>
-      </div>
-
-      {/* Filters Panel */}
-      {showFilters && (
-        <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px] mb-[24px]">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[14px] font-semibold text-[#0D0D0D]">Filters</h3>
-            <button onClick={resetFilters} className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
-              Reset All
-            </button>
-          </div>
-
-          <div className="grid grid-cols-4 gap-[16px]">
-            <div>
-              <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">Tier</label>
-              <select 
-                value={filterTier}
-                onChange={(e) => setFilterTier(e.target.value)}
-                className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
-              >
-                <option value="">All Tiers</option>
-                {TIERS.map((tier) => (
-                  <option key={tier} value={tier}>{tier}</option>
-                ))}
-              </select>
+          {/* Summary Cards */}
+          <div className="grid grid-cols-4 gap-[16px] mb-[24px]">
+            <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
+              <p className="text-[13px] text-[#6E6E6E] mb-1">Total Sponsors</p>
+              <p className="text-[24px] font-semibold text-[#0D0D0D]">{sponsors.length}</p>
             </div>
 
-            <div>
-              <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                Contribution Type
-              </label>
-              <select 
-                value={filterContributionType}
-                onChange={(e) => setFilterContributionType(e.target.value)}
-                className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
-              >
-                <option value="">All Types</option>
-                {CONTRIBUTION_TYPES.map((type) => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">Status</label>
-              <select 
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
-              >
-                <option value="">All</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">Search</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6E6E6E]" />
-                <input
-                  type="text"
-                  value={filterSearch}
-                  onChange={(e) => setFilterSearch(e.target.value)}
-                  placeholder="Sponsor name..."
-                  className="w-full h-[44px] pl-[36px] pr-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <label className="flex items-center gap-2">
-              <input 
-                type="checkbox" 
-                checked={filterFeaturedOnly}
-                onChange={(e) => setFilterFeaturedOnly(e.target.checked)}
-                className="w-4 h-4 accent-[#F36A4F]" 
-              />
-              <span className="text-[13px] text-[#3D3D3D]">Featured only</span>
-            </label>
-          </div>
-        </div>
-      )}
-
-      {/* Sponsors Grid */}
-      <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[24px]">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[14px] font-semibold text-[#0D0D0D]">All Sponsors</h3>
-          <p className="text-[13px] text-[#6E6E6E]">Drag to reorder</p>
-        </div>
-
-        <div className="space-y-3">
-          {filterLoading ? (
-            <div className="text-center py-12">
-              <div className="inline-block w-8 h-8 border-4 border-[#F36A4F] border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-[14px] text-[#6E6E6E] mt-4">Loading...</p>
-            </div>
-          ) : sponsors.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-[14px] text-[#6E6E6E]">No sponsors found matching your filters.</p>
-              {(filterTier || filterContributionType || filterStatus || filterSearch || filterFeaturedOnly) && (
-                <button 
-                  onClick={resetFilters}
-                  className="mt-2 text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium"
-                >
-                  Clear all filters
-                </button>
-              )}
-            </div>
-          ) : (
-            sponsors.map((sponsor) => (
-            <div
-              key={sponsor.id}
-              className="flex items-center gap-4 p-[16px] bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB] hover:bg-white transition-colors"
-            >
-              <button className="cursor-grab active:cursor-grabbing">
-                <GripVertical className="w-5 h-5 text-[#6E6E6E]" />
-              </button>
-
-              <div className="w-16 h-16 bg-white rounded-[8px] border border-[#DBDBDB] flex items-center justify-center overflow-hidden flex-shrink-0">
-                {sponsor.logo ? (
-                  <img src={sponsor.logo} alt={sponsor.name} className="w-full h-full object-contain p-2" />
-                ) : (
-                  <ImageIcon className="w-6 h-6 text-[#DBDBDB]" />
-                )}
-              </div>
-
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="text-[14px] font-semibold text-[#0D0D0D]">{sponsor.name}</h4>
-                  {sponsor.featured && (
-                    <Star className="w-4 h-4 text-[#F57F17] fill-[#F57F17]" />
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`px-2 py-0.5 text-[11px] font-medium rounded ${getTierColor(sponsor.tier)}`}>
-                    {sponsor.tier}
-                  </span>
-                  <span className="text-[12px] text-[#6E6E6E]">{sponsor.contributionType}</span>
-                  {sponsor.website && (
-                    <a
-                      href={sponsor.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[12px] text-[#F36A4F] hover:text-[#E55A3F] flex items-center gap-1"
-                    >
-                      <LinkIcon className="w-3 h-3" />
-                      Website
-                    </a>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                  {sponsor.active ? (
-                    <Eye className="w-4 h-4 text-[#2E7D32]" />
-                  ) : (
-                    <EyeOff className="w-4 h-4 text-[#6E6E6E]" />
-                  )}
-                  <span className="text-[12px] text-[#6E6E6E]">
-                    {sponsor.active ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
-
-                <button
-                  onClick={() => handleEdit(sponsor)}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
-                  title="Edit"
-                >
-                  <Edit className="w-4 h-4 text-[#3D3D3D]" />
-                </button>
-                <button
-                  onClick={() => handleDelete(sponsor)}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#FFEBEE]"
-                  title="Delete"
-                >
-                  <Trash2 className="w-4 h-4 text-[#C62828]" />
-                </button>
-              </div>
-            </div>
-          )))}
-        </div>
-      </div>
-
-      {/* Sponsor Editor Modal */}
-      {showEditor && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-[24px]">
-          <div className="bg-white rounded-[16px] w-full max-w-[720px]">
-            <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
-              <h3 className="text-[18px] font-semibold text-[#0D0D0D]">
-                {selectedSponsor ? 'Edit Sponsor' : 'Add New Sponsor'}
-              </h3>
-              <button
-                onClick={() => setShowEditor(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
-              >
-                <X className="w-5 h-5 text-[#3D3D3D]" />
-              </button>
-            </div>
-
-            <div className="p-[24px] space-y-4">
-              {/* Logo Upload */}
-              <div>
-                <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                  Logo * (Recommended: 400x400px)
-                </label>
-                <div className="flex items-center gap-4">
-                  <div className="w-24 h-24 bg-[#F8F8F8] rounded-[12px] border-2 border-dashed border-[#DBDBDB] flex items-center justify-center">
-                    {sponsorLogo ? (
-                      <img
-                        src={sponsorLogo}
-                        alt="Logo preview"
-                        className="w-full h-full object-contain p-2"
-                      />
-                    ) : (
-                      <ImageIcon className="w-8 h-8 text-[#DBDBDB]" />
-                    )}
-                  </div>
-                  <input
-                    type="file"
-                    id="sponsor-logo-upload"
-                    accept="image/jpeg,image/png,image/svg+xml,image/webp"
-                    onChange={handleLogoUpload}
-                    className="hidden"
-                    disabled={uploading}
-                  />
-                  <label
-                    htmlFor="sponsor-logo-upload"
-                    className={`h-[44px] px-[20px] rounded-full border border-[#DBDBDB] ${
-                      uploading ? 'bg-[#F3F3F3] cursor-not-allowed' : 'hover:bg-[#F3F3F3] cursor-pointer'
-                    } text-[14px] font-medium text-[#3D3D3D] flex items-center gap-2`}
-                  >
-                    <Upload className="w-4 h-4" />
-                    {uploading ? 'Uploading...' : 'Upload Logo'}
-                  </label>
-                  <p className="text-[12px] text-[#6E6E6E]">
-                    JPG, PNG or SVG. Max 2MB.
-                    <br />
-                    Auto-resized to standard dimensions
-                  </p>
-                </div>
-              </div>
-
-              {/* Sponsor Details */}
-              <div className="grid grid-cols-2 gap-[16px]">
-                <div className="col-span-2">
-                  <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                    Sponsor Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={sponsorName}
-                    onChange={(e) => setSponsorName(e.target.value)}
-                    className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
-                    placeholder="e.g., TCS Foundation"
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                    Website URL (Optional)
-                  </label>
-                  <input
-                    type="url"
-                    value={sponsorWebsite}
-                    onChange={(e) => setSponsorWebsite(e.target.value)}
-                    className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
-                    placeholder="https://www.sponsor.com"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                    Contribution Type *
-                  </label>
-                  <select
-                    value={contributionType}
-                    onChange={(e) => setContributionType(e.target.value as any)}
-                    className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
-                  >
-                    {CONTRIBUTION_TYPES.map((type) => (
-                      <option key={type}>{type}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                    Sponsor Tier *
-                  </label>
-                  <select
-                    value={tier}
-                    onChange={(e) => setTier(e.target.value as any)}
-                    className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
-                  >
-                    {TIERS.map((t) => (
-                      <option key={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="col-span-2">
-                  <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                    Display Order
-                  </label>
-                  <input
-                    type="number"
-                    value={displayOrder}
-                    onChange={(e) => setDisplayOrder(parseInt(e.target.value) || 0)}
-                    className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
-                    placeholder="0"
-                  />
-                  <p className="text-[12px] text-[#6E6E6E] mt-1">
-                    Lower numbers appear first (0 = highest priority)
-                  </p>
-                </div>
-              </div>
-
-              {/* Toggles */}
-              <div className="space-y-3 pt-4 border-t border-[#DBDBDB]">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={isActive}
-                    onChange={(e) => setIsActive(e.target.checked)}
-                    className="w-4 h-4 accent-[#F36A4F]"
-                  />
-                  <span className="text-[13px] text-[#3D3D3D]">Active (visible on website)</span>
-                </label>
-
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={isFeatured}
-                    onChange={(e) => {
-                      setIsFeatured(e.target.checked);
-                      setShowOnHomepage(e.target.checked);
-                    }}
-                    className="w-4 h-4 accent-[#F36A4F]"
-                  />
-                  <span className="text-[13px] text-[#3D3D3D]">
-                    Featured sponsor (show on homepage)
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            <div className="p-[24px] border-t border-[#DBDBDB] flex justify-end gap-3">
-              <button
-                onClick={() => setShowEditor(false)}
-                className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={!sponsorName}
-                className="h-[44px] px-[20px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-white text-[14px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {selectedSponsor ? 'Update Sponsor' : 'Add Sponsor'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && sponsorToDelete && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-[16px] w-[480px]">
-            <div className="p-[24px] border-b border-[#DBDBDB]">
-              <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Delete Sponsor</h3>
-              <p className="text-[13px] text-[#6E6E6E] mt-1">
-                Please provide a reason for deleting this sponsor
+            <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
+              <p className="text-[13px] text-[#6E6E6E] mb-1">Active</p>
+              <p className="text-[24px] font-semibold text-[#2E7D32]">
+                {sponsors.filter((s: Sponsor) => s.active).length}
               </p>
             </div>
 
-            <div className="p-[24px]">
-              <div className="mb-4 p-[12px] bg-[#FFEBEE] rounded-[8px]">
-                <p className="text-[13px] text-[#C62828]">
-                  You are about to delete: <strong>{sponsorToDelete.name}</strong>
-                </p>
-              </div>
-
-              <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                Reason for Deletion *
-              </label>
-              <textarea
-                value={deleteReason}
-                onChange={(e) => setDeleteReason(e.target.value)}
-                className="w-full h-[100px] px-[12px] py-[10px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F] resize-none"
-                placeholder="e.g., Partnership ended, requested by sponsor"
-              />
+            <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
+              <p className="text-[13px] text-[#6E6E6E] mb-1">Featured</p>
+              <p className="text-[24px] font-semibold text-[#F57F17]">
+                {sponsors.filter((s: Sponsor) => s.featured).length}
+              </p>
             </div>
 
-            <div className="p-[24px] border-t border-[#DBDBDB] flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setDeleteReason('');
-                  setSponsorToDelete(null);
-                }}
-                className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                disabled={!deleteReason.trim()}
-                className="h-[44px] px-[20px] rounded-full bg-[#C62828] hover:bg-[#B71C1C] text-white text-[14px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Confirm Delete
-              </button>
+            <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
+              <p className="text-[13px] text-[#6E6E6E] mb-1">Platinum Tier</p>
+              <p className="text-[24px] font-semibold text-[#424242]">
+                {sponsors.filter((s: Sponsor) => s.tier === 'Platinum').length}
+              </p>
             </div>
           </div>
-        </div>
-      )}
+
+          {/* Filters Panel */}
+          {showFilters && (
+            <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px] mb-[24px]">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-[14px] font-semibold text-[#0D0D0D]">Filters</h3>
+                <button onClick={resetFilters} className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
+                  Reset All
+                </button>
+              </div>
+
+              <div className="grid grid-cols-4 gap-[16px]">
+                <div>
+                  <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">Tier</label>
+                  <select
+                    value={filterTier}
+                    onChange={(e) => setFilterTier(e.target.value)}
+                    className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                  >
+                    <option value="">All Tiers</option>
+                    {TIERS.map((tier) => (
+                      <option key={tier} value={tier}>{tier}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                    Contribution Type
+                  </label>
+                  <select
+                    value={filterContributionType}
+                    onChange={(e) => setFilterContributionType(e.target.value)}
+                    className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                  >
+                    <option value="">All Types</option>
+                    {CONTRIBUTION_TYPES.map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">Status</label>
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                  >
+                    <option value="">All</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">Search</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6E6E6E]" />
+                    <input
+                      type="text"
+                      value={filterSearch}
+                      onChange={(e) => setFilterSearch(e.target.value)}
+                      placeholder="Sponsor name..."
+                      className="w-full h-[44px] pl-[36px] pr-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={filterFeaturedOnly}
+                    onChange={(e) => setFilterFeaturedOnly(e.target.checked)}
+                    className="w-4 h-4 accent-[#F36A4F]"
+                  />
+                  <span className="text-[13px] text-[#3D3D3D]">Featured only</span>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* Sponsors Grid */}
+          <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[24px]">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[14px] font-semibold text-[#0D0D0D]">All Sponsors</h3>
+              <p className="text-[13px] text-[#6E6E6E]">Drag to reorder</p>
+            </div>
+
+            <div className="space-y-3">
+              {filterLoading ? (
+                <div className="text-center py-12">
+                  <div className="inline-block w-8 h-8 border-4 border-[#F36A4F] border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-[14px] text-[#6E6E6E] mt-4">Loading...</p>
+                </div>
+              ) : sponsors.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-[14px] text-[#6E6E6E]">No sponsors found matching your filters.</p>
+                  {(filterTier || filterContributionType || filterStatus || filterSearch || filterFeaturedOnly) && (
+                    <button
+                      onClick={resetFilters}
+                      className="mt-2 text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium"
+                    >
+                      Clear all filters
+                    </button>
+                  )}
+                </div>
+              ) : (
+                sponsors.map((sponsor: Sponsor) => (
+                  <div
+                    key={sponsor.id}
+                    className="flex items-center gap-4 p-[16px] bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB] hover:bg-white transition-colors"
+                  >
+                    <button className="cursor-grab active:cursor-grabbing">
+                      <GripVertical className="w-5 h-5 text-[#6E6E6E]" />
+                    </button>
+
+                    <div className="w-16 h-16 bg-white rounded-[8px] border border-[#DBDBDB] flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {sponsor.logo ? (
+                        <img src={sponsor.logo} alt={sponsor.name} className="w-full h-full object-contain p-2" />
+                      ) : (
+                        <ImageIcon className="w-6 h-6 text-[#DBDBDB]" />
+                      )}
+                    </div>
+
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="text-[14px] font-semibold text-[#0D0D0D]">{sponsor.name}</h4>
+                        {sponsor.featured && (
+                          <Star className="w-4 h-4 text-[#F57F17] fill-[#F57F17]" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 text-[11px] font-medium rounded ${getTierColor(sponsor.tier)}`}>
+                          {sponsor.tier}
+                        </span>
+                        <span className="text-[12px] text-[#6E6E6E]">{sponsor.contributionType}</span>
+                        {sponsor.website && (
+                          <a
+                            href={sponsor.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[12px] text-[#F36A4F] hover:text-[#E55A3F] flex items-center gap-1"
+                          >
+                            <LinkIcon className="w-3 h-3" />
+                            Website
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        {sponsor.active ? (
+                          <Eye className="w-4 h-4 text-[#2E7D32]" />
+                        ) : (
+                          <EyeOff className="w-4 h-4 text-[#6E6E6E]" />
+                        )}
+                        <span className="text-[12px] text-[#6E6E6E]">
+                          {sponsor.active ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => handleEdit(sponsor)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
+                        title="Edit"
+                      >
+                        <Edit className="w-4 h-4 text-[#3D3D3D]" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(sponsor)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#FFEBEE]"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4 text-[#C62828]" />
+                      </button>
+                    </div>
+                  </div>
+                )))}
+            </div>
+          </div>
+
+          {/* Sponsor Editor Modal */}
+          {showEditor && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-[24px]">
+              <div className="bg-white rounded-[16px] w-full max-w-[720px]">
+                <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
+                  <h3 className="text-[18px] font-semibold text-[#0D0D0D]">
+                    {selectedSponsor ? 'Edit Sponsor' : 'Add New Sponsor'}
+                  </h3>
+                  <button
+                    onClick={() => setShowEditor(false)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
+                  >
+                    <X className="w-5 h-5 text-[#3D3D3D]" />
+                  </button>
+                </div>
+
+                <div className="p-[24px] space-y-4">
+                  {/* Logo Upload */}
+                  <div>
+                    <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                      Logo * (Recommended: 400x400px)
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <div className="w-24 h-24 bg-[#F8F8F8] rounded-[12px] border-2 border-dashed border-[#DBDBDB] flex items-center justify-center">
+                        {sponsorLogo ? (
+                          <img
+                            src={sponsorLogo}
+                            alt="Logo preview"
+                            className="w-full h-full object-contain p-2"
+                          />
+                        ) : (
+                          <ImageIcon className="w-8 h-8 text-[#DBDBDB]" />
+                        )}
+                      </div>
+                      <input
+                        type="file"
+                        id="sponsor-logo-upload"
+                        accept="image/jpeg,image/png,image/svg+xml,image/webp"
+                        onChange={handleLogoUpload}
+                        className="hidden"
+                        disabled={uploading}
+                      />
+                      <label
+                        htmlFor="sponsor-logo-upload"
+                        className={`h-[44px] px-[20px] rounded-full border border-[#DBDBDB] ${uploading ? 'bg-[#F3F3F3] cursor-not-allowed' : 'hover:bg-[#F3F3F3] cursor-pointer'
+                          } text-[14px] font-medium text-[#3D3D3D] flex items-center gap-2`}
+                      >
+                        <Upload className="w-4 h-4" />
+                        {uploading ? 'Uploading...' : 'Upload Logo'}
+                      </label>
+                      <p className="text-[12px] text-[#6E6E6E]">
+                        JPG, PNG or SVG. Max 2MB.
+                        <br />
+                        Auto-resized to standard dimensions
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Sponsor Details */}
+                  <div className="grid grid-cols-2 gap-[16px]">
+                    <div className="col-span-2">
+                      <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                        Sponsor Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={sponsorName}
+                        onChange={(e) => setSponsorName(e.target.value)}
+                        className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                        placeholder="e.g., TCS Foundation"
+                      />
+                    </div>
+
+                    <div className="col-span-2">
+                      <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                        Website URL (Optional)
+                      </label>
+                      <input
+                        type="url"
+                        value={sponsorWebsite}
+                        onChange={(e) => setSponsorWebsite(e.target.value)}
+                        className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                        placeholder="https://www.sponsor.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                        Contribution Type *
+                      </label>
+                      <select
+                        value={contributionType}
+                        onChange={(e) => setContributionType(e.target.value as any)}
+                        className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                      >
+                        {CONTRIBUTION_TYPES.map((type) => (
+                          <option key={type}>{type}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                        Sponsor Tier *
+                      </label>
+                      <select
+                        value={tier}
+                        onChange={(e) => setTier(e.target.value as any)}
+                        className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                      >
+                        {TIERS.map((t) => (
+                          <option key={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="col-span-2">
+                      <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                        Display Order
+                      </label>
+                      <input
+                        type="number"
+                        value={displayOrder}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setDisplayOrder(val === '' ? '' : Math.max(0, parseInt(val)));
+                        }}
+                        className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                        placeholder="0"
+                      />
+                      <p className="text-[12px] text-[#6E6E6E] mt-1">
+                        Lower numbers appear first (0 = highest priority)
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Toggles */}
+                  <div className="space-y-3 pt-4 border-t border-[#DBDBDB]">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={isActive}
+                        onChange={(e) => setIsActive(e.target.checked)}
+                        className="w-4 h-4 accent-[#F36A4F]"
+                      />
+                      <span className="text-[13px] text-[#3D3D3D]">Active (visible on website)</span>
+                    </label>
+
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={isFeatured}
+                        onChange={(e) => {
+                          setIsFeatured(e.target.checked);
+                          setShowOnHomepage(e.target.checked);
+                        }}
+                        className="w-4 h-4 accent-[#F36A4F]"
+                      />
+                      <span className="text-[13px] text-[#3D3D3D]">
+                        Featured sponsor (show on homepage)
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="p-[24px] border-t border-[#DBDBDB] flex justify-end gap-3">
+                  <button
+                    onClick={() => setShowEditor(false)}
+                    className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={!sponsorName}
+                    className="h-[44px] px-[20px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-white text-[14px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {selectedSponsor ? 'Update Sponsor' : 'Add Sponsor'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Delete Confirmation Modal */}
+          {showDeleteModal && sponsorToDelete && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-[16px] w-[480px]">
+                <div className="p-[24px] border-b border-[#DBDBDB]">
+                  <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Delete Sponsor</h3>
+                  <p className="text-[13px] text-[#6E6E6E] mt-1">
+                    Please provide a reason for deleting this sponsor
+                  </p>
+                </div>
+
+                <div className="p-[24px]">
+                  <div className="mb-4 p-[12px] bg-[#FFEBEE] rounded-[8px]">
+                    <p className="text-[13px] text-[#C62828]">
+                      You are about to delete: <strong>{sponsorToDelete.name}</strong>
+                    </p>
+                  </div>
+
+                  <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                    Reason for Deletion *
+                  </label>
+                  <textarea
+                    value={deleteReason}
+                    onChange={(e) => setDeleteReason(e.target.value)}
+                    className="w-full h-[100px] px-[12px] py-[10px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F] resize-none"
+                    placeholder="e.g., Partnership ended, requested by sponsor"
+                  />
+                </div>
+
+                <div className="p-[24px] border-t border-[#DBDBDB] flex justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setDeleteReason('');
+                      setSponsorToDelete(null);
+                    }}
+                    className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    disabled={!deleteReason.trim()}
+                    className="h-[44px] px-[20px] rounded-full bg-[#C62828] hover:bg-[#B71C1C] text-white text-[14px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Confirm Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

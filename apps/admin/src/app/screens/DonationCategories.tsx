@@ -16,7 +16,7 @@ interface DonationCategory {
   tagLabel?: string;
   highlighted: boolean;
   isDefault: boolean;
-  
+
   // Amount rules
   presetAmounts: number[];
   minAmount?: number;
@@ -24,7 +24,7 @@ interface DonationCategory {
   allowCustomAmount: boolean;
   recurringAllowed: boolean;
   recurringDefaultChecked: boolean;
-  
+
   // Receipt & 80G
   receiptEnabled: boolean;
   eligible80G: boolean;
@@ -33,7 +33,7 @@ interface DonationCategory {
   autoEmailReceipt: boolean;
   autoSMSReceipt: boolean;
   receiptDescription?: string;
-  
+
   // Form field rules
   panRule: 'always' | 'threshold' | 'optional';
   panThreshold?: number;
@@ -41,12 +41,12 @@ interface DonationCategory {
   mobileRequired: boolean;
   showPurposeField: boolean;
   allowAnonymous: boolean;
-  
+
   // Gateway restrictions
   allowedGateways: ('razorpay' | 'paytm')[];
   allowedPaymentMethods: string[];
   internationalAllowed: boolean;
-  
+
   // Accounting
   accountingHead?: string;
   costCenter?: string;
@@ -60,7 +60,7 @@ export function DonationCategories() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  
+
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<DonationCategory | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('basic');
@@ -248,7 +248,7 @@ export function DonationCategories() {
 
   const confirmDelete = async () => {
     if (!deleteConfirmId) return;
-    
+
     try {
       setError(null);
       const res = await apiFetch(`/donation-categories/${deleteConfirmId}`, { method: 'DELETE' });
@@ -313,234 +313,233 @@ export function DonationCategories() {
         </div>
       ) : (
         <>
-      {/* Categories List */}
-      <div className="space-y-[16px]">
-        {categories.length === 0 ? (
-          <div className="py-12 text-center bg-white rounded-[16px] border border-[#DBDBDB]">
-            <p className="text-[16px] text-[#6E6E6E]">No donation categories found.</p>
-            <p className="text-[14px] text-[#6E6E6E] mt-2">Click "Add Category" to create your first category.</p>
-          </div>
-        ) : (
-          categories.map((category) => (
-          <div
-            key={category.id}
-            className="bg-white border border-[#DBDBDB] rounded-[16px] overflow-hidden"
-          >
-            {/* Category Header */}
-            <div className="p-[24px]">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-[12px] mb-[8px]">
-                    <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D]">
-                      {category.name}
-                    </h3>
-                    {category.tagLabel && (
-                      <span className="px-[8px] py-[2px] bg-[#FEF1EE] text-[#F36A4F] rounded-[4px] text-[13px] leading-[18px] font-medium">
-                        {category.tagLabel}
-                      </span>
-                    )}
-                    <span
-                      className={`px-[8px] py-[2px] rounded-[4px] text-[13px] leading-[18px] font-medium ${
-                        category.status === 'active'
-                          ? 'bg-[#D4F4DD] text-[#0E6027]'
-                          : 'bg-[#F3F3F3] text-[#6E6E6E]'
-                      }`}
-                    >
-                      {category.status === 'active' ? 'Active' : 'Inactive'}
-                    </span>
-                    {category.highlighted && (
-                      <span className="px-[8px] py-[2px] bg-[#FFF4E5] text-[#F59E0B] rounded-[4px] text-[13px] leading-[18px] font-medium">
-                        Highlighted
-                      </span>
-                    )}
-                    {category.isDefault && (
-                      <span className="px-[8px] py-[2px] bg-[#EDE9FE] text-[#7C3AED] rounded-[4px] text-[13px] leading-[18px] font-medium">
-                        Default
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[14px] leading-[20px] text-[#6E6E6E] mb-[12px]">
-                    {category.description}
-                  </p>
-                  <div className="flex items-center gap-[24px]">
-                    <div className="flex items-center gap-[8px]">
-                      <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Code:</span>
-                      <span className="text-[13px] leading-[18px] font-medium text-[#3D3D3D] font-mono">
-                        {category.typeCode}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-[8px]">
-                      <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Sort Order:</span>
-                      <span className="text-[13px] leading-[18px] font-medium text-[#3D3D3D]">
-                        {category.sortOrder}
-                      </span>
-                    </div>
-                    {category.eligible80G && (
-                      <span className="px-[8px] py-[2px] bg-[#D4F4DD] text-[#0E6027] rounded-[4px] text-[13px] leading-[18px] font-medium">
-                        80G Eligible
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-[8px]">
-                  <button
-                    onClick={() => setExpandedCategory(expandedCategory === category.id ? null : category.id)}
-                    className="w-[44px] h-[44px] flex items-center justify-center border border-[#DBDBDB] rounded-[999px] hover:bg-[#F3F3F3] transition-colors"
-                  >
-                    {expandedCategory === category.id ? (
-                      <ChevronUp className="w-5 h-5 text-[#3D3D3D]" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5 text-[#3D3D3D]" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => handleEdit(category)}
-                    className="w-[44px] h-[44px] flex items-center justify-center border border-[#DBDBDB] rounded-[999px] hover:bg-[#F3F3F3] transition-colors"
-                  >
-                    <Edit className="w-5 h-5 text-[#3D3D3D]" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(category.id)}
-                    className="w-[44px] h-[44px] flex items-center justify-center border border-[#F36A4F] text-[#F36A4F] rounded-[999px] hover:bg-[#FEF1EE] transition-colors"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </div>
+          {/* Categories List */}
+          <div className="space-y-[16px]">
+            {categories.length === 0 ? (
+              <div className="py-12 text-center bg-white rounded-[16px] border border-[#DBDBDB]">
+                <p className="text-[16px] text-[#6E6E6E]">No donation categories found.</p>
+                <p className="text-[14px] text-[#6E6E6E] mt-2">Click "Add Category" to create your first category.</p>
               </div>
-            </div>
-
-            {/* Expanded Details */}
-            {expandedCategory === category.id && (
-              <div className="border-t border-[#DBDBDB] p-[24px] bg-[#FAFAFA]">
-                <div className="grid grid-cols-3 gap-[24px]">
-                  {/* Amount Rules */}
-                  <div>
-                    <h4 className="text-[14px] leading-[20px] font-semibold text-[#0D0D0D] mb-[12px]">
-                      Amount Rules
-                    </h4>
-                    <div className="space-y-[8px]">
-                      <div className="flex justify-between">
-                        <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Presets:</span>
-                        <span className="text-[13px] leading-[18px] text-[#3D3D3D]">
-                          ₹{category.presetAmounts.join(', ₹')}
-                        </span>
-                      </div>
-                      {category.minAmount && (
-                        <div className="flex justify-between">
-                          <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Min Amount:</span>
-                          <span className="text-[13px] leading-[18px] text-[#3D3D3D]">
-                            ₹{category.minAmount}
+            ) : (
+              categories.map((category) => (
+                <div
+                  key={category.id}
+                  className="bg-white border border-[#DBDBDB] rounded-[16px] overflow-hidden"
+                >
+                  {/* Category Header */}
+                  <div className="p-[24px]">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-[12px] mb-[8px]">
+                          <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D]">
+                            {category.name}
+                          </h3>
+                          {category.tagLabel && (
+                            <span className="px-[8px] py-[2px] bg-[#FEF1EE] text-[#F36A4F] rounded-[4px] text-[13px] leading-[18px] font-medium">
+                              {category.tagLabel}
+                            </span>
+                          )}
+                          <span
+                            className={`px-[8px] py-[2px] rounded-[4px] text-[13px] leading-[18px] font-medium ${category.status === 'active'
+                              ? 'bg-[#D4F4DD] text-[#0E6027]'
+                              : 'bg-[#F3F3F3] text-[#6E6E6E]'
+                              }`}
+                          >
+                            {category.status === 'active' ? 'Active' : 'Inactive'}
                           </span>
+                          {category.highlighted && (
+                            <span className="px-[8px] py-[2px] bg-[#FFF4E5] text-[#F59E0B] rounded-[4px] text-[13px] leading-[18px] font-medium">
+                              Highlighted
+                            </span>
+                          )}
+                          {category.isDefault && (
+                            <span className="px-[8px] py-[2px] bg-[#EDE9FE] text-[#7C3AED] rounded-[4px] text-[13px] leading-[18px] font-medium">
+                              Default
+                            </span>
+                          )}
                         </div>
-                      )}
-                      {category.maxAmount && (
-                        <div className="flex justify-between">
-                          <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Max Amount:</span>
-                          <span className="text-[13px] leading-[18px] text-[#3D3D3D]">
-                            ₹{category.maxAmount}
-                          </span>
+                        <p className="text-[14px] leading-[20px] text-[#6E6E6E] mb-[12px]">
+                          {category.description}
+                        </p>
+                        <div className="flex items-center gap-[24px]">
+                          <div className="flex items-center gap-[8px]">
+                            <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Code:</span>
+                            <span className="text-[13px] leading-[18px] font-medium text-[#3D3D3D] font-mono">
+                              {category.typeCode}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-[8px]">
+                            <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Sort Order:</span>
+                            <span className="text-[13px] leading-[18px] font-medium text-[#3D3D3D]">
+                              {category.sortOrder}
+                            </span>
+                          </div>
+                          {category.eligible80G && (
+                            <span className="px-[8px] py-[2px] bg-[#D4F4DD] text-[#0E6027] rounded-[4px] text-[13px] leading-[18px] font-medium">
+                              80G Eligible
+                            </span>
+                          )}
                         </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Custom Amount:</span>
-                        <span className={`text-[13px] leading-[18px] ${category.allowCustomAmount ? 'text-[#0E6027]' : 'text-[#6E6E6E]'}`}>
-                          {category.allowCustomAmount ? 'Allowed' : 'Not Allowed'}
-                        </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Recurring:</span>
-                        <span className={`text-[13px] leading-[18px] ${category.recurringAllowed ? 'text-[#0E6027]' : 'text-[#6E6E6E]'}`}>
-                          {category.recurringAllowed ? 'Allowed' : 'Not Allowed'}
-                        </span>
+                      <div className="flex items-center gap-[8px]">
+                        <button
+                          onClick={() => setExpandedCategory(expandedCategory === category.id ? null : category.id)}
+                          className="w-[44px] h-[44px] flex items-center justify-center border border-[#DBDBDB] rounded-[999px] hover:bg-[#F3F3F3] transition-colors"
+                        >
+                          {expandedCategory === category.id ? (
+                            <ChevronUp className="w-5 h-5 text-[#3D3D3D]" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-[#3D3D3D]" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleEdit(category)}
+                          className="w-[44px] h-[44px] flex items-center justify-center border border-[#DBDBDB] rounded-[999px] hover:bg-[#F3F3F3] transition-colors"
+                        >
+                          <Edit className="w-5 h-5 text-[#3D3D3D]" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(category.id)}
+                          className="w-[44px] h-[44px] flex items-center justify-center border border-[#F36A4F] text-[#F36A4F] rounded-[999px] hover:bg-[#FEF1EE] transition-colors"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
                       </div>
                     </div>
                   </div>
 
-                  {/* Form & Receipt */}
-                  <div>
-                    <h4 className="text-[14px] leading-[20px] font-semibold text-[#0D0D0D] mb-[12px]">
-                      Form & Receipt
-                    </h4>
-                    <div className="space-y-[8px]">
-                      <div className="flex justify-between">
-                        <span className="text-[13px] leading-[18px] text-[#6E6E6E]">PAN Rule:</span>
-                        <span className="text-[13px] leading-[18px] text-[#3D3D3D] capitalize">
-                          {category.panRule}
-                          {category.panRule === 'threshold' && category.panThreshold && ` (₹${category.panThreshold})`}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Address:</span>
-                        <span className={`text-[13px] leading-[18px] ${category.addressRequired ? 'text-[#F36A4F]' : 'text-[#6E6E6E]'}`}>
-                          {category.addressRequired ? 'Required' : 'Optional'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Mobile:</span>
-                        <span className={`text-[13px] leading-[18px] ${category.mobileRequired ? 'text-[#F36A4F]' : 'text-[#6E6E6E]'}`}>
-                          {category.mobileRequired ? 'Required' : 'Optional'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Auto Email:</span>
-                        <span className={`text-[13px] leading-[18px] ${category.autoEmailReceipt ? 'text-[#0E6027]' : 'text-[#6E6E6E]'}`}>
-                          {category.autoEmailReceipt ? 'Yes' : 'No'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Auto SMS:</span>
-                        <span className={`text-[13px] leading-[18px] ${category.autoSMSReceipt ? 'text-[#0E6027]' : 'text-[#6E6E6E]'}`}>
-                          {category.autoSMSReceipt ? 'Yes' : 'No'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                  {/* Expanded Details */}
+                  {expandedCategory === category.id && (
+                    <div className="border-t border-[#DBDBDB] p-[24px] bg-[#FAFAFA]">
+                      <div className="grid grid-cols-3 gap-[24px]">
+                        {/* Amount Rules */}
+                        <div>
+                          <h4 className="text-[14px] leading-[20px] font-semibold text-[#0D0D0D] mb-[12px]">
+                            Amount Rules
+                          </h4>
+                          <div className="space-y-[8px]">
+                            <div className="flex justify-between">
+                              <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Presets:</span>
+                              <span className="text-[13px] leading-[18px] text-[#3D3D3D]">
+                                ₹{category.presetAmounts.join(', ₹')}
+                              </span>
+                            </div>
+                            {category.minAmount && (
+                              <div className="flex justify-between">
+                                <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Min Amount:</span>
+                                <span className="text-[13px] leading-[18px] text-[#3D3D3D]">
+                                  ₹{category.minAmount}
+                                </span>
+                              </div>
+                            )}
+                            {category.maxAmount && (
+                              <div className="flex justify-between">
+                                <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Max Amount:</span>
+                                <span className="text-[13px] leading-[18px] text-[#3D3D3D]">
+                                  ₹{category.maxAmount}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex justify-between">
+                              <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Custom Amount:</span>
+                              <span className={`text-[13px] leading-[18px] ${category.allowCustomAmount ? 'text-[#0E6027]' : 'text-[#6E6E6E]'}`}>
+                                {category.allowCustomAmount ? 'Allowed' : 'Not Allowed'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Recurring:</span>
+                              <span className={`text-[13px] leading-[18px] ${category.recurringAllowed ? 'text-[#0E6027]' : 'text-[#6E6E6E]'}`}>
+                                {category.recurringAllowed ? 'Allowed' : 'Not Allowed'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
 
-                  {/* Accounting */}
-                  <div>
-                    <h4 className="text-[14px] leading-[20px] font-semibold text-[#0D0D0D] mb-[12px]">
-                      Accounting & Reports
-                    </h4>
-                    <div className="space-y-[8px]">
-                      {category.accountingHead && (
+                        {/* Form & Receipt */}
                         <div>
-                          <span className="text-[13px] leading-[18px] text-[#6E6E6E] block mb-[2px]">
-                            Accounting Head:
-                          </span>
-                          <span className="text-[13px] leading-[18px] text-[#3D3D3D]">
-                            {category.accountingHead}
-                          </span>
+                          <h4 className="text-[14px] leading-[20px] font-semibold text-[#0D0D0D] mb-[12px]">
+                            Form & Receipt
+                          </h4>
+                          <div className="space-y-[8px]">
+                            <div className="flex justify-between">
+                              <span className="text-[13px] leading-[18px] text-[#6E6E6E]">PAN Rule:</span>
+                              <span className="text-[13px] leading-[18px] text-[#3D3D3D] capitalize">
+                                {category.panRule}
+                                {category.panRule === 'threshold' && category.panThreshold && ` (₹${category.panThreshold})`}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Address:</span>
+                              <span className={`text-[13px] leading-[18px] ${category.addressRequired ? 'text-[#F36A4F]' : 'text-[#6E6E6E]'}`}>
+                                {category.addressRequired ? 'Required' : 'Optional'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Mobile:</span>
+                              <span className={`text-[13px] leading-[18px] ${category.mobileRequired ? 'text-[#F36A4F]' : 'text-[#6E6E6E]'}`}>
+                                {category.mobileRequired ? 'Required' : 'Optional'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Auto Email:</span>
+                              <span className={`text-[13px] leading-[18px] ${category.autoEmailReceipt ? 'text-[#0E6027]' : 'text-[#6E6E6E]'}`}>
+                                {category.autoEmailReceipt ? 'Yes' : 'No'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[13px] leading-[18px] text-[#6E6E6E]">Auto SMS:</span>
+                              <span className={`text-[13px] leading-[18px] ${category.autoSMSReceipt ? 'text-[#0E6027]' : 'text-[#6E6E6E]'}`}>
+                                {category.autoSMSReceipt ? 'Yes' : 'No'}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      )}
-                      {category.costCenter && (
+
+                        {/* Accounting */}
                         <div>
-                          <span className="text-[13px] leading-[18px] text-[#6E6E6E] block mb-[2px]">
-                            Cost Center:
-                          </span>
-                          <span className="text-[13px] leading-[18px] text-[#3D3D3D]">
-                            {category.costCenter}
-                          </span>
+                          <h4 className="text-[14px] leading-[20px] font-semibold text-[#0D0D0D] mb-[12px]">
+                            Accounting & Reports
+                          </h4>
+                          <div className="space-y-[8px]">
+                            {category.accountingHead && (
+                              <div>
+                                <span className="text-[13px] leading-[18px] text-[#6E6E6E] block mb-[2px]">
+                                  Accounting Head:
+                                </span>
+                                <span className="text-[13px] leading-[18px] text-[#3D3D3D]">
+                                  {category.accountingHead}
+                                </span>
+                              </div>
+                            )}
+                            {category.costCenter && (
+                              <div>
+                                <span className="text-[13px] leading-[18px] text-[#6E6E6E] block mb-[2px]">
+                                  Cost Center:
+                                </span>
+                                <span className="text-[13px] leading-[18px] text-[#3D3D3D]">
+                                  {category.costCenter}
+                                </span>
+                              </div>
+                            )}
+                            {category.reportGrouping && (
+                              <div>
+                                <span className="text-[13px] leading-[18px] text-[#6E6E6E] block mb-[2px]">
+                                  Report Group:
+                                </span>
+                                <span className="text-[13px] leading-[18px] text-[#3D3D3D]">
+                                  {category.reportGrouping}
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      )}
-                      {category.reportGrouping && (
-                        <div>
-                          <span className="text-[13px] leading-[18px] text-[#6E6E6E] block mb-[2px]">
-                            Report Group:
-                          </span>
-                          <span className="text-[13px] leading-[18px] text-[#3D3D3D]">
-                            {category.reportGrouping}
-                          </span>
-                        </div>
-                      )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
-              </div>
+              ))
             )}
           </div>
-          ))
-        )}
-      </div>
         </>
       )}
 
@@ -567,11 +566,10 @@ export function DonationCategories() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as TabType)}
-                  className={`px-[16px] h-[44px] rounded-[8px] text-[14px] leading-[20px] font-medium whitespace-nowrap transition-colors ${
-                    activeTab === tab.id
-                      ? 'bg-[#FEF1EE] text-[#F36A4F]'
-                      : 'text-[#6E6E6E] hover:bg-[#F3F3F3]'
-                  }`}
+                  className={`px-[16px] h-[44px] rounded-[8px] text-[14px] leading-[20px] font-medium whitespace-nowrap transition-colors ${activeTab === tab.id
+                    ? 'bg-[#FEF1EE] text-[#F36A4F]'
+                    : 'text-[#6E6E6E] hover:bg-[#F3F3F3]'
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -647,8 +645,11 @@ export function DonationCategories() {
                       <input
                         type="number"
                         value={formData.sortOrder || 1}
-                        onChange={(e) => updateFormData('sortOrder', parseInt(e.target.value))}
-                        min="1"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          updateFormData('sortOrder', val === '' ? '' : Math.max(0, parseInt(val)));
+                        }}
+                        min="0"
                         className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
                       />
                     </div>
@@ -725,9 +726,11 @@ export function DonationCategories() {
                             value={formData.presetAmounts?.[index] || ''}
                             onChange={(e) => {
                               const newPresets = [...(formData.presetAmounts || [])];
-                              newPresets[index] = parseInt(e.target.value) || 0;
+                              const val = e.target.value;
+                              newPresets[index] = val === '' ? '' : Math.max(0, parseInt(val));
                               updateFormData('presetAmounts', newPresets);
                             }}
+                            min="0"
                             className="w-full h-[44px] pl-[32px] pr-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
                           />
                         </div>
@@ -747,7 +750,11 @@ export function DonationCategories() {
                         <input
                           type="number"
                           value={formData.minAmount || ''}
-                          onChange={(e) => updateFormData('minAmount', e.target.value ? Number(e.target.value) : undefined)}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateFormData('minAmount', val === '' ? '' : Math.max(0, Number(val)));
+                          }}
+                          min="0"
                           className="w-full h-[44px] pl-[32px] pr-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
                         />
                       </div>
@@ -764,7 +771,11 @@ export function DonationCategories() {
                         <input
                           type="number"
                           value={formData.maxAmount || ''}
-                          onChange={(e) => updateFormData('maxAmount', e.target.value ? Number(e.target.value) : undefined)}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateFormData('maxAmount', val === '' ? '' : Math.max(0, Number(val)));
+                          }}
+                          min="0"
                           className="w-full h-[44px] pl-[32px] pr-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
                         />
                       </div>
@@ -983,7 +994,11 @@ export function DonationCategories() {
                         <input
                           type="number"
                           value={formData.panThreshold || 2000}
-                          onChange={(e) => updateFormData('panThreshold', parseInt(e.target.value))}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateFormData('panThreshold', val === '' ? '' : Math.max(0, parseInt(val)));
+                          }}
+                          min="0"
                           className="w-full h-[44px] pl-[32px] pr-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
                         />
                       </div>

@@ -5,6 +5,7 @@ import { AramCard } from '@/app/components/aram/AramCard';
 import { Heart, Download, Calendar } from 'lucide-react';
 import { useApi } from '@/app/context/ApiContext';
 import { generateReceiptPDF } from '@/app/utils/pdfGenerator';
+import { useDonationFormStatus } from '@/app/hooks/useDonationFormStatus';
 
 interface Donation {
   id: number;
@@ -84,6 +85,8 @@ export function Dashboard() {
   const endItem = Math.min(page * limit, total);
 
   const handleDownloadReceipt = (donation: Donation) => {
+    if (!checkAndNotify()) return;
+
     generateReceiptPDF(
       {
         receiptNo: donation.receiptNo,
@@ -100,6 +103,11 @@ export function Dashboard() {
         address: apiAuth?.address || apiAuth?.location,
       }
     );
+  };
+
+  const handleDonateClick = () => {
+    if (!checkAndNotify()) return;
+    onDonateNow();
   };
 
   return (
@@ -283,7 +291,7 @@ export function Dashboard() {
         </div>
       </AramCard>
 
-
+      {/* Impact Section */}
       {/* <AramCard>
         <div className="flex flex-col gap-[16px]">
           <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Impact / Funds Utilized</h3>
@@ -306,6 +314,6 @@ export function Dashboard() {
           </div>
         </div>
       </AramCard> */}
-    </div>
+    </div >
   );
 }

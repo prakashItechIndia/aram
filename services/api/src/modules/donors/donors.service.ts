@@ -385,12 +385,17 @@ export class DonorsService {
    * Uses donors table when present (PAN); otherwise creates T_USER with User_Type = Standard User.
    */
   async createGuestOrReject(dto: CreateGuestDonorDto): Promise<{ donorId: number }> {
-    const normalizedPan = dto.pan.trim().toUpperCase();
-    const existingByPan = await this.findByPan(normalizedPan);
-    if (existingByPan) {
-      throw new ConflictException(
-        'You have donated before with this PAN. Please use Login to Donate.',
-      );
+    // Normalize PAN if provided
+    const normalizedPan = dto.pan ? dto.pan.trim().toUpperCase() : '';
+    
+    // Only check for existing PAN if PAN is provided
+    if (normalizedPan) {
+      const existingByPan = await this.findByPan(normalizedPan);
+      if (existingByPan) {
+        throw new ConflictException(
+          'You have donated before with this PAN. Please use Login to Donate.',
+        );
+      }
     }
 
     // Check Mobile
@@ -421,8 +426,15 @@ export class DonorsService {
 
     const now = new Date();
     // Create new user in T_USER
-    // Generate temp pass based on PAN
-    const tempPass = `Aram@${normalizedPan}`;
+    // Generate password based on whether PAN is provided
+    let tempPass: string;
+    if (normalizedPan && normalizedPan.length > 0) {
+      // If PAN is provided, use PAN-based password
+      tempPass = `Aram@${normalizedPan}`;
+    } else {
+      // If no PAN, generate random strong password
+      tempPass = generateStrongPassword();
+    }
 
     const hashedPassword = Buffer.from(tempPass).toString('base64');
 
@@ -457,9 +469,10 @@ export class DonorsService {
     // RECORD THE DONATION (this also creates the donors profile)
     await this.recordDonationInternal(inserted.id, email, {
       ...dto,
-      pan: normalizedPan, // Use normalized PAN
+      pan: normalizedPan || '', // Use normalized PAN or empty string
     });
 
     return { donorId: inserted.id };
   }
 }
+
