@@ -580,10 +580,9 @@ export const DonationFormSettings: React.FC = () => {
               type="button"
               onClick={() => {
                 setPresetAmounts((prev: number[]) => {
-                  let newAmount = 1000;
-                  while (prev.includes(newAmount)) {
-                    newAmount += 500;
-                  }
+                  // Find the highest existing amount and add 500
+                  const maxAmount = prev.length > 0 ? Math.max(...prev) : 500;
+                  const newAmount = maxAmount + 500;
                   return [...prev, newAmount].sort((a, b) => a - b);
                 });
               }}

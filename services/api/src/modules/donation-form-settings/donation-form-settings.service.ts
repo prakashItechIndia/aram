@@ -5,6 +5,8 @@ import { donationFormSettings } from '../../database/models/donation-form-settin
 import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';
 import * as schema from '../../database/schema';
 import { UpdateDonationFormSettingsDto } from './dto/update-donation-form-settings.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { DonorsService } from '../donors/donors.service';
 
 export interface DonationFormConfig {
   // Form Status
@@ -45,7 +47,11 @@ export interface DonationFormConfig {
 
 @Injectable()
 export class DonationFormSettingsService {
-  constructor(@Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>) {}
+  constructor(
+    @Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>,
+    private notificationsService: NotificationsService,
+    private donorsService: DonorsService,
+  ) {}
 
   /**
    * Get public donation form status (no auth required)
@@ -193,6 +199,22 @@ export class DonationFormSettingsService {
       createdAt: new Date(),
     } as any);
 
+    // Broadcast notification to all donors
+    try {
+      const donors = await this.donorsService.findAll();
+      const notificationPromises = donors.map((donor) =>
+        this.notificationsService.create({
+          userId: donor.id,
+          type: 'info',
+          title: 'Donation Form Updated',
+          message: 'The donation form has been updated by the admin. Check it out.',
+        })
+      );
+      await Promise.all(notificationPromises);
+    } catch (error) {
+      console.error('Failed to broadcast settings update notification:', error);
+    }
+
     return this.getCurrentSettings();
   }
 
@@ -238,6 +260,22 @@ export class DonationFormSettingsService {
       createdBy: userId ? `User ${userId}` : 'System',
       createdAt: new Date(),
     } as any);
+
+    // Broadcast notification to all donors (also for rollback)
+    try {
+      const donors = await this.donorsService.findAll();
+      const notificationPromises = donors.map((donor) =>
+        this.notificationsService.create({
+          userId: donor.id,
+          type: 'info',
+          title: 'Donation Form Updated',
+          message: 'The donation form has been updated (rollback) by the admin. Check it out.',
+        })
+      );
+      await Promise.all(notificationPromises);
+    } catch (error) {
+      console.error('Failed to broadcast rollback notification:', error);
+    }
 
     return this.getCurrentSettings();
   }
