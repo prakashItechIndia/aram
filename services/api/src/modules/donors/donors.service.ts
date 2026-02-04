@@ -229,7 +229,8 @@ export class DonorsService {
    * Used for 80G and Tax Document reports.
    */
   async getDonationSummaries(userId: number) {
-    const { data: donations } = await this.findDonationsByUserId(userId);
+    // Fetch all donations (high limit) to ensure accurate summary
+    const { data: donations } = await this.findDonationsByUserId(userId, { limit: 100000 });
 
     // Group by FY
     const summaries: Record<string, { totalAmount: number; count: number }> = {};
@@ -261,6 +262,15 @@ export class DonorsService {
       type: 'Form 10BE', // Default type for tax docs
       fileName: `Doc_${year.replace(/\s/g, '_')}.pdf`
     })).sort((a, b) => b.year.localeCompare(a.year)); // Newest first
+  }
+
+  /**
+   * Get full donation history and summaries for PDF generation.
+   */
+  async getFullHistory(userId: number) {
+    const { data: receipts } = await this.findDonationsByUserId(userId, { limit: 100000 });
+    const taxDocs = await this.getDonationSummaries(userId);
+    return { receipts, taxDocs };
   }
 
   /**

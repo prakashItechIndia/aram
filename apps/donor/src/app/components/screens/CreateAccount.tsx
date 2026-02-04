@@ -14,7 +14,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { validateForm as globalValidateForm, validationRules, validationMessages, sanitizeInput, countryPhoneConfigs, getMobileValidation } from '../../utils/validations';
 import { useDonationFormStatus } from '../../hooks/useDonationFormStatus';
 import { useCountries } from '../../hooks/useCountries';
-import { getCountryPhonePrefix } from '../../utils/countryPhonePrefixes';
+
 
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '@/app/context/ApiContext';
@@ -38,7 +38,7 @@ export function CreateAccount() {
   // Map countries to show prefix for dropdown
   const countries = countriesData.map(c => ({
     value: c.value,
-    label: getCountryPhonePrefix(c.value)
+    label: c.code || ''
   }));
 
   // Terms & Privacy states
