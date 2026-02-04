@@ -7,7 +7,7 @@ interface DonationFormConfig {
   formEnabled?: boolean;
   maintenanceMessage?: string;
   multiCountry?: boolean;
-  panRequired?: 'always' | 'threshold' | 'optional' | 'never';
+  panRequired?: 'always' | 'threshold' | 'optional';
   panThreshold?: number;
   addressRequired?: boolean;
   mobileRequired?: boolean;
@@ -17,7 +17,7 @@ interface DonationFormConfig {
   maxAmount?: number;
   allowCustomAmount?: boolean;
   enableRecurring?: boolean;
-  suggestRecurring?: boolean;
+
   recurringFrequencies?: string[];
   enabledPaymentModes?: string[];
   defaultPaymentMode?: string;
@@ -97,7 +97,7 @@ export const DonationFormSettings: React.FC = () => {
 
   // Field Configuration
   const [multiCountry, setMultiCountry] = useState(false);
-  const [panRequired, setPanRequired] = useState<'always' | 'threshold' | 'optional' | 'never'>('threshold');
+  const [panRequired, setPanRequired] = useState<'always' | 'threshold' | 'optional'>('threshold');
   const [panThreshold, setPanThreshold] = useState(2000);
   const [addressRequired, setAddressRequired] = useState(true);
   const [mobileRequired, setMobileRequired] = useState(true);
@@ -111,7 +111,7 @@ export const DonationFormSettings: React.FC = () => {
 
   // Recurring Donations
   const [enableRecurring, setEnableRecurring] = useState(true);
-  const [suggestRecurring, setSuggestRecurring] = useState(true);
+
 
   // Other settings
   const [showDonorHistory, setShowDonorHistory] = useState(true);
@@ -153,7 +153,7 @@ export const DonationFormSettings: React.FC = () => {
     maxAmount,
     allowCustomAmount,
     enableRecurring,
-    suggestRecurring,
+
     showDonorHistory,
     autoFillLastDonor,
     requireTermsAcceptance,
@@ -179,7 +179,7 @@ export const DonationFormSettings: React.FC = () => {
       setMaxAmount(data.config?.maxAmount ?? 1000000);
       setAllowCustomAmount(data.config?.allowCustomAmount ?? true);
       setEnableRecurring(data.config?.enableRecurring ?? true);
-      setSuggestRecurring(data.suggestRecurring ?? true);
+
       setShowDonorHistory(data.config?.showDonorHistory ?? true);
       setAutoFillLastDonor(data.config?.autoFillLastDonor ?? true);
       setRequireTermsAcceptance(data.config?.requireTermsAcceptance ?? true);
@@ -207,6 +207,37 @@ export const DonationFormSettings: React.FC = () => {
 
   const handleSave = async () => {
     try {
+      // Validation
+      if (presetAmounts.some((amount: number) => !amount || amount <= 0)) {
+         toast.error('Kindly enter preset amounts');
+         return;
+      }
+
+      // PAN Threshold Validation
+      if (panRequired === 'threshold') {
+        if (panThreshold === '' || panThreshold === undefined || panThreshold === null) {
+           toast.error('Kindly enter threshold value');
+           return;
+        }
+        if (Number(panThreshold) <= 0) {
+           toast.error('Kindly enter minimum value greater than 0');
+           return;
+        }
+      }
+
+      if (!minAmount || minAmount <= 0) {
+         toast.error('Kindly enter minimum amount');
+         return;
+      }
+      if (!maxAmount || maxAmount <= 0) {
+         toast.error('Kindly enter maximum amount');
+         return;
+      }
+      if (Number(minAmount) >= Number(maxAmount)) {
+         toast.error('Minimum amount should be less than maximum amount');
+         return;
+      }
+
       setSaving(true);
 
       const payload = {
@@ -223,7 +254,6 @@ export const DonationFormSettings: React.FC = () => {
         maxAmount,
         allowCustomAmount,
         enableRecurring,
-        suggestRecurring,
         showDonorHistory,
         autoFillLastDonor,
         requireTermsAcceptance,
@@ -252,6 +282,13 @@ export const DonationFormSettings: React.FC = () => {
       setSaving(false);
     }
   };
+    // ... (rest of code omitted for brevity until Min/Max inputs) ...
+
+// I need to locate where Min/Max inputs are to replace them with corrected handlers.
+// Since replace_file_content works on contiguous blocks, I might need separate calls if they are far apart or just replace a larger chunk if they are close.
+// handleSave is lines 208-272.
+// Min/Max inputs are lines 589-620.
+// I will do handleSave first.
 
   const handleDiscard = () => {
     setShowDiscardConfirm(true);
@@ -426,7 +463,16 @@ export const DonationFormSettings: React.FC = () => {
                       value={panThreshold}
                       onChange={(e) => {
                         const val = e.target.value;
-                        setPanThreshold(val === '' ? '' : Math.max(0, parseInt(val)));
+                        if (val === '') {
+                           setPanThreshold('' as any); // Allow clearing to type new value
+                           return;
+                        }
+                        const num = parseInt(val);
+                        if (num <= 0) {
+                           toast.error('PAN Threshold must be greater than 0');
+                           return;
+                        }
+                        setPanThreshold(num);
                       }}
                       style={{ padding: '8px 12px', border: '1px solid #DBDBDB', borderRadius: '12px', fontSize: '14px', width: '120px' }}
                     />
@@ -439,13 +485,6 @@ export const DonationFormSettings: React.FC = () => {
               <div>
                 <span style={{ fontWeight: 500, color: '#0D0D0D' }}>Optional for International</span>
                 <div style={{ fontSize: '13px', color: '#6E6E6E' }}>Not required for non-Indian donors</div>
-              </div>
-            </label>
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
-              <input type="radio" value="never" checked={panRequired === 'never'} onChange={(e) => setPanRequired(e.target.value as any)} style={{ marginTop: '4px' }} />
-              <div>
-                <span style={{ fontWeight: 500, color: '#0D0D0D' }}>Never Ask</span>
-                <div style={{ fontSize: '13px', color: '#6E6E6E' }}>PAN field not shown</div>
               </div>
             </label>
           </div>
@@ -472,7 +511,7 @@ export const DonationFormSettings: React.FC = () => {
             <div style={{ fontWeight: 500, color: '#0D0D0D' }}>Mobile OTP Verification</div>
             <div style={{ fontSize: '13px', color: '#6E6E6E' }}>Verify mobile number with OTP (currently disabled)</div>
           </div>
-          <Switch checked={otpVerification} onChange={() => { }} disabled />
+          <Switch checked={otpVerification} onChange={() => setOtpVerification(!otpVerification)} />
         </div>
       </div>
 
@@ -491,9 +530,26 @@ export const DonationFormSettings: React.FC = () => {
                   value={amt}
                   onChange={(e) => {
                     const val = e.target.value;
-                    const next = [...presetAmounts];
-                    next[idx] = val === '' ? '' : Math.max(0, parseInt(val));
-                    setPresetAmounts(next);
+                    
+                    if (val === '') {
+                       const next = [...presetAmounts];
+                       next[idx] = '' as any;
+                       setPresetAmounts(next);
+                       return;
+                    }
+
+                    const numVal = Math.max(0, parseInt(val));
+                    
+                    // Check if this value already exists at another index
+                    const isDuplicate = presetAmounts.some((amount: number, i: number) => i !== idx && amount === numVal);
+                    
+                    if (!isDuplicate) {
+                      const next = [...presetAmounts];
+                      next[idx] = numVal;
+                      setPresetAmounts(next);
+                    } else {
+                       toast.error('This amount already exists');
+                    }
                   }}
                   style={{
                     padding: '8px 12px',
@@ -522,7 +578,15 @@ export const DonationFormSettings: React.FC = () => {
             ))}
             <button
               type="button"
-              onClick={() => setPresetAmounts((prev: number[]) => [...prev, 1000])}
+              onClick={() => {
+                setPresetAmounts((prev: number[]) => {
+                  let newAmount = 1000;
+                  while (prev.includes(newAmount)) {
+                    newAmount += 500;
+                  }
+                  return [...prev, newAmount].sort((a, b) => a - b);
+                });
+              }}
               style={{
                 padding: '8px 16px',
                 backgroundColor: 'white',
@@ -547,7 +611,11 @@ export const DonationFormSettings: React.FC = () => {
               value={minAmount}
               onChange={(e) => {
                 const val = e.target.value;
-                setMinAmount(val === '' ? '' : Math.max(0, parseInt(val)));
+                if (val === '') {
+                   setMinAmount('' as any);
+                   return;
+                }
+                setMinAmount(Math.max(0, parseInt(val)));
               }}
               style={{
                 padding: '12px 14px',
@@ -565,7 +633,11 @@ export const DonationFormSettings: React.FC = () => {
               value={maxAmount}
               onChange={(e) => {
                 const val = e.target.value;
-                setMaxAmount(val === '' ? '' : Math.max(0, parseInt(val)));
+                if (val === '') {
+                   setMaxAmount('' as any);
+                   return;
+                }
+                setMaxAmount(Math.max(0, parseInt(val)));
               }}
               style={{
                 padding: '12px 14px',
@@ -578,13 +650,7 @@ export const DonationFormSettings: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-          <div>
-            <div style={{ fontWeight: 500, color: '#0D0D0D' }}>Suggest Recurring Donations</div>
-            <div style={{ fontSize: '13px', color: '#6E6E6E' }}>Show option to make donation recurring</div>
-          </div>
-          <Switch checked={suggestRecurring} onChange={() => setSuggestRecurring(!suggestRecurring)} />
-        </div>
+
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
           <span style={{ fontWeight: 500, color: '#0D0D0D' }}>Allow Custom Amount</span>

@@ -67,12 +67,12 @@ export function DonateLoggedIn() {
   const [displayName, setDisplayName] = useState(userName);
   const [displayEmail, setDisplayEmail] = useState(userEmail);
   const [displayPhone, setDisplayPhone] = useState(userPhone);
-  const { checkAndNotify, panRequired, panThreshold, addressRequired, presetAmounts, minAmount, maxAmount } = useDonationFormStatus();
+  const { checkAndNotify, panRequired, panThreshold, addressRequired, presetAmounts, minAmount, maxAmount, allowCustomAmount } = useDonationFormStatus();
   const { countries, loading: countriesLoading } = useCountries();
 
   // Calculate if PAN field should be shown
   const shouldShowPAN = React.useMemo(() => {
-    if (panRequired === 'never') return false;
+    // panRequired 'never' option has been removed
     if (panRequired === 'always') return true;
     if (panRequired === 'threshold') {
       const currentAmount = selectedPreset || Number(customAmount) || 0;
@@ -184,33 +184,55 @@ export function DonateLoggedIn() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handlePay = () => {
+  const [submitting, setSubmitting] = useState(false);
 
+  const handlePay = async () => {
+    if (!checkAndNotify()) return;
+    
     if (validateForm()) {
       // Save donation preferences for next time
       saveLastDonationPrefs(amount, donationType);
 
-      const donationData = {
-        amount,
-        address: addressRequired ? address : '',
-        panNumber: shouldShowPAN ? panNumber.toUpperCase() : '',
-        donationType,
-        country,
-        name: displayName,
-        email: displayEmail,
-        phone: displayPhone,
-      };
+      setSubmitting(true);
+      try {
+        const donationResponse = await processDonation({
+          amount,
+          address: addressRequired ? address : '',
+          pan: shouldShowPAN ? panNumber.toUpperCase() : '',
+          donationType,
+          country,
+          name: displayName,
+        });
 
-      // Generate receipt number immediately
-      const receiptNo = `AR${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${new Date().getDate().toString().padStart(2, '0')}${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-
-      // Navigate to payment processing with initial 'processing' status
-      navigate('/payment-processing', {
-        state: {
-          status: 'processing',
-          donationData: { ...donationData, receiptNo }
+        if (donationResponse.success) {
+          // Navigate to payment processing -> success with confirmed data
+          navigate('/payment-processing', {
+            state: {
+              status: 'success',
+              donationData: {
+                amount: donationResponse.amount,
+                type: donationResponse.type, // Display name from API
+                receiptNo: donationResponse.receiptNo,
+                donationType: donationResponse.donationType || donationType,
+                name: displayName,
+                email: displayEmail,
+                phone: displayPhone,
+                address: addressRequired ? address : '',
+                panNumber: shouldShowPAN ? panNumber.toUpperCase() : '',
+                country,
+              }
+            }
+          });
+          refreshNotifications();
+        } else {
+          // Add toast for error
+          console.error('Donation failed:', donationResponse.error);
         }
-      });
+      } catch (error) {
+        console.error('Donation error:', error);
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
 
@@ -246,28 +268,23 @@ export function DonateLoggedIn() {
           </div>
 
           {/* User Info Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-[24px]">
-            <AramInput
-              label="Full Name"
-              value={displayName}
-              onChange={setDisplayName}
-              disabled
-              error={errors.displayName}
-            />
-            <AramInput
-              label="Email Address"
-              value={displayEmail}
-              onChange={() => { }}
-              disabled
-              helperText="Verified registered email"
-            />
-            <AramInput
-              label="Mobile Number"
-              value={displayPhone}
-              onChange={() => { }}
-              disabled
-              helperText="Verified registered mobile"
-            />
+          <div className="flex flex-col gap-[24px]">
+            {/* Profile Info Card */}
+            <div className="w-full bg-[#FAFAFA] border border-[#E5E5E5] rounded-[16px] p-[24px] grid grid-cols-1 md:grid-cols-3 gap-[24px]">
+              <div className="flex flex-col gap-[8px]">
+                <span className="text-[14px] leading-[20px] text-[#6E6E6E]">Name</span>
+                <span className="text-[16px] leading-[24px] font-semibold text-[#0D0D0D]">{displayName}</span>
+              </div>
+              <div className="flex flex-col gap-[8px]">
+                <span className="text-[14px] leading-[20px] text-[#6E6E6E]">Email</span>
+                <span className="text-[16px] leading-[24px] font-semibold text-[#0D0D0D]">{displayEmail}</span>
+              </div>
+              <div className="flex flex-col gap-[8px]">
+                <span className="text-[14px] leading-[20px] text-[#6E6E6E]">Phone</span>
+                <span className="text-[16px] leading-[24px] font-semibold text-[#0D0D0D]">{displayPhone}</span>
+              </div>
+            </div>
+
             {shouldShowPAN && (
               <AramInput
                 label="PAN Number"
@@ -311,21 +328,23 @@ export function DonateLoggedIn() {
                 </button>
               ))}
             </div>
-            <AramInput
-              placeholder="Enter custom amount"
-              value={customAmount}
-              onChange={(val) => {
-                setCustomAmount(val);
-                setSelectedPreset(null);
-                // Clear PAN only if it was manually entered (not from profile)
-                if (!panFromProfile) {
-                  setPanNumber('');
-                }
-              }}
-              type="number"
-              error={errors.amount}
-              helperText={`Min: ₹${minAmount}, Max: ₹${maxAmount}`}
-            />
+            {allowCustomAmount && (
+              <AramInput
+                placeholder="Enter custom amount"
+                value={customAmount}
+                onChange={(val) => {
+                  setCustomAmount(val);
+                  setSelectedPreset(null);
+                  // Clear PAN only if it was manually entered (not from profile)
+                  if (!panFromProfile) {
+                    setPanNumber('');
+                  }
+                }}
+                type="number"
+                error={errors.amount}
+                helperText={`Min: ₹${minAmount}, Max: ₹${maxAmount}`}
+              />
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
@@ -380,8 +399,8 @@ export function DonateLoggedIn() {
 
           {/* Action Buttons */}
           <div className="flex gap-[16px]">
-            <AramButton onClick={handlePay} variant="primary" className="flex-1 h-[56px] text-[16px]" disabled={amount < minAmount}>
-              Pay ₹{amount.toLocaleString()}
+            <AramButton onClick={handlePay} variant="primary" className="flex-1 h-[56px] text-[16px]" disabled={amount < minAmount || submitting}>
+              {submitting ? 'Processing...' : `Pay ₹${amount.toLocaleString()}`}
             </AramButton>
             <AramButton onClick={handleReset} variant="secondary" className="px-[32px]">
               Clear

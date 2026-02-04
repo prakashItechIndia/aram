@@ -56,7 +56,7 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
       {/* Search and Actions */}
       <div className="flex items-center gap-[12px]">
         {/* Global Search */}
-        <div className="relative w-[420px]">
+        {/* <div className="relative w-[420px]">
           <input
             type="text"
             value={searchQuery}
@@ -66,7 +66,7 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
             style={{ fontSize: '14px', lineHeight: '20px', color: '#3D3D3D' }}
           />
           <Search className="absolute left-[14px] top-1/2 -translate-y-1/2" size={18} color="#6E6E6E" />
-        </div>
+        </div> */}
 
         <div className="relative">
           <button

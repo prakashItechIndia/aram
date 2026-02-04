@@ -27,7 +27,7 @@ export interface DonationFormConfig {
 
   // Recurring Donations
   enableRecurring?: boolean;
-  suggestRecurring?: boolean;
+
   recurringFrequencies?: string[];
 
   // Payment Options
@@ -86,7 +86,6 @@ export class DonationFormSettingsService {
       addressRequired: true,
       mobileRequired: true,
       otpVerification: false,
-      suggestRecurring: true,
       maintenanceMessage: '',
       changesDescription: '',
       createdBy: null,
@@ -189,7 +188,6 @@ export class DonationFormSettingsService {
       addressRequired: dto.addressRequired ?? config.addressRequired ?? true,
       mobileRequired: dto.mobileRequired ?? config.mobileRequired ?? true,
       otpVerification: dto.otpVerification ?? config.otpVerification ?? false,
-      suggestRecurring: dto.suggestRecurring ?? config.suggestRecurring ?? true,
       changesDescription: dto.changesDescription || 'Settings updated',
       createdBy: dto.updatedBy || (userId ? `User ${userId}` : 'System'),
       createdAt: new Date(),
@@ -236,7 +234,6 @@ export class DonationFormSettingsService {
       addressRequired: targetVersion[0].addressRequired,
       mobileRequired: targetVersion[0].mobileRequired,
       otpVerification: targetVersion[0].otpVerification,
-      suggestRecurring: targetVersion[0].suggestRecurring,
       changesDescription: `Rolled back to ${targetVersion[0].version}`,
       createdBy: userId ? `User ${userId}` : 'System',
       createdAt: new Date(),
@@ -279,7 +276,6 @@ export class DonationFormSettingsService {
       maxAmount: 1000000,
       allowCustomAmount: true,
       enableRecurring: true,
-      suggestRecurring: true,
       recurringFrequencies: ['monthly', 'quarterly', 'yearly'],
       enabledPaymentModes: ['upi', 'netbanking', 'card', 'wallet'],
       defaultPaymentMode: 'upi',

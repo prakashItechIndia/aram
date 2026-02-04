@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, Inject } from '@nestjs/common';
-import { eq, and, sql, desc } from 'drizzle-orm';
+import { eq, and, sql, desc, like } from 'drizzle-orm';
 import { DRIZZLE } from '../../database/database.module';
 import { tUser } from '../../database/models/t-user.model';
 import { donors } from '../../database/models/donors.model';
@@ -147,11 +147,11 @@ export class DonorsService {
       const donorId = donorRows[0].id;
 
       // Build WHERE conditions
-      const conditions: any[] = [eq(schema.eChallans.donorId, donorId)];
+      const conditions: any[] = [eq(eChallans.donorId, donorId)];
 
       // Filter by receipt number (search)
       if (query?.searchReceipt) {
-        conditions.push(sql`${schema.eChallans.challanNumber} LIKE ${`%${query.searchReceipt}%`}`);
+        conditions.push(sql`${eChallans.challanNumber} LIKE ${`%${query.searchReceipt}%`}`);
       }
 
       // Filter by financial year
@@ -160,8 +160,8 @@ export class DonorsService {
         const startYear = parseInt(startYearStr, 10);
         const fyStart = new Date(`${startYear}-04-01`);
         const fyEnd = new Date(`${startYear + 1}-03-31T23:59:59`);
-        conditions.push(sql`${schema.eChallans.donationDate} >= ${fyStart}`);
-        conditions.push(sql`${schema.eChallans.donationDate} <= ${fyEnd}`);
+        conditions.push(sql`${eChallans.donationDate} >= ${fyStart}`);
+        conditions.push(sql`${eChallans.donationDate} <= ${fyEnd}`);
       }
 
       // Filter by donation type (categoryCode)
@@ -169,11 +169,11 @@ export class DonorsService {
         // First get the category ID from the code
         const catRows = await this.db
           .select()
-          .from(schema.donationCategories)
-          .where(eq(schema.donationCategories.categoryCode, query.donationType));
+          .from(donationCategories)
+          .where(eq(donationCategories.categoryCode, query.donationType));
 
         if (catRows[0]) {
-          conditions.push(eq(schema.eChallans.categoryId, catRows[0].id));
+          conditions.push(eq(eChallans.categoryId, catRows[0].id));
         }
       }
 
@@ -192,6 +192,7 @@ export class DonorsService {
           paymentMode: eChallans.paymentMode,
           categoryId: eChallans.categoryId,
           categoryName: donationCategories.displayName,
+          is80gEligible: donationCategories.is80gEligible,
         })
         .from(eChallans)
         .leftJoin(
@@ -199,7 +200,7 @@ export class DonorsService {
           eq(eChallans.categoryId, donationCategories.id),
         )
         .where(and(...conditions))
-        .orderBy(sql`${schema.eChallans.donationDate} DESC`);
+        .orderBy(sql`${eChallans.donationDate} DESC`);
 
       const total = allDonations.length;
 
@@ -214,7 +215,7 @@ export class DonorsService {
         date: d.donationDate ? new Date(d.donationDate).toISOString().split('T')[0] : '',
         type: d.categoryName || 'General Fund',
         status: 'Success',
-        eligible80G: true, // Assuming all donations are 80G eligible
+        eligible80G: d.is80gEligible ?? false,
       }));
 
       return { data, total };
@@ -345,7 +346,31 @@ export class DonorsService {
     const categoryId = catRows[0]?.id || 1;
 
     // 3. Insert into e_challans using donorId (from donors table)
-    const challanNumber = `CH${now.getTime()}`;
+    // Generate Challan Number: AR + YYMMDD + Sequence (4 digits)
+    const yy = now.getFullYear().toString().slice(-2);
+    const mm = (now.getMonth() + 1).toString().padStart(2, '0');
+    const dd = now.getDate().toString().padStart(2, '0');
+    const datePrefix = `AR${yy}${mm}${dd}`;
+
+    // Find last challan for today to determine sequence
+    const lastChallanRows = await this.db
+      .select({ challanNumber: eChallans.challanNumber })
+      .top(1)
+      .from(eChallans)
+      .where(like(eChallans.challanNumber, `${datePrefix}%`))
+      .orderBy(desc(eChallans.id));
+
+    let sequence = 1;
+    if (lastChallanRows[0]?.challanNumber) {
+      const lastSeqStr = lastChallanRows[0].challanNumber.replace(datePrefix, '');
+      const lastSeq = parseInt(lastSeqStr, 10);
+      if (!isNaN(lastSeq)) {
+        sequence = lastSeq + 1;
+      }
+    }
+
+    const challanNumber = `${datePrefix}${sequence.toString().padStart(4, '0')}`;
+
     await this.db.insert(eChallans).values({
       challanNumber,
       donorId: donorId,
@@ -357,8 +382,8 @@ export class DonorsService {
     });
 
     // 4. Send Email Receipt
+    const catName = catRows[0]?.displayName || 'General Fund';
     try {
-      const catName = catRows[0]?.displayName || 'General Fund';
       await this.emailService.sendDonationReceipt(normalizedEmail, dto.name, {
         amount: dto.amount,
         receiptNo: challanNumber,
@@ -377,7 +402,14 @@ export class DonorsService {
       message: `Thank you for your donation of ₹${dto.amount}! Transaction recorded as ${challanNumber}.`,
     });
 
-    return { success: true, challanNumber };
+    return {
+      success: true,
+      receiptNo: challanNumber,
+      amount: dto.amount,
+      type: catName, // Returns display name (e.g. "General Fund")
+      date: now.toISOString().split('T')[0],
+      donationType: dto.donationType // Return original code too if needed
+    };
   }
 
   /**
@@ -387,7 +419,7 @@ export class DonorsService {
   async createGuestOrReject(dto: CreateGuestDonorDto): Promise<{ donorId: number }> {
     // Normalize PAN if provided
     const normalizedPan = dto.pan ? dto.pan.trim().toUpperCase() : '';
-    
+
     // Only check for existing PAN if PAN is provided
     if (normalizedPan) {
       const existingByPan = await this.findByPan(normalizedPan);
@@ -467,12 +499,15 @@ export class DonorsService {
     });
 
     // RECORD THE DONATION (this also creates the donors profile)
-    await this.recordDonationInternal(inserted.id, email, {
+    const donationResult = await this.recordDonationInternal(inserted.id, email, {
       ...dto,
       pan: normalizedPan || '', // Use normalized PAN or empty string
     });
 
-    return { donorId: inserted.id };
+    return {
+      donorId: inserted.id,
+      ...donationResult
+    };
   }
 }
 
