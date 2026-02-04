@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AramButton } from '@/app/components/aram/AramButton';
 import { AramCard } from '@/app/components/aram/AramCard';
 import { AramInput } from '@/app/components/aram/AramInput';
 import { AramTextarea } from '@/app/components/aram/AramTextarea';
 import { AramSelect } from '@/app/components/aram/AramSelect';
+import { useApi } from '@/app/context/ApiContext';
 
 interface DonorProfile {
   name?: string;
@@ -14,14 +16,6 @@ interface DonorProfile {
   country?: string;
   donorType?: string;
   donationAmount?: string;
-}
-
-interface DonateLoggedInProps {
-  onPay: (data: any) => void;
-  userName: string;
-  userEmail: string;
-  userPhone: string;
-  api?: { donorsApi: { donorsControllerGetMyProfile: (options?: any) => Promise<{ data?: DonorProfile | null }> } };
 }
 
 const donationTypes = [
@@ -60,7 +54,14 @@ const saveLastDonationPrefs = (amount: number, donationType: string) => {
   }
 };
 
-export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: DonateLoggedInProps) {
+export function DonateLoggedIn() {
+  const navigate = useNavigate();
+  const { api, user: authUser, processDonation, refreshNotifications } = useApi();
+
+  const userName = authUser?.name || '';
+  const userEmail = authUser?.email || '';
+  const userPhone = authUser?.mobileNumber || ''; // Assuming mobileNumber is the field name from Dashboard check
+
   const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState('');
   const [address, setAddress] = useState('');
@@ -169,7 +170,7 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
       // Save donation preferences for next time
       saveLastDonationPrefs(amount, donationType);
 
-      onPay({
+      const donationData = {
         amount,
         address,
         panNumber: panNumber.toUpperCase(),
@@ -178,6 +179,17 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
         name: displayName,
         email: displayEmail,
         phone: displayPhone,
+      };
+
+      // Generate receipt number immediately
+      const receiptNo = `AR${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${new Date().getDate().toString().padStart(2, '0')}${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+
+      // Navigate to payment processing with initial 'processing' status
+      navigate('/payment-processing', {
+        state: {
+          status: 'processing',
+          donationData: { ...donationData, receiptNo }
+        }
       });
     }
   };
@@ -225,12 +237,14 @@ export function DonateLoggedIn({ onPay, userName, userEmail, userPhone, api }: D
             <AramInput
               label="Email Address"
               value={displayEmail}
+              onChange={() => { }}
               disabled
               helperText="Verified registered email"
             />
             <AramInput
               label="Mobile Number"
               value={displayPhone}
+              onChange={() => { }}
               disabled
               helperText="Verified registered mobile"
             />

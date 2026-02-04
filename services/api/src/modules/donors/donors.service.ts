@@ -3,6 +3,8 @@ import { eq, and, sql, desc } from 'drizzle-orm';
 import { DRIZZLE } from '../../database/database.module';
 import { tUser } from '../../database/models/t-user.model';
 import { donors } from '../../database/models/donors.model';
+import { eChallans } from '../../database/models/e-challans.model';
+import { donationCategories } from '../../database/models/donation-categories.model';
 import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';
 import * as schema from '../../database/schema';
 import type { CreateGuestDonorDto } from './dto/create-guest-donor.dto';
@@ -82,16 +84,16 @@ export class DonorsService {
         // Fetch latest donation for preferences
         const lastDonation = await this.db
           .select({
-            amount: schema.eChallans.amount,
-            typeCode: schema.donationCategories.categoryCode,
+            amount: eChallans.amount,
+            typeCode: donationCategories.categoryCode,
           })
-          .from(schema.eChallans)
+          .from(eChallans)
           .leftJoin(
-            schema.donationCategories,
-            eq(schema.eChallans.categoryId, schema.donationCategories.id),
+            donationCategories,
+            eq(eChallans.categoryId, donationCategories.id),
           )
-          .where(eq(schema.eChallans.donorId, donorDetail.id))
-          .orderBy(desc(schema.eChallans.id)); // Use ID for unambiguous chronological order
+          .where(eq(eChallans.donorId, donorDetail.id))
+          .orderBy(desc(eChallans.id)); // Use ID for unambiguous chronological order
 
         const last = lastDonation[0];
         console.log('Last Donation fetched:', last);
@@ -183,18 +185,18 @@ export class DonorsService {
       // Fetch donations with filters applied (all results for count)
       const allDonations = await this.db
         .select({
-          id: schema.eChallans.id,
-          challanNumber: schema.eChallans.challanNumber,
-          amount: schema.eChallans.amount,
-          donationDate: schema.eChallans.donationDate,
-          paymentMode: schema.eChallans.paymentMode,
-          categoryId: schema.eChallans.categoryId,
-          categoryName: schema.donationCategories.displayName,
+          id: eChallans.id,
+          challanNumber: eChallans.challanNumber,
+          amount: eChallans.amount,
+          donationDate: eChallans.donationDate,
+          paymentMode: eChallans.paymentMode,
+          categoryId: eChallans.categoryId,
+          categoryName: donationCategories.displayName,
         })
-        .from(schema.eChallans)
+        .from(eChallans)
         .leftJoin(
-          schema.donationCategories,
-          eq(schema.eChallans.categoryId, schema.donationCategories.id),
+          donationCategories,
+          eq(eChallans.categoryId, donationCategories.id),
         )
         .where(and(...conditions))
         .orderBy(sql`${schema.eChallans.donationDate} DESC`);
@@ -338,13 +340,13 @@ export class DonorsService {
     // 2. Find Category Id by categoryCode (frontend sends "aram-sei", "building", etc.)
     const catRows = await this.db
       .select()
-      .from(schema.donationCategories)
-      .where(eq(schema.donationCategories.categoryCode, dto.donationType));
+      .from(donationCategories)
+      .where(eq(donationCategories.categoryCode, dto.donationType));
     const categoryId = catRows[0]?.id || 1;
 
     // 3. Insert into e_challans using donorId (from donors table)
     const challanNumber = `CH${now.getTime()}`;
-    await this.db.insert(schema.eChallans).values({
+    await this.db.insert(eChallans).values({
       challanNumber,
       donorId: donorId,
       amount: dto.amount.toString(),

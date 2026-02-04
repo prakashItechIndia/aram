@@ -1,27 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AramButton } from '@/app/components/aram/AramButton';
 import { AramCard } from '@/app/components/aram/AramCard';
 import { AramInput } from '@/app/components/aram/AramInput';
 import { Upload, Sun, Moon, Download, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { validateField, validationRules, validationMessages, sanitizeInput } from '../../utils/validations';
+import { useApi } from '@/app/context/ApiContext';
 
-export interface ProfileProps {
-  userName: string;
-  userEmail: string;
-  userPhone: string;
-  userPan?: string;
-  userAddress?: string;
-  profileImage?: string;
-  onSaveProfile: (data: any) => void;
-  onUpdatePassword: (data: any) => Promise<{ success: boolean; error?: string }>;
-  onUploadImage: (file: File) => Promise<void>;
-}
+export function Profile() {
+  const { user, updateProfile, changePassword, uploadProfileImage } = useApi();
 
-export function Profile({ userName, userEmail, userPhone, userPan, userAddress, profileImage, onSaveProfile, onUpdatePassword, onUploadImage }: ProfileProps) {
-  const [name, setName] = useState(userName);
-  const [phone, setPhone] = useState(userPhone);
-  const [pan, setPan] = useState(userPan || '');
-  const [address, setAddress] = useState(userAddress || '');
+  const [name, setName] = useState(user?.name || '');
+  const [phone, setPhone] = useState(user?.mobileNumber || user?.phone || '');
+  const [pan, setPan] = useState(user?.pan || '');
+  const [address, setAddress] = useState(user?.address || user?.location || '');
+
+  // Sync state with user context when it loads
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setPhone(user.mobileNumber || user.phone || '');
+      setPan(user.pan || '');
+      setAddress(user.address || user.location || '');
+    }
+  }, [user]);
+
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -33,7 +35,7 @@ export function Profile({ userName, userEmail, userPhone, userPan, userAddress, 
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     const newErrors: any = {};
     const nameError = validateField(name, validationRules.name, validationMessages.name);
     if (nameError) newErrors.name = nameError;
@@ -49,7 +51,7 @@ export function Profile({ userName, userEmail, userPhone, userPan, userAddress, 
       return;
     }
 
-    onSaveProfile({ name, phone, pan, address });
+    await updateProfile({ name, phone, pan, address });
     setErrors({});
   };
 
@@ -82,7 +84,7 @@ export function Profile({ userName, userEmail, userPhone, userPan, userAddress, 
       return;
     }
 
-    const res = await onUpdatePassword({ currentPassword, newPassword });
+    const res = await changePassword({ currentPassword, newPassword });
     if (res.success) {
       setCurrentPassword('');
       setNewPassword('');
@@ -103,7 +105,7 @@ export function Profile({ userName, userEmail, userPhone, userPan, userAddress, 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      onUploadImage(file);
+      uploadProfileImage(file);
     }
   };
 
@@ -137,8 +139,8 @@ export function Profile({ userName, userEmail, userPhone, userPan, userAddress, 
               onChange={handleFileChange}
             />
             <div className="w-[80px] h-[80px] rounded-full bg-[#F3F3F3] flex items-center justify-center overflow-hidden">
-              {profileImage ? (
-                <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+              {user?.profilePicture ? (
+                <img src={user.profilePicture} alt="Profile" className="w-full h-full object-cover" />
               ) : (
                 <span style={{ fontSize: '32px', fontWeight: 700, color: '#F36A4F' }}>
                   {name.charAt(0).toUpperCase()}
@@ -165,7 +167,7 @@ export function Profile({ userName, userEmail, userPhone, userPan, userAddress, 
             />
             <AramInput
               label="Email"
-              value={userEmail}
+              value={user?.email || ''}
               onChange={() => { }}
               disabled
               helperText="Email cannot be changed"
@@ -207,10 +209,10 @@ export function Profile({ userName, userEmail, userPhone, userPan, userAddress, 
               Save Changes
             </AramButton>
             <AramButton onClick={() => {
-              setName(userName);
-              setPhone(userPhone);
-              setPan(userPan || '');
-              setAddress(userAddress || '');
+              setName(user?.name || '');
+              setPhone(user?.mobileNumber || user?.phone || '');
+              setPan(user?.pan || '');
+              setAddress(user?.address || user?.location || '');
             }} variant="secondary">
               Cancel
             </AramButton>
