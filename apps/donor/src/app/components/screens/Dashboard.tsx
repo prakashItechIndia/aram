@@ -85,7 +85,6 @@ export function Dashboard() {
   const endItem = Math.min(page * limit, total);
 
   const handleDownloadReceipt = (donation: Donation) => {
-    if (!checkAndNotify()) return;
 
     generateReceiptPDF(
       {
@@ -106,7 +105,6 @@ export function Dashboard() {
   };
 
   const handleDonateClick = () => {
-    if (!checkAndNotify()) return;
     onDonateNow();
   };
 
@@ -158,7 +156,7 @@ export function Dashboard() {
               Last Donation Date
             </span>
             <span style={{ fontSize: '18px', lineHeight: '26px', fontWeight: 600, color: '#0D0D0D' }}>
-              {lastDonationDate}
+              {lastDonation?.date || 'No donations yet'}
             </span>
           </div>
         </AramCard>
