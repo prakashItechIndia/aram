@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AramButton } from '@/app/components/aram/AramButton';
 import { AramCard } from '@/app/components/aram/AramCard';
+import { toast } from 'sonner';
 import { CheckCircle, Download } from 'lucide-react';
 import { useApi } from '@/app/context/ApiContext';
 import { generateReceiptPDF } from '@/app/utils/pdfGenerator';
@@ -21,7 +22,7 @@ interface DonationData {
 export function PaymentProcessing() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useApi();
+  const { user, isAuthenticated } = useApi();
 
   const state = location.state as {
     status: 'processing' | 'success' | 'failed';
@@ -30,13 +31,20 @@ export function PaymentProcessing() {
 
   const donationData = state?.donationData;
   const displayData = donationData;
-
   useEffect(() => {
     if (!displayData) {
       navigate('/donate');
       return;
     }
-  }, [displayData, navigate]);
+
+    // If guest donation success, show toast about temporary password
+    if (state?.status === 'success' && !isAuthenticated) {
+      toast.success('Donation successful!', {
+        description: 'A temporary password has been sent to your email for your new account.',
+        duration: 8000,
+      });
+    }
+  }, [displayData, navigate, state?.status, isAuthenticated]);
 
   const handleDownloadReceipt = () => {
     if (displayData) {
@@ -108,8 +116,8 @@ export function PaymentProcessing() {
                 <Download size={18} className="inline mr-2" />
                 Download Receipt
               </AramButton>
-              <AramButton onClick={() => navigate('/')} variant="primary" className="flex-1">
-                Go to Home
+              <AramButton onClick={() => navigate(isAuthenticated ? '/dashboard' : '/')} variant="primary" className="flex-1">
+                {isAuthenticated ? 'Go to Dashboard' : 'Go to Home'}
               </AramButton>
             </div>
           </>
