@@ -115,24 +115,30 @@ export function CreateAccount() {
   };
 
   const handleSubmit = async () => {
+    // Validate form fields first
+    if (!validateForm()) {
+      return;
+    }
+    
+    // Then check terms acceptance
     if (!agreeTerms) {
       toast.error('You should accept the Terms of Service and Privacy Policy');
       return;
     }
-    if (validateForm()) {
-      const result = await register({
-        name,
-        email,
-        password,
-        phone,
-      });
+    
+    // Proceed with registration
+    const result = await register({
+      name,
+      email,
+      password,
+      phone,
+    });
 
-      if (result.success) {
-        toast.success('Account created successfully!');
-        navigate('/dashboard');
-      } else {
-        toast.error(result.error ?? 'Registration failed');
-      }
+    if (result.success) {
+      toast.success('Account created successfully!');
+      navigate('/');
+    } else {
+      toast.error(result.error ?? 'Registration failed');
     }
   };
 
@@ -276,8 +282,8 @@ export function CreateAccount() {
           </div>
 
           {/* Terms Modal */}
-          <Dialog open={showTerms} onOpenChange={setShowTerms}>
-            <DialogContent className="max-w-[700px] bg-white p-0 overflow-hidden rounded-none">
+          <Dialog open={showTerms} onOpenChange={() => {}}>
+            <DialogContent className="max-w-[700px] bg-white p-0 overflow-hidden rounded-none" hideCloseButton>
               <div className="flex flex-col h-full">
                 <div className="p-[40px] text-center relative">
                   <DialogHeader>
@@ -288,9 +294,9 @@ export function CreateAccount() {
                     </p>
                   </DialogHeader>
                 </div>
-                <div className="px-[40px] pb-[40px]">
+                <div className="px-[40px] overflow-hidden">
                   <ScrollArea className="h-[400px] pr-4">
-                    <div className="text-[14px] leading-[22px] text-[#3D3D3D] space-y-4">
+                    <div className="text-[14px] leading-[22px] text-[#3D3D3D] space-y-4 pb-4">
                       <p>Welcome to Aram Foundation. By using our services, you agree to comply with and be bound by the following terms and conditions. Please review them carefully.</p>
                       <p><strong>1. Acceptance of Terms:</strong> By accessing this site, you are agreeing to be bound by these web site Terms and Conditions of Use, all applicable laws and regulations, and agree that you are responsible for compliance with any applicable local laws.</p>
                       <p><strong>2. Use License:</strong> Permission is granted to temporarily download one copy of the materials (information or software) on Aram Foundation's web site for personal, non-commercial transitory viewing only.</p>
@@ -303,13 +309,18 @@ export function CreateAccount() {
                     </div>
                   </ScrollArea>
                 </div>
+                <div className="flex justify-center p-[40px] pt-[24px]">
+                  <AramButton onClick={() => setShowTerms(false)} variant="primary">
+                    I Agree
+                  </AramButton>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
 
           {/* Privacy Policy Modal */}
-          <Dialog open={showPrivacy} onOpenChange={setShowPrivacy}>
-            <DialogContent className="max-w-[700px] bg-white p-0 overflow-hidden rounded-none">
+          <Dialog open={showPrivacy} onOpenChange={() => {}}>
+            <DialogContent className="max-w-[700px] bg-white p-0 overflow-hidden rounded-none" hideCloseButton>
               <div className="flex flex-col h-full">
                 <div className="p-[40px] text-center relative">
                   <DialogHeader>
@@ -320,18 +331,23 @@ export function CreateAccount() {
                     </p>
                   </DialogHeader>
                 </div>
-                <div className="px-[40px] pb-[40px]">
+                <div className="px-[40px] overflow-hidden">
                   <ScrollArea className="h-[400px] pr-4">
-                    <div className="text-[14px] leading-[22px] text-[#3D3D3D] space-y-4">
+                    <div className="text-[14px] leading-[22px] text-[#3D3D3D] space-y-4 pb-4">
                       <p>Your privacy is important to us. It is Aram Foundation's policy to respect your privacy regarding any information we may collect from you across our website, and other sites we own and operate.</p>
-                      <p><strong>1. Information we collect:</strong> We only ask for personal information when we truly need it to provide a service to you. We collect it by fair and lawful means, with your knowledge and consent. We also let you know why we’re collecting it and how it will be used.</p>
-                      <p><strong>2. Use of Information:</strong> We only retain collected information for as long as necessary to provide you with your requested service. What data we store, we’ll protect within commercially acceptable means to prevent loss and theft, as well as unauthorized access, disclosure, copying, use or modification.</p>
-                      <p><strong>3. Data Protection:</strong> We don’t share any personally identifying information publicly or with third-parties, except when required to by law.</p>
+                      <p><strong>1. Information we collect:</strong> We only ask for personal information when we truly need it to provide a service to you. We collect it by fair and lawful means, with your knowledge and consent. We also let you know why we're collecting it and how it will be used.</p>
+                      <p><strong>2. Use of Information:</strong> We only retain collected information for as long as necessary to provide you with your requested service. What data we store, we'll protect within commercially acceptable means to prevent loss and theft, as well as unauthorized access, disclosure, copying, use or modification.</p>
+                      <p><strong>3. Data Protection:</strong> We don't share any personally identifying information publicly or with third-parties, except when required to by law.</p>
                       <p><strong>4. External Links:</strong> Our website may link to external sites that are not operated by us. Please be aware that we have no control over the content and practices of these sites, and cannot accept responsibility or liability for their respective privacy policies.</p>
                       <p><strong>5. User Consent:</strong> You are free to refuse our request for your personal information, with the understanding that we may be unable to provide you with some of your desired services.</p>
                       <p><strong>6. Policy Changes:</strong> Your continued use of our website will be regarded as acceptance of our practices around privacy and personal information. If you have any questions about how we handle user data and personal information, feel free to contact us.</p>
                     </div>
                   </ScrollArea>
+                </div>
+                <div className="flex justify-center p-[40px] pt-[24px]">
+                  <AramButton onClick={() => setShowPrivacy(false)} variant="primary">
+                    I Agree
+                  </AramButton>
                 </div>
               </div>
             </DialogContent>
