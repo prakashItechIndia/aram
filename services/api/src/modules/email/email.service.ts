@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { ConfigService } from '@nestjs/config';
+import * as PDFDocument from 'pdfkit';
 
 @Injectable()
 export class EmailService {
@@ -141,10 +142,28 @@ export class EmailService {
     this.logger.log(`Template email sent to ${to}`);
   }
 
-  async sendDonationReceipt(email: string, name: string, donationDetails: { amount: number; receiptNo: string; date: string; type: string }) {
+  async sendDonationReceipt(
+    email: string,
+    name: string,
+    donationDetails: {
+      amount: number;
+      receiptNo: string;
+      date: string;
+      type: string;
+      email?: string;
+      pan?: string;
+      address?: string;
+      phone?: string;
+      eligible80G?: boolean;
+    }
+  ) {
     if (!this.transporter) return;
     const from = this.configService.get<string>('SMTP_FROM') || '"Aram Foundation" <no-reply@aram.org>';
     const subject = `Donation Receipt - ${donationDetails.receiptNo}`;
+
+    // Generate PDF Buffer
+    const pdfBuffer = await this.generateReceiptPDFBuffer(name, donationDetails);
+
     const html = `
       <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px;">
         <h2 style="color: #F36A4F; text-align: center;">Thank You for Your Donation!</h2>
@@ -172,9 +191,9 @@ export class EmailService {
           </table>
         </div>
 
-        <p>You can download your official receipt by logging into your portal at any time.</p>
+        <p>We have attached your official receipt to this email. You can also download it at any time by logging into your portal.</p>
         <div style="text-align: center; margin-top: 30px;">
-          <a href="${this.configService.get<string>('FRONTEND_URL') || 'https://aram-donor.vercel.app'}" 
+          <a href="${(this.configService.get<string>('FRONTEND_URL') || 'https://aram-donor.vercel.app').replace(/\/$/, '')}/home" 
              style="background-color: #F36A4F; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
              Visit Donor Portal
           </a>
@@ -187,10 +206,95 @@ export class EmailService {
       </div>
     `;
     try {
-      await this.transporter.sendMail({ from, to: email, subject, html });
-      this.logger.log(`Donation receipt email sent to ${email}`);
+      await this.transporter.sendMail({
+        from,
+        to: email,
+        subject,
+        html,
+        attachments: [
+          {
+            filename: `Receipt_${donationDetails.receiptNo}.pdf`,
+            content: pdfBuffer,
+          }
+        ]
+      });
+      this.logger.log(`Donation receipt email sent to ${email} with attachment`);
     } catch (error) {
       this.logger.error(`Failed to send donation receipt email to ${email}`, error);
     }
+  }
+
+  private async generateReceiptPDFBuffer(name: string, details: any): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 50 });
+      const buffers = [];
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => {
+        resolve(Buffer.concat(buffers));
+      });
+      doc.on('error', reject);
+
+      // --- HEADER ---
+      doc.fillColor('#F36A4F').fontSize(24).text('ARAM FOUNDATION', { align: 'center' });
+      doc.fillColor('#666').fontSize(10).text('Email: info@aramfoundation.org | Web: www.aramfoundation.org', { align: 'center' });
+      doc.moveDown();
+      doc.strokeColor('#DBDBDB').moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+      doc.moveDown(2);
+
+      // --- TITLE ---
+      doc.fillColor('#000').fontSize(18).text('DONATION RECEIPT', { align: 'center' });
+      doc.moveDown(2);
+
+      // --- DONOR & RECEIPT INFO ---
+      const topOfDetails = doc.y;
+
+      // Left side: Donor
+      doc.fontSize(11).fillColor('#666').text('Donor Details:');
+      doc.fillColor('#000').font('Helvetica-Bold').text(name);
+      doc.font('Helvetica').fontSize(10);
+      if (details.email) doc.text(`Email: ${details.email}`);
+      if (details.phone) doc.text(`Phone: ${details.phone}`);
+      if (details.pan) doc.text(`PAN: ${details.pan}`);
+      if (details.address) doc.text(`Address: ${details.address}`, { width: 250 });
+
+      // Right side: Receipt (Reset Y to topOfDetails)
+      const rightColX = 300;
+      doc.y = topOfDetails;
+      doc.fontSize(10).font('Helvetica-Bold');
+      doc.text(`Receipt No: ${details.receiptNo}`, rightColX, doc.y, { width: 250, align: 'right' });
+      doc.font('Helvetica');
+      doc.text(`Date: ${details.date}`, rightColX, doc.y + 2, { width: 250, align: 'right' });
+      doc.text(`80G Eligible: ${details.eligible80G ? 'Yes' : 'No'}`, rightColX, doc.y + 2, { width: 250, align: 'right' });
+
+      doc.moveDown(4);
+
+      // --- TABLE HEADER ---
+      const tableTop = doc.y;
+      doc.fillColor('#F36A4F').rect(50, tableTop, 500, 25).fill();
+      doc.fillColor('#FFF').font('Helvetica-Bold').fontSize(11);
+      doc.text('Description', 70, tableTop + 7);
+      doc.text('Amount', 300, tableTop + 7, { width: 230, align: 'right' });
+
+      // --- TABLE BODY ---
+      doc.fillColor('#000').font('Helvetica').fontSize(10);
+      doc.text(details.type, 70, tableTop + 35);
+      doc.text(`INR ${details.amount.toLocaleString()}`, 300, tableTop + 35, { width: 230, align: 'right' });
+
+      doc.strokeColor('#DBDBDB').moveTo(50, tableTop + 55).lineTo(550, tableTop + 55).stroke();
+
+      // --- TOTAL ---
+      doc.moveDown(4);
+      doc.font('Helvetica-Bold').fontSize(14).text(`Total Amount: INR ${details.amount.toLocaleString()}`, 300, doc.y, { width: 250, align: 'right' });
+
+      // --- FOOTER ---
+      doc.moveDown(4);
+      doc.font('Helvetica').fontSize(9).fillColor('#999');
+      const note = details.eligible80G
+        ? 'This is a computer generated receipt and does not require a physical signature. Your donation is eligible for 80G tax exemption.'
+        : 'This is a computer generated receipt and does not require a physical signature.';
+      doc.text(note, 50, doc.y, { width: 500, align: 'center' });
+
+      doc.end();
+    });
   }
 }

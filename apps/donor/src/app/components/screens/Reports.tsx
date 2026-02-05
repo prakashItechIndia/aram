@@ -29,6 +29,7 @@ export function Reports() {
   }
 
   const fyOptions = [
+    { value: '', label: 'All Years' },
     { value: 'fy2025-26', label: 'FY 2025-26' },
     { value: 'fy2024-25', label: 'FY 2024-25' },
     { value: 'fy2023-24', label: 'FY 2023-24' },
@@ -56,7 +57,7 @@ export function Reports() {
 
   // Filter States
   const [searchReceipt, setSearchReceipt] = useState('');
-  const [selectedFY, setSelectedFY] = useState('fy2025-26');
+  const [selectedFY, setSelectedFY] = useState('');
   const [selectedType, setSelectedType] = useState('');
 
   // Pagination States
@@ -97,7 +98,11 @@ export function Reports() {
           }
         } else {
           // Both 80G and Tax tabs use the tax-summaries endpoint
-          const res = await fetch(`${baseUrl}/donors/me/tax-summaries`, { headers });
+          const params = new URLSearchParams();
+          if (selectedFY) params.append('financialYear', selectedFY);
+          if (selectedType) params.append('donationType', selectedType);
+
+          const res = await fetch(`${baseUrl}/donors/me/tax-summaries?${params.toString()}`, { headers });
           if (res.ok) {
             const data = await res.json();
             setTaxDocs(data || []);
@@ -228,6 +233,32 @@ export function Reports() {
         </div>
       </AramCard>
 
+      {/* Common Filters */}
+      <AramCard noPadding>
+        <div className="p-[16px] border-[#DBDBDB] flex flex-col md:flex-row gap-[12px]">
+          <div className="flex-1 relative">
+            <AramInput
+              placeholder="Search by receipt number"
+              value={searchReceipt}
+              onChange={setSearchReceipt}
+            />
+            <Search className="absolute right-[14px] top-[12px] pointer-events-none" size={18} color="#6E6E6E" />
+          </div>
+          <AramSelect
+            value={selectedFY}
+            onChange={setSelectedFY}
+            options={fyOptions}
+            className="w-full md:w-[220px]"
+          />
+          <AramSelect
+            value={selectedType}
+            onChange={setSelectedType}
+            options={donationTypeOptions}
+            className="w-full md:w-[220px]"
+          />
+        </div>
+      </AramCard>
+
       {/* Tabs */}
       <div className="flex gap-[8px] border-b border-[#DBDBDB]">
         {(['receipts', '80g', 'tax'] as const).map((tab) => (
@@ -255,111 +286,89 @@ export function Reports() {
           </div>
         </AramCard>
       ) : activeTab === 'receipts' ? (
-        <AramCard noPadding>
-          {/* Filters */}
-          <div className="p-[16px] border-b border-[#DBDBDB] flex flex-col md:flex-row gap-[12px]">
-            <div className="flex-1 relative">
-              <AramInput
-                placeholder="Search by receipt number"
-                value={searchReceipt}
-                onChange={setSearchReceipt}
-              />
-              <Search className="absolute right-[14px] top-[12px] pointer-events-none" size={18} color="#6E6E6E" />
-            </div>
-            <AramSelect
-              value={selectedFY}
-              onChange={setSelectedFY}
-              options={fyOptions}
-              className="w-full md:w-[220px]"
-            />
-            <AramSelect
-              value={selectedType}
-              onChange={setSelectedType}
-              options={donationTypeOptions}
-              className="w-full md:w-[220px]"
-            />
-          </div>
-
-          {/* Receipts Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr style={{ height: '48px', backgroundColor: '#F3F3F3' }}>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Date</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Receipt No</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Type</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Amount</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>80G</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Download</th>
-                </tr>
-              </thead>
-              <tbody>
-                {receipts.map((receipt) => (
-                  <tr key={receipt.id} style={{ height: '52px', borderBottom: '1px solid #DBDBDB' }}>
-                    <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{receipt.date}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>{receipt.receiptNo}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{receipt.type}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>₹{receipt.amount.toLocaleString()}</td>
-                    <td style={{ padding: '12px 16px' }}>
-                      {receipt.eligible80G ? (
-                        <span style={{ color: '#734F48', fontSize: '14px', fontWeight: 600 }}>Yes</span>
-                      ) : (
-                        <span style={{ color: '#6E6E6E', fontSize: '14px' }}>No</span>
-                      )}
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <button
-                        onClick={() => handleDownloadReceipt(receipt)}
-                        className="flex items-center gap-[8px] hover:opacity-80 transition-opacity"
-                        style={{ color: '#F36A4F' }}
-                      >
-                        <Download size={16} />
-                        <span style={{ fontSize: '14px' }}>PDF</span>
-                      </button>
-                    </td>
+        <div className="flex flex-col gap-[24px]">
+          <AramCard noPadding>
+            {/* Receipts Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr style={{ height: '48px', backgroundColor: '#F3F3F3' }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Date</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Receipt No</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Type</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Amount</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>80G</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Download</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination Controls */}
-          {total > limit && (
-            <div className="p-[16px] border-t border-[#DBDBDB] flex items-center justify-between flex-wrap gap-4">
-              <div className="text-[14px] text-[#6E6E6E]">
-                Showing {Math.min((page - 1) * limit + 1, total)} to {Math.min(page * limit, total)} of {total} receipts
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1 || isLoading}
-                  className="h-[40px] px-[16px] border border-[#DBDBDB] rounded-[8px] text-[14px] font-medium text-[#3D3D3D] bg-white hover:bg-[#F3F3F3] disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                <span className="px-4 text-[14px] text-[#3D3D3D]">
-                  Page {page} of {totalPages}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages || isLoading}
-                  className="h-[40px] px-[16px] border border-[#DBDBDB] rounded-[8px] text-[14px] font-medium text-[#3D3D3D] bg-white hover:bg-[#F3F3F3] disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
+                </thead>
+                <tbody>
+                  {receipts.map((receipt) => (
+                    <tr key={receipt.id} style={{ height: '52px', borderBottom: '1px solid #DBDBDB' }}>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{receipt.date}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>{receipt.receiptNo}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{receipt.type}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>₹{receipt.amount.toLocaleString()}</td>
+                      <td style={{ padding: '12px 16px' }}>
+                        {receipt.eligible80G ? (
+                          <span style={{ color: '#734F48', fontSize: '14px', fontWeight: 600 }}>Yes</span>
+                        ) : (
+                          <span style={{ color: '#6E6E6E', fontSize: '14px' }}>No</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <button
+                          onClick={() => handleDownloadReceipt(receipt)}
+                          className="flex items-center gap-[8px] hover:opacity-80 transition-opacity"
+                          style={{ color: '#F36A4F' }}
+                        >
+                          <Download size={16} />
+                          <span style={{ fontSize: '14px' }}>PDF</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
 
-          {receipts.length === 0 && (
-            <div className="p-[48px] text-center">
-              <FileText size={48} color="#DBDBDB" className="mx-auto mb-[16px]" />
-              <p style={{ fontSize: '16px', color: '#6E6E6E' }}>No receipts available yet</p>
-            </div>
-          )}
-        </AramCard>
+            {/* Pagination Controls */}
+            {total > limit && (
+              <div className="p-[16px] border-t border-[#DBDBDB] flex items-center justify-between flex-wrap gap-4">
+                <div className="text-[14px] text-[#6E6E6E]">
+                  Showing {Math.min((page - 1) * limit + 1, total)} to {Math.min(page * limit, total)} of {total} receipts
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1 || isLoading}
+                    className="h-[40px] px-[16px] border border-[#DBDBDB] rounded-[8px] text-[14px] font-medium text-[#3D3D3D] bg-white hover:bg-[#F3F3F3] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-4 text-[14px] text-[#3D3D3D]">
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages || isLoading}
+                    className="h-[40px] px-[16px] border border-[#DBDBDB] rounded-[8px] text-[14px] font-medium text-[#3D3D3D] bg-white hover:bg-[#F3F3F3] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {receipts.length === 0 && (
+              <div className="p-[48px] text-center">
+                <FileText size={48} color="#DBDBDB" className="mx-auto mb-[16px]" />
+                <p style={{ fontSize: '16px', color: '#6E6E6E' }}>No receipts available yet</p>
+              </div>
+            )}
+          </AramCard>
+        </div>
       ) : activeTab === '80g' ? (
         <div className="flex flex-col gap-[24px]">
           <AramCard>
@@ -371,9 +380,16 @@ export function Reports() {
                     These documents are generated based on successful donations.
                   </p>
                 </div>
-                <AramButton variant="primary" onClick={() => handleDownload80GSummary('FY 2024-25')}>
+                <AramButton
+                  variant="primary"
+                  disabled={!selectedFY}
+                  onClick={() => {
+                    const label = fyOptions.find(o => o.value === selectedFY)?.label || 'Summary';
+                    handleDownload80GSummary(label);
+                  }}
+                >
                   <Download size={18} className="inline mr-2" />
-                  Download 80G Summary (FY 2024-25)
+                  Download 80G Summary ({fyOptions.find(o => o.value === selectedFY)?.label || 'Select FY'})
                 </AramButton>
               </div>
             </div>
@@ -435,9 +451,16 @@ export function Reports() {
                     Consolidated tax certificates for your financial records.
                   </p>
                 </div>
-                <AramButton variant="primary" onClick={() => handleDownloadTaxSummary('FY 2024-25')}>
+                <AramButton
+                  variant="primary"
+                  disabled={!selectedFY}
+                  onClick={() => {
+                    const label = fyOptions.find(o => o.value === selectedFY)?.label || 'Summary';
+                    handleDownloadTaxSummary(label);
+                  }}
+                >
                   <Download size={18} className="inline mr-2" />
-                  Download Tax Summary (FY 2024-25)
+                  Download Tax Summary ({fyOptions.find(o => o.value === selectedFY)?.label || 'Select FY'})
                 </AramButton>
               </div>
             </div>
