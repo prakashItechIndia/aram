@@ -231,7 +231,7 @@ export class DonorsService {
   async getDonationSummaries(userId: number) {
     // Fetch all donations (high limit) to ensure accurate summary
     const { data: donations } = await this.findDonationsByUserId(userId, { limit: 100000 });
-
+    console.log('donations', donations)
     // Group by FY
     const summaries: Record<string, { totalAmount: number; count: number }> = {};
 

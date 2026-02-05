@@ -99,6 +99,18 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     setUserState(null);
   }, []);
 
+  // Helper to handle 401 responses
+  const handle401 = useCallback(() => {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      sessionStorage.clear();
+      localStorage.clear();
+    }
+    logout();
+    if (typeof window !== 'undefined') {
+      window.location.href = '/signin';
+    }
+  }, [logout]);
+
   const exchangeOnlyOnce = useCallback(async () => { }, []);
 
   const httpClientMinState: HttpClientMinState = useMemo(
@@ -111,6 +123,12 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       },
       exchangeOnlyOnce,
       logout,
+      onUnauthorized: () => {
+        // Redirect to donor signin page
+        if (typeof window !== 'undefined') {
+          window.location.href = '/signin';
+        }
+      },
     }),
     [exchangeOnlyOnce, logout],
   );
@@ -365,6 +383,10 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
           'Authorization': `Bearer ${user?.accessToken}`,
         },
       });
+      if (res.status === 401) {
+        handle401();
+        return 0;
+      }
       if (!res.ok) return 0;
       const count = await res.json();
       const result = typeof count === 'number' ? count : 0;
@@ -373,7 +395,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     } catch {
       return 0;
     }
-  }, [user]);
+  }, [user, handle401]);
 
   const fetchNotifications = useCallback(async (userId: number) => {
     try {
@@ -383,6 +405,10 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
           'Authorization': `Bearer ${user?.accessToken}`,
         },
       });
+      if (res.status === 401) {
+        handle401();
+        return [];
+      }
       if (!res.ok) return [];
       const data = await res.json();
       const list = Array.isArray(data) ? data : [];
@@ -395,7 +421,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     } catch {
       return [];
     }
-  }, [user]);
+  }, [user, handle401]);
 
   const refreshNotifications = useCallback(async () => {
     if (user?.id) {
@@ -415,6 +441,10 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
           'Authorization': `Bearer ${user?.accessToken}`,
         },
       });
+      if (res.status === 401) {
+        handle401();
+        return { success: false, error: 'Unauthorized' };
+      }
       if (!res.ok) throw new Error('Failed to mark notification as read');
 
       // Optimistic UI update
@@ -425,7 +455,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     } catch (err: unknown) {
       return { success: false, error: (err as Error).message };
     }
-  }, [user?.accessToken]);
+  }, [user?.accessToken, handle401]);
 
   React.useEffect(() => {
     if (user?.id) {
@@ -444,12 +474,16 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
         },
         body: JSON.stringify(data),
       });
+      if (res.status === 401) {
+        handle401();
+        return { success: false, error: 'Unauthorized' };
+      }
       if (!res.ok) throw new Error('Failed to create notification');
       return { success: true };
     } catch (err: unknown) {
       return { success: false, error: (err as Error).message };
     }
-  }, [user?.accessToken]);
+  }, [user?.accessToken, handle401]);
 
   const processDonation = useCallback(async (data: any) => {
     try {
@@ -462,13 +496,17 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
         },
         body: JSON.stringify(data),
       });
+      if (res.status === 401) {
+        handle401();
+        return { success: false, error: 'Unauthorized' };
+      }
       if (!res.ok) throw new Error('Failed to process donation');
       const result = await res.json();
       return { success: true, ...result };
     } catch (err: unknown) {
       return { success: false, error: (err as Error).message };
     }
-  }, [user?.accessToken]);
+  }, [user?.accessToken, handle401]);
 
   const changePassword = useCallback(async (data: any) => {
     try {
@@ -481,6 +519,10 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
         },
         body: JSON.stringify(data),
       });
+      if (res.status === 401) {
+        handle401();
+        return { success: false, error: 'Unauthorized' };
+      }
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message || 'Failed to update password');
@@ -489,7 +531,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     } catch (err: unknown) {
       return { success: false, error: (err as Error).message };
     }
-  }, [user?.accessToken]);
+  }, [user?.accessToken, handle401]);
 
   const uploadProfileImage = useCallback(async (file: File) => {
     try {
@@ -504,6 +546,11 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
         },
         body: formData,
       });
+
+      if (res.status === 401) {
+        handle401();
+        return { success: false, error: 'Unauthorized' };
+      }
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -523,7 +570,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     } catch (err: unknown) {
       return { success: false, error: (err as Error).message };
     }
-  }, [user]);
+  }, [user, handle401]);
 
   const enableAccount = useCallback(async (emailOrPhone: string) => {
     try {
@@ -560,6 +607,11 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify(data),
       });
 
+      if (res.status === 401) {
+        handle401();
+        return { success: false, error: 'Unauthorized' };
+      }
+
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message || 'Failed to update profile');
@@ -585,7 +637,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     } catch (err: unknown) {
       return { success: false, error: (err as Error).message };
     }
-  }, [user]);
+  }, [user, handle401]);
 
   const value: ApiContextValue = useMemo(
     () => ({

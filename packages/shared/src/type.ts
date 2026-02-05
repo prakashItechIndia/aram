@@ -14,8 +14,8 @@ export type CustomSVGIconType = ({
 
 export type FlattenKeys<T> = T extends object
   ? {
-      [K in keyof T]-?: `${K & string}${T[K] extends object ? '.' : ''}${FlattenKeys<T[K]>}`;
-    }[keyof T]
+    [K in keyof T]-?: `${K & string}${T[K] extends object ? '.' : ''}${FlattenKeys<T[K]>}`;
+  }[keyof T]
   : '';
 
 export type HttpClientMinState = {
@@ -23,5 +23,6 @@ export type HttpClientMinState = {
   authTokenVersion: number | undefined;
   exchangeOnlyOnce: () => Promise<unknown>;
   logout: () => void;
+  onUnauthorized?: () => void;
 };
 export type LanguageType = 'en' | 'de';
