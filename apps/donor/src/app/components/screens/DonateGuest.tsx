@@ -170,7 +170,7 @@ export function DonateGuest() {
       toast.error(`Maximum donation amount is ₹${maxAmount}`);
       return;
     }
-    
+
     if (!validateForm()) return;
 
     if (api?.donorsApi) {
@@ -385,7 +385,6 @@ export function DonateGuest() {
                     onClick={() => {
                       setSelectedPreset(preset);
                       setCustomAmount('');
-                      setPanNumber(''); // Clear PAN on amount change
                     }}
                     className={`h-[44px] px-[24px] rounded-[999px] border transition-colors ${selectedPreset === preset
                       ? 'border-[#F36A4F] bg-[#FEF1EE] text-[#F36A4F]'
@@ -405,7 +404,6 @@ export function DonateGuest() {
                     if (/^\d*$/.test(val)) {
                       setCustomAmount(val);
                       setSelectedPreset(null);
-                      setPanNumber(''); // Clear PAN on amount change
                     }
                   }}
                   type="number"
@@ -417,7 +415,7 @@ export function DonateGuest() {
 
 
 
-            
+
           </div>
 
 

@@ -79,26 +79,16 @@ export function OtpScreen() {
             } else {
                 if (res.error?.toLowerCase().includes('disabled')) {
                     toast('Your account is disabled', {
-                        description: 'Click Okay to enable your account',
+                        description: 'Click Okay to enable your account and continue',
                         action: {
                             label: 'Okay',
-                            onClick: async () => {
-                                const enableRes = await enableAccount(phoneNumber);
-                                if (enableRes.success) {
-                                    toast.success('Account enabled! Verifying again...');
-                                    handleVerify();
-                                } else {
-                                    toast.error(enableRes.error || 'Failed to enable account');
-                                }
-                            }
+                            onClick: () => handleReenableAccount(),
                         },
                         cancel: {
                             label: 'Cancel',
-                            onClick: () => {
-                                toast.error('Verification cancelled');
-                            }
-                        }
-                    })
+                            onClick: () => { },
+                        },
+                    });
                 } else {
                     toast.error(res.error || 'Verification failed');
                 }
@@ -108,6 +98,22 @@ export function OtpScreen() {
             toast.error(errorMsg);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleReenableAccount = async () => {
+        try {
+            const res = await enableAccount(phoneNumber);
+            if (res.success) {
+                toast.success('Account enabled successfully! Verifying again...');
+                // Try verifying again
+                handleVerify();
+            } else {
+                toast.error(res.error || 'Failed to enable account');
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'An unexpected error occurred');
+        } finally {
         }
     };
 
