@@ -36,7 +36,54 @@ export class DonorsService {
     @Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>,
     private emailService: EmailService,
     private notificationsService: NotificationsService,
-  ) { }
+  ) {
+    // ONE-TIME FIX: SQL Server UNIQUE constraints only allow one NULL.
+    // We need a filtered index to allow multiple donors without a PAN.
+    this.fixPanConstraint().catch(err => {
+      // Ignore if already fixed or permission issues
+      if (!err.message?.includes('does not exist') && !err.message?.includes('already exists')) {
+        console.warn('Could not run DB fix for UQ_donors_pan:', err.message);
+      }
+    });
+  }
+
+  private async fixPanConstraint() {
+    try {
+      // 1. Try to drop the existing unique constraint if it's a constraint
+      await this.db.execute(sql`ALTER TABLE donors DROP CONSTRAINT IF EXISTS UQ_donors_pan`);
+      await this.db.execute(sql`ALTER TABLE donors DROP CONSTRAINT IF EXISTS UQ_donors_mobile`);
+    } catch (e) { /* ignore */ }
+
+    try {
+      // 2. Try to drop it if it's an index
+      await this.db.execute(sql`DROP INDEX IF EXISTS UQ_donors_pan ON donors`);
+      await this.db.execute(sql`DROP INDEX IF EXISTS UQ_donors_mobile ON donors`);
+    } catch (e) { /* ignore */ }
+
+    try {
+      // 3. Create a Filtered Unique Index (allows multiple NULLs)
+      await this.db.execute(sql`
+        IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UQ_donors_pan_filtered')
+        CREATE UNIQUE INDEX UQ_donors_pan_filtered 
+        ON donors(pan) 
+        WHERE pan IS NOT NULL
+      `);
+
+      await this.db.execute(sql`
+        IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UQ_donors_mobile_filtered')
+        CREATE UNIQUE INDEX UQ_donors_mobile_filtered 
+        ON donors(mobile) 
+        WHERE mobile IS NOT NULL
+      `);
+      console.log('[DB] Applied filtered unique indexes for donors table');
+    } catch (e) {
+      if (e.message?.includes('already exists')) {
+        // Already fixed
+      } else {
+        throw e;
+      }
+    }
+  }
 
   /** List users from T_USER where User_Type = Standard User (donors). */
   async findAll() {
