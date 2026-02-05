@@ -63,7 +63,7 @@ export function AramInput({
             lineHeight: '20px',
             fontWeight: 400,
             color: '#3D3D3D',
-            paddingLeft: prefix ? 'var(--prefix-width, 80px)' : '14px'
+            paddingLeft: prefix ? 'var(--prefix-width, 60px)' : '14px'
           }}
         />
       </div>

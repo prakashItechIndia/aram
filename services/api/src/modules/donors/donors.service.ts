@@ -600,7 +600,7 @@ export class DonorsService {
       userId: inserted.id,
       type: 'info',
       title: 'Welcome to Aram',
-      message: 'Thank you for your guest donation! Use your email and temporary password to login.',
+      message: 'Thank you for your generous donation. Your support truly means a lot to us.',
     });
 
     // RECORD THE DONATION (this also creates the donors profile)
