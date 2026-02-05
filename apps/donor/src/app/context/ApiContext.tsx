@@ -63,7 +63,7 @@ type ApiContextValue = {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; data?: any }>;
   checkMobile: (mobileNumber: string) => Promise<{ success: boolean; registered: boolean; error?: string }>;
   sendOtp: (mobileNumber: string) => Promise<{ success: boolean; message?: string; error?: string }>;
-  verifyOtp: (mobileNumber: string, otpCode: string) => Promise<{ success: boolean; data?: any; error?: string }>;
+  verifyOtp: (mobileNumber: string, otpCode: string, shouldLogin?: boolean) => Promise<{ success: boolean; data?: any; error?: string }>;
   register: (data: { name: string; email: string; password: string; phone: string }) => Promise<{ success: boolean; error?: string }>;
   changePassword: (data: any) => Promise<{ success: boolean; error?: string; message?: string }>;
   uploadProfileImage: (file: File) => Promise<{ success: boolean; url?: string; error?: string }>;
@@ -230,7 +230,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
   );
 
   const verifyOtp = useCallback(
-    async (mobileNumber: string, otpCode: string): Promise<{ success: boolean; data?: any; error?: string }> => {
+    async (mobileNumber: string, otpCode: string, shouldLogin = true): Promise<{ success: boolean; data?: any; error?: string }> => {
       try {
         const baseUrl = getApiBaseUrl();
         const res = await fetch(`${baseUrl}/auth/verify-otp`, {
@@ -250,7 +250,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
 
         // Handle successful sign-in
         const accessToken = data?.access_token;
-        if (accessToken) {
+        if (accessToken && shouldLogin) {
           authTokenVersionRef.current += 1;
           const authUser: AuthUser = {
             accessToken,

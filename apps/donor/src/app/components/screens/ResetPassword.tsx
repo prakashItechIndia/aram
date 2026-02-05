@@ -5,6 +5,8 @@ import { AramCard } from '@/app/components/aram/AramCard';
 import { AramInput } from '@/app/components/aram/AramInput';
 import { Eye, EyeOff } from 'lucide-react';
 import { useApi } from '@/app/context/ApiContext';
+import { validateField, validationRules, validationMessages } from '../../utils/validations';
+import { toast } from 'sonner';
 
 export function ResetPassword() {
   const navigate = useNavigate();
@@ -16,40 +18,43 @@ export function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<any>({});
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const validatePassword = (pwd: string) => {
-    // 8+ chars, uppercase, number, special char
-    const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
-    return regex.test(pwd);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    const newErrors: any = {};
 
-    if (!validatePassword(password)) {
-      setError('Password must be 8+ chars, contain uppercase, number, and special character.');
-      return;
+    // Use shared validation rules
+    const passwordError = validateField(password, validationRules.password, validationMessages.password);
+    if (passwordError) {
+      newErrors.password = passwordError;
     }
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "Confirm password is required";
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
     setSubmitting(true);
+    setErrors({});
     try {
       const result = await resetPassword(token, password);
       if (result.success) {
         setSuccess(true);
+        toast.success('Password reset successfully');
       } else {
-        setError(result.error || 'Failed to reset password.');
+        setErrors({ general: result.error || 'Failed to reset password.' });
       }
     } catch (err) {
-      setError('An error occurred.');
+      setErrors({ general: 'An error occurred.' });
     } finally {
       setSubmitting(false);
     }
@@ -97,9 +102,13 @@ export function ResetPassword() {
               type={showPassword ? 'text' : 'password'}
               placeholder="Enter new password"
               value={password}
-              onChange={setPassword}
+              onChange={(val) => {
+                setPassword(val);
+                setErrors((prev: any) => ({ ...prev, password: undefined }));
+              }}
               required
-              error={undefined}
+              error={errors.password}
+              helperText="Min 8 characters, uppercase, number, special character"
             />
             <button
               type="button"
@@ -116,9 +125,12 @@ export function ResetPassword() {
               type={showConfirmPassword ? 'text' : 'password'}
               placeholder="Confirm new password"
               value={confirmPassword}
-              onChange={setConfirmPassword}
+              onChange={(val) => {
+                setConfirmPassword(val);
+                setErrors((prev: any) => ({ ...prev, confirmPassword: undefined }));
+              }}
               required
-              error={undefined}
+              error={errors.confirmPassword}
             />
             <button
               type="button"
@@ -129,9 +141,9 @@ export function ResetPassword() {
             </button>
           </div>
 
-          {error && (
+          {errors.general && (
             <div className="p-[16px] bg-red-50 border border-red-200 rounded-[16px] text-red-700 text-sm">
-              {error}
+              {errors.general}
             </div>
           )}
 

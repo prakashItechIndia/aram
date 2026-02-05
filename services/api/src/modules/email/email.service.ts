@@ -87,7 +87,7 @@ export class EmailService {
         <p>Click the link below to set a new password:</p>
         <p><a href="${link}" style="color: #F36A4F; font-weight: bold;">Reset Password</a></p>
         <p>Or copy this link: ${link}</p>
-        <p>This link will expire in 1 hour.</p>
+        <p>This link will expire in 5 minutes.</p>
         <br>
         <p>Regards,<br>Aram Team</p>
       </div>

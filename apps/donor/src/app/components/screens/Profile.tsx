@@ -82,7 +82,7 @@ export function Profile() {
       const pwdError = validateField(newPassword, validationRules.password, validationMessages.password);
       if (pwdError) {
         newErrors.newPassword = pwdError;
-      } else if (currentPassword === newPassword) {
+      } else if (currentPassword.trim() === newPassword.trim()) {
         newErrors.newPassword = "New password cannot be the same as current password";
       }
     } else {
