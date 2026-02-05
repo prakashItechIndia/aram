@@ -218,7 +218,40 @@ export class DonorsService {
         eligible80G: d.is80gEligible ?? false,
       }));
 
-      return { data, total };
+      // Calculate overall statistics from all donations
+      const totalDonated = allDonations.reduce((sum, d) => sum + (parseFloat(d.amount as any) || 0), 0);
+      const donationCount = allDonations.length;
+      const lastDonationDate = allDonations.length > 0
+        ? (allDonations[0].donationDate ? new Date(allDonations[0].donationDate).toISOString().split('T')[0] : null)
+        : null;
+
+      // Calculate 80G eligible amount for current financial year
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth(); // 0-11
+      const startYear = currentMonth < 3 ? currentYear - 1 : currentYear;
+      const endYear = startYear + 1;
+      const fyStart = new Date(`${startYear}-04-01`);
+      const fyEnd = new Date(`${endYear}-03-31T23:59:59`);
+
+      const eligible80GCurrentFY = allDonations
+        .filter(d => {
+          if (!d.is80gEligible || !d.donationDate) return false;
+          const dDate = new Date(d.donationDate);
+          return dDate >= fyStart && dDate <= fyEnd;
+        })
+        .reduce((sum, d) => sum + (parseFloat(d.amount as any) || 0), 0);
+
+      return {
+        data,
+        total,
+        stats: {
+          totalDonated,
+          donationCount,
+          lastDonationDate,
+          eligible80GCurrentFY,
+        },
+      };
     } catch (err) {
       console.error('Error fetching donations:', err);
       return { data: [], total: 0 };

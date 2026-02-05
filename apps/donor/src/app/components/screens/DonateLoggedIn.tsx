@@ -110,19 +110,19 @@ export function DonateLoggedIn() {
           if (donor.email) setDisplayEmail(donor.email);
           if (donor.mobileNumber) setDisplayPhone(donor.mobileNumber);
 
-          // Map donation amount from profile
-          if (donor.donationAmount) {
-            const amount = Number(donor.donationAmount);
-            // Check if it matches a preset
-            const matchingPreset = presetAmounts.find(p => p === amount);
-            if (matchingPreset) {
-              setSelectedPreset(matchingPreset);
-              setCustomAmount('');
-            } else {
-              setCustomAmount(amount.toString());
-              setSelectedPreset(null);
-            }
-          }
+          // Map donation amount from profile - DISABLED: amount should start empty
+          // if (donor.donationAmount) {
+          //   const amount = Number(donor.donationAmount);
+          //   // Check if it matches a preset
+          //   const matchingPreset = presetAmounts.find(p => p === amount);
+          //   if (matchingPreset) {
+          //     setSelectedPreset(matchingPreset);
+          //     setCustomAmount('');
+          //   } else {
+          //     setCustomAmount(amount.toString());
+          //     setSelectedPreset(null);
+          //   }
+          // }
 
           // Map donation type from profile (backend returns categoryCode, map it to frontend value)
           if (donor.donationType) {
@@ -139,23 +139,23 @@ export function DonateLoggedIn() {
       });
   }, [api?.donorsApi, presetAmounts]);
 
-  // Restore last donation preferences on mount
-  useEffect(() => {
-    const lastPrefs = getLastDonationPrefs();
-    if (lastPrefs) {
-      const { amount, donationType: lastType } = lastPrefs;
-      // Check if the amount matches a preset
-      const matchingPreset = presetAmounts.find(p => p === amount);
-      if (matchingPreset) {
-        setSelectedPreset(matchingPreset);
-      } else {
-        setCustomAmount(amount.toString());
-      }
-      if (lastType) {
-        setDonationType(lastType);
-      }
-    }
-  }, [presetAmounts]);
+  // Restore last donation preferences on mount - DISABLED: amount should start empty
+  // useEffect(() => {
+  //   const lastPrefs = getLastDonationPrefs();
+  //   if (lastPrefs) {
+  //     const { amount, donationType: lastType } = lastPrefs;
+  //     // Check if the amount matches a preset
+  //     const matchingPreset = presetAmounts.find(p => p === amount);
+  //     if (matchingPreset) {
+  //       setSelectedPreset(matchingPreset);
+  //     } else {
+  //       setCustomAmount(amount.toString());
+  //     }
+  //     if (lastType) {
+  //       setDonationType(lastType);
+  //     }
+  //   }
+  // }, [presetAmounts]);
 
   const amount = selectedPreset || Number(customAmount) || 0;
 

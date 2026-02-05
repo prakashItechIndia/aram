@@ -35,7 +35,7 @@ export const generateGenericPDF = (
 
         doc.setFontSize(10);
         doc.setTextColor(100);
-        doc.text('Tiruppur, Tamil Nadu, India', 105, 28, { align: 'center' });
+        // doc.text('Tiruppur, Tamil Nadu, India', 105, 28, { align: 'center' });
         doc.text('Email: info@aramfoundation.org | Web: www.aramfoundation.org', 105, 33, { align: 'center' });
 
         doc.setDrawColor(219, 219, 219);
@@ -91,7 +91,7 @@ export const generateReceiptPDF = (receipt: ReceiptDetails, user: UserDetails) =
 
         doc.setFontSize(10);
         doc.setTextColor(100);
-        doc.text('Tiruppur, Tamil Nadu, India', 105, 28, { align: 'center' });
+        // doc.text('Tiruppur, Tamil Nadu, India', 105, 28, { align: 'center' });
         doc.text('Email: info@aramfoundation.org | Web: www.aramfoundation.org', 105, 33, { align: 'center' });
 
         doc.setDrawColor(219, 219, 219);
@@ -175,7 +175,7 @@ export const generateNotificationsPDF = (notifications: any[]) => {
 
         doc.setFontSize(10);
         doc.setTextColor(100);
-        doc.text('Tiruppur, Tamil Nadu, India', 105, 28, { align: 'center' });
+        // doc.text('Tiruppur, Tamil Nadu, India', 105, 28, { align: 'center' });
         doc.text('Email: info@aramfoundation.org | Web: www.aramfoundation.org', 105, 33, { align: 'center' });
 
         doc.setDrawColor(219, 219, 219);
@@ -238,7 +238,7 @@ export const generateDonationHistoryPDF = (
 
         doc.setFontSize(10);
         doc.setTextColor(100);
-        doc.text('Tiruppur, Tamil Nadu, India', 105, 28, { align: 'center' });
+        // doc.text('Tiruppur, Tamil Nadu, India', 105, 28, { align: 'center' });
         doc.text('Email: info@aramfoundation.org | Web: www.aramfoundation.org', 105, 33, { align: 'center' });
 
         doc.setDrawColor(219, 219, 219);

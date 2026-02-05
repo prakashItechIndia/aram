@@ -31,6 +31,12 @@ export function Dashboard() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [total, setTotal] = useState(0);
+  const [stats, setStats] = useState({
+    totalDonated: 0,
+    donationCount: 0,
+    lastDonationDate: null as string | null,
+    eligible80GCurrentFY: 0,
+  });
 
   const user = {
     name: apiAuth?.name || 'Donor',
@@ -60,6 +66,17 @@ export function Dashboard() {
         const data = await response.json();
         const items = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
         const totalCount = typeof data?.total === 'number' ? data.total : items.length;
+        
+        // Extract overall statistics from API response
+        if (data?.stats) {
+          setStats({
+            totalDonated: data.stats.totalDonated || 0,
+            donationCount: data.stats.donationCount || 0,
+            lastDonationDate: data.stats.lastDonationDate || null,
+            eligible80GCurrentFY: data.stats.eligible80GCurrentFY || 0,
+          });
+        }
+        
         setDonations(items);
         setTotal(totalCount);
       } catch (err) {
@@ -90,18 +107,13 @@ export function Dashboard() {
     return { startDate, endDate, label: `${startYear}-${endYear.toString().slice(-2)}` };
   };
 
-  const { startDate, endDate, label: fyLabel } = getFYDates();
+  const { label: fyLabel } = getFYDates();
 
-  const totalDonated = donations.reduce((sum, d) => sum + d.amount, 0);
-  const donationCount = donations.length;
-  const lastDonationDate = donations.length > 0 ? donations[0].date : 'N/A';
-
-  const eligible80G = donations
-    .filter(d => {
-      const dDate = new Date(d.date);
-      return d.eligible80G && dDate >= startDate && dDate <= endDate;
-    })
-    .reduce((sum, d) => sum + d.amount, 0);
+  // Use statistics from API response instead of calculating from paginated data
+  const totalDonated = stats.totalDonated;
+  const donationCount = stats.donationCount;
+  const lastDonationDate = stats.lastDonationDate || 'N/A';
+  const eligible80G = stats.eligible80GCurrentFY;
 
   const totalPages = Math.ceil(total / limit);
   const startItem = total > 0 ? (page - 1) * limit + 1 : 0;
@@ -175,7 +187,7 @@ export function Dashboard() {
               Last Donation Date
             </span>
             <span style={{ fontSize: '18px', lineHeight: '26px', fontWeight: 600, color: '#0D0D0D' }}>
-              {lastDonationDate?.date || 'No donations yet'}
+              {lastDonationDate !== 'N/A' ? lastDonationDate : 'No donations yet'}
             </span>
           </div>
         </AramCard>
