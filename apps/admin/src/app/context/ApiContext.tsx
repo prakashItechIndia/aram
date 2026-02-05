@@ -95,6 +95,12 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       },
       exchangeOnlyOnce,
       logout,
+      onUnauthorized: () => {
+        // Redirect to admin login page
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
+      },
     }),
     [exchangeOnlyOnce, logout],
   );
@@ -105,7 +111,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
   }, [httpClientMinState]);
 
   const apiFetch = useCallback(
-    (path: string, options?: { method?: string; body?: string | FormData }) => {
+    async (path: string, options?: { method?: string; body?: string | FormData }) => {
       const basePath = getApiBaseUrl();
       const url = path.startsWith('http') ? path : `${basePath}${path.startsWith('/') ? path : `/${path}`}`;
       const token = userRef.current?.accessToken;
@@ -115,9 +121,26 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       if (options?.body && typeof options.body === 'string') {
         headers['Content-Type'] = 'application/json';
       }
-      return fetch(url, { method: options?.method ?? 'GET', headers, body: options?.body });
+      const response = await fetch(url, { method: options?.method ?? 'GET', headers, body: options?.body });
+
+      // Handle 401 errors
+      if (response.status === 401) {
+        // Clear session storage
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          sessionStorage.clear();
+          localStorage.clear();
+        }
+        // Logout
+        logout();
+        // Redirect to login
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
+      }
+
+      return response;
     },
-    [],
+    [logout],
   );
 
   const login = useCallback(

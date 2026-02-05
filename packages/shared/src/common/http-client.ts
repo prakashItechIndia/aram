@@ -74,9 +74,15 @@ export const setupHttpInterceptors = (
     // if 401
     if (statusCode === 401) {
       try {
+        // Clear all session storage
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          sessionStorage.clear();
+        }
         // console.log(config.url, ' logout');
         //  logout only once
         httpClientMinState.logout();
+        // Redirect to login page if callback is provided
+        httpClientMinState.onUnauthorized?.();
       } catch (e) {
         console.error('Logout error', e);
         //
