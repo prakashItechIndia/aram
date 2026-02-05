@@ -16,7 +16,7 @@ import { EmailService } from '../email/email.service';
 import { NotificationsService } from '../notifications/notifications.service';
 // import { donors } from '../../database/models/donors.model';
 import { SmsService } from '../sms/sms.service';
-import { getAndConsumeResetToken, setResetToken } from './admin-reset-token.store';
+import { consumeResetToken, getResetToken, setResetToken } from './admin-reset-token.store';
 import { AdminLoginDto } from './dto/admin-login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -171,8 +171,16 @@ export class AuthService {
     }
 
     const payload = { email: user.eMail, sub: user.id };
+
+    // Generate a reset token for the "Set Password" page to consume
+    const resetToken = randomBytes(32).toString('hex');
+    if (user.eMail) {
+      setResetToken(resetToken, user.eMail);
+    }
+
     return {
       access_token: this.jwtService.sign(payload),
+      reset_token: resetToken,
       user: {
         id: user.id,
         name: user.name,
@@ -346,10 +354,27 @@ export class AuthService {
   }
 
   async resetPasswordDonor(dto: ResetPasswordDto) {
-    const record = getAndConsumeResetToken(dto.token);
+    const record = getResetToken(dto.token);
     if (!record) {
       throw new BadRequestException('Invalid or expired reset token');
     }
+
+    // Fetch user to check against current password
+    const userRows = await this.db.select().from(tUser).where(eq(tUser.eMail, record.email));
+    const user = userRows[0];
+
+    if (user) {
+      // Check if new password is same as current (old) password
+      const match =
+        (user.password?.startsWith('$2') && (await bcrypt.compare(dto.newPassword, user.password))) ||
+        user.password === dto.newPassword ||
+        (user.password && Buffer.from(user.password, 'base64').toString('utf8') === dto.newPassword);
+
+      if (match) {
+        throw new BadRequestException('New password cannot be the same as the current password');
+      }
+    }
+
     // Use bcrypt for secure hashing (now supported by column length 255)
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
     await this.db
@@ -358,15 +383,17 @@ export class AuthService {
       .where(eq(tUser.eMail, record.email));
 
     // Create persistent notification
-    const userRows = await this.db.select().from(tUser).where(eq(tUser.eMail, record.email));
-    if (userRows[0]) {
+    if (user) {
       await this.notificationsService.create({
-        userId: userRows[0].id,
+        userId: user.id,
         type: 'info',
         title: 'Password Reset',
         message: 'Your password was successfully reset.',
       });
     }
+
+    // Now consume the token since we finished updating the password
+    consumeResetToken(dto.token);
 
     return { message: 'Password has been reset. You can sign in with your new password.' };
   }
@@ -556,7 +583,7 @@ export class AuthService {
   }
 
   async resetPassword(dto: ResetPasswordDto) {
-    const record = getAndConsumeResetToken(dto.token);
+    const record = getResetToken(dto.token);
     if (!record) {
       throw new BadRequestException('Invalid or expired reset token');
     }
@@ -565,6 +592,10 @@ export class AuthService {
       .update(tUser)
       .set({ password: hashedPassword })
       .where(eq(tUser.eMail, record.email));
+
+    // Consume the token after successful update
+    consumeResetToken(dto.token);
+
     return { message: 'Password has been reset. You can sign in with your new password.' };
   }
 }

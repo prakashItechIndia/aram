@@ -26,30 +26,34 @@ export function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<any>({});
   const [isLoading, setIsLoading] = useState(false);
-  // isMobile is true if input matches 10 digits
-  const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    const trimmed = emailOrPhone.trim();
-    // 10 purely numeric characters = mobile number
-    const isPhone = /^\d{10}$/.test(trimmed);
-    setIsMobile(isPhone);
 
-    // Clear password only if switching to mobile AND OTP is enabled
-    if (isPhone && otpVerification) {
-      setPassword('');
-    }
-  }, [emailOrPhone, otpVerification]);
+
+  // Dynamic state for scenarios
+  const isScenario1 = !mobileRequired;
+  const isScenario2 = mobileRequired && !otpVerification;
+  const isScenario3 = mobileRequired && otpVerification;
+
+  // Dynamic Label and Placeholder
+  const loginLabel = isScenario1 ? "Email" : "Phone Number";
+  const loginPlaceholder = isScenario1 ? "Email" : "Phone Number";
 
   const handleSubmit = async () => {
-    // Only use OTP flow if input is mobile AND OTP verification is enabled
-    if (isMobile && otpVerification) {
+    const trimmedInput = emailOrPhone.trim();
+
+    if (isScenario3) {
+      // Scenario 3: Phone + OTP
+      if (!/^\d+$/.test(trimmedInput) || trimmedInput.length !== 10) {
+        setErrors({ emailOrPhone: 'Please enter a valid 10-digit phone number' });
+        return;
+      }
+
       setIsLoading(true);
       try {
-        const res = await sendOtp(emailOrPhone.trim());
+        const res = await sendOtp(trimmedInput);
         if (res.success) {
           toast.success('OTP sent successfully');
-          navigate('/verify-otp', { state: { phone: emailOrPhone.trim() } });
+          navigate('/verify-otp', { state: { phone: trimmedInput } });
         } else {
           toast.error(res.error || 'Failed to send OTP');
         }
@@ -59,21 +63,31 @@ export function SignIn() {
       return;
     }
 
-    // Standard Login Flow (Email OR Mobile+Password)
+    // Scenario 1 & 2: Email/Password or Phone/Password
     const formData = {
-      emailOrPhone: emailOrPhone.trim(),
+      emailOrPhone: trimmedInput,
       password,
     };
 
-    const fieldRules = {
-      emailOrPhone: validationRules.emailOrPhone,
+    const fieldRules: any = {
       password: validationRules.password,
     };
 
-    const fieldMessages = {
-      emailOrPhone: validationMessages.emailOrPhone,
+    const fieldMessages: any = {
       password: validationMessages.password,
     };
+
+    if (isScenario2) {
+      // Scenario 2 validation: Phone number numeric <= 10
+      if (!/^\d+$/.test(trimmedInput) || trimmedInput.length > 10 || trimmedInput.length === 0) {
+        setErrors({ emailOrPhone: 'Please enter a valid phone number (up to 10 digits)' });
+        return;
+      }
+    } else {
+      // Scenario 1 validation: Email
+      fieldRules.emailOrPhone = validationRules.email;
+      fieldMessages.emailOrPhone = validationMessages.email;
+    }
 
     const newErrors = globalValidateForm(formData, fieldRules, fieldMessages);
     setErrors(newErrors);
@@ -81,10 +95,10 @@ export function SignIn() {
     if (Object.keys(newErrors).length === 0) {
       setIsLoading(true);
       try {
-        const result = await login(emailOrPhone.trim(), password);
+        const result = await login(trimmedInput, password);
         if (result.success) {
           toast.success('Logged in successfully');
-          navigate('/donate');
+          navigate('/dashboard');
         } else {
           if (result.error?.toLowerCase().includes('disabled')) {
             toast('Your account is disabled', {
@@ -92,7 +106,7 @@ export function SignIn() {
               action: {
                 label: 'Okay',
                 onClick: async () => {
-                  const res = await enableAccount(emailOrPhone.trim());
+                  const res = await enableAccount(trimmedInput);
                   if (res.success) {
                     toast.success('Account enabled successfully! Please sign in again.');
                     handleSubmit();
@@ -121,16 +135,6 @@ export function SignIn() {
     }
   };
 
-  // Dynamic Label
-  // If mobileRequired is true -> "Email or Phone" (or just "Phone" if strictly phone?)
-  // User asked: "if disable means email label should come".
-  // "if enable mobile number... email or mobile number label"
-  const loginLabel = mobileRequired ? "Email or Mobile Number" : "Email Address";
-  const loginPlaceholder = mobileRequired ? "Enter your email or mobile number" : "Enter your email address";
-
-  // Is password disabled? Only if using Mobile AND OTP is ON.
-  const isPasswordDisabled = isMobile && otpVerification;
-
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex items-center justify-center p-[24px]">
       <AramCard className="w-full max-w-[520px]">
@@ -157,23 +161,31 @@ export function SignIn() {
               label={loginLabel}
               placeholder={loginPlaceholder}
               value={emailOrPhone}
-              onChange={setEmailOrPhone}
+              onChange={(val) => {
+                // If phone scenario (2 or 3), only allow numeric input and up to 10 chars
+                if (!isScenario1) {
+                  if (/^\d*$/.test(val) && val.length <= 10) {
+                    setEmailOrPhone(val);
+                  }
+                } else {
+                  setEmailOrPhone(val);
+                }
+              }}
               required
               error={errors.emailOrPhone}
             />
 
-            <div className="relative">
-              <AramInput
-                label="Password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Enter your password"
-                value={password}
-                onChange={setPassword}
-                required={!isPasswordDisabled}
-                error={errors.password}
-                disabled={isPasswordDisabled}
-              />
-              {!isPasswordDisabled && (
+            {!isScenario3 && (
+              <div className="relative">
+                <AramInput
+                  label="Password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={setPassword}
+                  required
+                  error={errors.password}
+                />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -181,10 +193,10 @@ export function SignIn() {
                 >
                   {showPassword ? <Eye size={18} color="#6E6E6E" /> : <EyeOff size={18} color="#6E6E6E" />}
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
-            {!isPasswordDisabled && (
+            {!isScenario3 && (
               <div className="text-right">
                 <button
                   type="button"
@@ -200,7 +212,7 @@ export function SignIn() {
 
           <div className="flex flex-col gap-[12px]">
             <AramButton onClick={handleSubmit} variant="primary" className="w-full" disabled={isLoading}>
-              {isLoading ? (isPasswordDisabled ? 'Sending...' : 'Signing in...') : (isPasswordDisabled ? 'Get OTP' : 'Sign in')}
+              {isLoading ? (isScenario3 ? 'Sending...' : 'Signing in...') : (isScenario3 ? 'Get OTP' : 'Sign in')}
             </AramButton>
             <div className="text-center">
               <button
