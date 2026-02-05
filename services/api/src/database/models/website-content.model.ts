@@ -19,7 +19,7 @@ export const websiteContent = mssqlTable('website_content', {
   slug: nvarchar('slug', { length: 128 }),
   status: nvarchar('status', { length: 32 }),
   modifiedBy: nvarchar('modified_by', { length: 128 }),
-  createdAt: datetime2('created_at', { precision: 3 }).default(sql`GETDATE()`),
+  createdAt: datetime2('created_at', { precision: 3 }).default(sql`GETUTCDATE()`),
   updatedAt: datetime2('updated_at', { precision: 3 }),
 });
 
