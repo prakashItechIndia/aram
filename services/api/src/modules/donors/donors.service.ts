@@ -11,6 +11,7 @@ import type { CreateGuestDonorDto } from './dto/create-guest-donor.dto';
 import { EmailService } from '../email/email.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { generateStrongPassword } from '../../common/utils/password.util';
+import { QueryDonationsDto } from './dto/query-donations.dto';
 
 /** User_Type value for donor/portal users (T_USER). */
 const DONOR_USER_TYPE = 'Standard User';
@@ -308,10 +309,9 @@ export class DonorsService {
    * Get aggregated donation summaries by Financial Year.
    * Used for 80G and Tax Document reports.
    */
-  async getDonationSummaries(userId: number) {
+  async getDonationSummaries(userId: number, query?: QueryDonationsDto) {
     // Fetch all donations (high limit) to ensure accurate summary
-    const { data: donations } = await this.findDonationsByUserId(userId, { limit: 100000 });
-    console.log('donations', donations)
+    const { data: donations } = await this.findDonationsByUserId(userId, { ...query, limit: 100000 });
     // Group by FY
     const summaries: Record<string, { totalAmount: number; count: number }> = {};
 
@@ -479,6 +479,11 @@ export class DonorsService {
         receiptNo: challanNumber,
         date: now.toISOString().split('T')[0],
         type: catName,
+        email: normalizedEmail,
+        pan: dto.pan || null,
+        address: dto.address || null,
+        phone: dto.mobile || null,
+        eligible80G: catRows[0]?.is80gEligible ?? false,
       });
     } catch (err) {
       console.error('Failed to send donation receipt email:', err);

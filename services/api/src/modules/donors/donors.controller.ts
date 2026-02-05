@@ -34,8 +34,8 @@ export class DonorsController {
   @Get('me/tax-summaries')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  async getTaxSummaries(@Request() req: any) {
-    return this.donorsService.getDonationSummaries(req.user.userId);
+  async getTaxSummaries(@Request() req: any, @Query() query: QueryDonationsDto) {
+    return this.donorsService.getDonationSummaries(req.user.userId, query);
   }
 
   @Get('me/full-history')
