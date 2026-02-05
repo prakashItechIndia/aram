@@ -16,15 +16,25 @@ export class NotificationsService {
     });
   }
 
-  async findAll(userId?: number) {
+  async findAll(userId?: number, limit?: number) {
     if (userId !== undefined) {
-      return this.db
-        .select()
+      const baseQuery = limit 
+        ? this.db.select().top(limit)
+        : this.db.select();
+      
+      return baseQuery
         .from(adminNotifications)
         .where(eq(adminNotifications.userId, userId))
         .orderBy(adminNotifications.createdAt);
     }
-    return this.db.select().from(adminNotifications).orderBy(adminNotifications.createdAt);
+    
+    const baseQuery = limit
+      ? this.db.select().top(limit)
+      : this.db.select();
+    
+    return baseQuery
+      .from(adminNotifications)
+      .orderBy(adminNotifications.createdAt);
   }
 
   async findUnreadCount(userId: number) {

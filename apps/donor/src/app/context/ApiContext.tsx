@@ -74,8 +74,8 @@ type ApiContextValue = {
   forgotPassword: (email: string) => Promise<{ success: boolean; error?: string; message?: string }>;
   resetPassword: (token: string, password: string) => Promise<{ success: boolean; error?: string }>;
   fetchUnreadNotificationsCount: (userId: number) => Promise<number>;
-  fetchNotifications: (userId: number) => Promise<Notification[]>;
-  refreshNotifications: () => Promise<void>;
+  fetchNotifications: (userId: number, limit?: number) => Promise<Notification[]>;
+  refreshNotifications: (limit?: number) => Promise<void>;
   markNotificationAsRead: (notificationId: number) => Promise<{ success: boolean; error?: string }>;
   createNotification: (data: { userId?: number; type: string; title: string; message: string }) => Promise<{ success: boolean; error?: string }>;
   processDonation: (data: any) => Promise<{ success: boolean; error?: string; challanNumber?: string; receiptNo?: string; amount?: number; type?: string; donationType?: string }>;
@@ -397,10 +397,13 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, handle401]);
 
-  const fetchNotifications = useCallback(async (userId: number) => {
+  const fetchNotifications = useCallback(async (userId: number, limit?: number) => {
     try {
       const baseUrl = getApiBaseUrl();
-      const res = await fetch(`${baseUrl}/notifications?userId=${userId}`, {
+      const url = limit 
+        ? `${baseUrl}/notifications?userId=${userId}&limit=${limit}`
+        : `${baseUrl}/notifications?userId=${userId}`;
+      const res = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${user?.accessToken}`,
         },
@@ -423,11 +426,11 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, handle401]);
 
-  const refreshNotifications = useCallback(async () => {
+  const refreshNotifications = useCallback(async (limit: number = 10) => {
     if (user?.id) {
       await Promise.all([
         fetchUnreadNotificationsCount(user.id),
-        fetchNotifications(user.id)
+        fetchNotifications(user.id, limit)
       ]);
     }
   }, [user, fetchUnreadNotificationsCount, fetchNotifications]);

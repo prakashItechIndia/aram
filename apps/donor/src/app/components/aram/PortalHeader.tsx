@@ -10,7 +10,7 @@ interface PortalHeaderProps {
 }
 
 export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeaderProps) {
-  const { user, notificationCount, notifications, markNotificationAsRead } = useApi();
+  const { user, notificationCount, notifications, markNotificationAsRead, fetchNotifications } = useApi();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -103,7 +103,7 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
                 <div className="max-h-[420px] overflow-y-auto">
                   {notifications.length > 0 ? (
                     <div className="flex flex-col">
-                      {(showAllNotifications ? notifications : notifications.slice(0, 10)).map((notif: Notification) => (
+                      {notifications.map((notif: Notification) => (
                         <div
                           key={notif.id}
                           className={`p-[16px] border-b border-[#F3F3F3] last:border-0 hover:bg-[#F9F9F9] transition-colors relative group ${!notif.readAt ? 'bg-[#FFF9F8]' : ''}`}
@@ -158,10 +158,16 @@ export function PortalHeader({ currentPage, onNavigate, onLogout }: PortalHeader
                   )}
                 </div>
 
-                {notifications.length > 10 && (
+                  {(showAllNotifications || notifications.length >= 10) && notifications.length > 0 && (
                   <div className="p-[12px] bg-[#FAFAFA] border-t border-[#F3F3F3] text-center">
                     <button
-                      onClick={() => setShowAllNotifications(!showAllNotifications)}
+                      onClick={async () => {
+                        const newShowAll = !showAllNotifications;
+                        setShowAllNotifications(newShowAll);
+                        if (user?.id) {
+                          await fetchNotifications(user.id, newShowAll ? undefined : 10);
+                        }
+                      }}
                       className="text-[#6E6E6E] hover:text-[#3D3D3D]"
                       style={{ fontSize: '12px', fontWeight: 600 }}
                     >
