@@ -188,7 +188,12 @@ export function CreateAccount() {
                 Phone Number <span className="text-[#F36A4F]">*</span>
               </label>
               <div className="flex gap-[8px]">
-                
+                <AramSelect
+                  value={country}
+                  onChange={setCountry}
+                  options={countries}
+                  className="w-[100px]"
+                />
                 <AramInput
                   type="tel"
                   placeholder={countryPhoneConfigs[country]?.maxLength === 10 ? 'Enter 10-digits Phone Number' : 'Enter 11-digits Phone Number'}
@@ -202,9 +207,9 @@ export function CreateAccount() {
 
             <div className="relative">
               <AramInput
-                label="Create Password"
+                label="New Password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Min 8 characters"
+                placeholder="Enter your password"
                 value={password}
                 onChange={setPassword}
                 required
@@ -226,7 +231,7 @@ export function CreateAccount() {
               <AramInput
                 label="Confirm Password"
                 type={showConfirmPassword ? 'text' : 'password'}
-                placeholder="Re-enter password"
+                placeholder="Re-enter your password"
                 value={confirmPassword}
                 onChange={setConfirmPassword}
                 required
