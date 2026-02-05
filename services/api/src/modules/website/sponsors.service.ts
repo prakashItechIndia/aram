@@ -17,7 +17,7 @@ export interface SponsorFilters {
 
 @Injectable()
 export class SponsorsService {
-  constructor(@Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>) {}
+  constructor(@Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>) { }
 
   async findAll(filters?: SponsorFilters) {
     const conditions: SQL[] = [];
@@ -45,11 +45,11 @@ export class SponsorsService {
     }
 
     const query = this.db.select().from(sponsors);
-    
+
     if (conditions.length > 0) {
       return query.where(and(...conditions));
     }
-    
+
     return query;
   }
 
@@ -106,5 +106,18 @@ export class SponsorsService {
     if (!existing) throw new NotFoundException(`Sponsor #${id} not found`);
     await this.db.delete(sponsors).where(eq(sponsors.id, id));
     return { deleted: true, id };
+  }
+
+  async reorder(items: { id: number; displayOrder: number }[]) {
+    // Perform updates in parallel (or sequential if DB requires, but Drizzle/MSSQL usually fine)
+    await Promise.all(
+      items.map((item) =>
+        this.db
+          .update(sponsors)
+          .set({ displayOrder: item.displayOrder, updatedAt: new Date() })
+          .where(eq(sponsors.id, item.id)),
+      ),
+    );
+    return { success: true };
   }
 }

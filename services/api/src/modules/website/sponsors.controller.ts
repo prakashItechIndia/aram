@@ -34,7 +34,7 @@ export class SponsorsController {
   constructor(
     private readonly service: SponsorsService,
     private readonly s3: S3Service,
-  ) {}
+  ) { }
 
   @Get()
   @ApiQuery({ name: 'tier', required: false, type: String })
@@ -58,9 +58,28 @@ export class SponsorsController {
     });
   }
 
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findById(id);
+  @Patch('reorder')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        items: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              displayOrder: { type: 'number' },
+            },
+          },
+        },
+      },
+    },
+  })
+  async reorder(@Body('items') items: { id: number; displayOrder: number }[]) {
+    if (!Array.isArray(items)) throw new BadRequestException('Items must be an array');
+    return this.service.reorder(items);
   }
 
   @Post('upload-logo')
@@ -91,6 +110,11 @@ export class SponsorsController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   create(@Body() dto: CreateSponsorDto) {
     return this.service.create(dto);
+  }
+
+  @Get(':id')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.service.findById(id);
   }
 
   @Patch(':id')
