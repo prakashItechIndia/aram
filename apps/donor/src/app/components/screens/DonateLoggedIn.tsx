@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { AramButton } from '@/app/components/aram/AramButton';
 import { AramCard } from '@/app/components/aram/AramCard';
 import { AramInput } from '@/app/components/aram/AramInput';
@@ -187,6 +188,16 @@ export function DonateLoggedIn() {
   const [submitting, setSubmitting] = useState(false);
 
   const handlePay = async () => {
+    // Validate amount first and show toast
+    if (amount < minAmount) {
+      toast.error(`Minimum donation amount is ₹${minAmount}`);
+      return;
+    }
+    if (amount > maxAmount) {
+      toast.error(`Maximum donation amount is ₹${maxAmount}`);
+      return;
+    }
+    
     if (!checkAndNotify()) return;
     
     if (validateForm()) {

@@ -223,6 +223,10 @@ export const DonationFormSettings: React.FC = () => {
            toast.error('Kindly enter minimum value greater than 0');
            return;
         }
+        if (Number(panThreshold) < 2001) {
+           toast.error('PAN Threshold must be greater than ₹2,000');
+           return;
+        }
       }
 
       if (!minAmount || minAmount <= 0) {
@@ -468,10 +472,6 @@ export const DonationFormSettings: React.FC = () => {
                            return;
                         }
                         const num = parseInt(val);
-                        if (num <= 0) {
-                           toast.error('PAN Threshold must be greater than 0');
-                           return;
-                        }
                         setPanThreshold(num);
                       }}
                       style={{ padding: '8px 12px', border: '1px solid #DBDBDB', borderRadius: '12px', fontSize: '14px', width: '120px' }}

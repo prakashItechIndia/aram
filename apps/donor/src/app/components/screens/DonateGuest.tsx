@@ -133,7 +133,10 @@ export function DonateGuest() {
     const fieldMessages: any = {
       name: validationMessages.name,
       email: validationMessages.email,
-      mobile: validationMessages.mobile,
+      mobile: {
+        required: 'Mobile number is required',
+        pattern: countryPhoneConfigs[country]?.message || 'Invalid mobile number format',
+      },
       amount: {
         required: 'Amount is required',
         min: `Minimum donation amount is ₹${minAmount}`,
@@ -158,6 +161,16 @@ export function DonateGuest() {
   };
 
   const handlePay = async () => {
+    // Validate amount first and show toast
+    if (amount < minAmount) {
+      toast.error(`Minimum donation amount is ₹${minAmount}`);
+      return;
+    }
+    if (amount > maxAmount) {
+      toast.error(`Maximum donation amount is ₹${maxAmount}`);
+      return;
+    }
+    
     if (!validateForm()) return;
 
     if (api?.donorsApi) {
