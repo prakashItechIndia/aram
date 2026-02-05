@@ -98,7 +98,7 @@ export function SignIn() {
         const result = await login(trimmedInput, password);
         if (result.success) {
           toast.success('Logged in successfully');
-          navigate('/donate');
+          navigate('/dashboard');
         } else {
           if (result.error?.toLowerCase().includes('disabled')) {
             toast('Your account is disabled', {

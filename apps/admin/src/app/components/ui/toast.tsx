@@ -5,6 +5,7 @@ export function Toaster() {
     <Sonner
       position="top-right"
       richColors
+      closeButton
       toastOptions={{
         style: {
           borderRadius: '12px',

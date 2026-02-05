@@ -362,9 +362,9 @@ export class DonorsService {
       await this.db.insert(donors).values({
         name: dto.name,
         email: normalizedEmail,
-        mobile: dto.mobile || '',
+        mobile: dto.mobile || null,
         address: dto.address,
-        pan: dto.pan || '',
+        pan: dto.pan || null,
         country: dto.country || 'India',
         isGuest: false, // They have a T_USER account now
         totalDonated: '0',
@@ -554,7 +554,7 @@ export class DonorsService {
     // RECORD THE DONATION (this also creates the donors profile)
     const donationResult = await this.recordDonationInternal(inserted.id, email, {
       ...dto,
-      pan: normalizedPan || '', // Use normalized PAN or empty string
+      pan: normalizedPan || null, // Use normalized PAN or null
     });
 
     return {

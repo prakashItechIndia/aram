@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createQueryClient } from '@aram/shared';
-import { toast, Toaster } from 'sonner';
+import { Toaster } from 'sonner';
 import { BrowserRouter } from 'react-router-dom';
 import { Router } from '@/router/Router';
 
@@ -22,8 +22,8 @@ interface UserData {
 }
 
 function AppContent() {
-  const { authUser, isAuthenticated, refreshNotifications } = useApi();
-  const [user, setUser] = useState<UserData>(() => ({
+  const { user: authUser, isAuthenticated, refreshNotifications } = useApi();
+  const [, setUser] = useState<UserData>(() => ({
     id: authUser?.id,
     name: authUser?.name ?? '',
     email: authUser?.email ?? '',
@@ -55,7 +55,7 @@ function AppContent() {
     <BrowserRouter>
       <div className="w-full min-h-[900px] mx-auto bg-white">
         <Router />
-        <Toaster position="top-right" richColors />
+        <Toaster position="top-right" richColors closeButton />
       </div>
     </BrowserRouter>
   );
