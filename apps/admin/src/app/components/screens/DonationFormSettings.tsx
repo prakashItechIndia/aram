@@ -837,8 +837,6 @@ export const DonationFormSettings: React.FC = () => {
                 <ul style={{ marginTop: '8px', paddingLeft: '20px' }}>
                   {multiCountry && <li>Multi-Country Support</li>}
                   {otpVerification && <li>OTP Verification</li>}
-                  {enableRecurring && <li>Recurring Donations</li>}
-                  {enable80GCertificate && <li>80G Certificate</li>}
                 </ul>
               </div>
 
