@@ -241,11 +241,20 @@ export class DonorsService {
           categoryId: eChallans.categoryId,
           categoryName: donationCategories.displayName,
           is80gEligible: donationCategories.is80gEligible,
+          donorName: donors.name,
+          donorEmail: donors.email,
+          donorMobile: donors.mobile,
+          donorPan: donors.pan,
+          donorAddress: donors.address,
         })
         .from(eChallans)
         .leftJoin(
           donationCategories,
           eq(eChallans.categoryId, donationCategories.id),
+        )
+        .leftJoin(
+          donors,
+          eq(eChallans.donorId, donors.id),
         )
         .where(and(...conditions))
         .orderBy(sql`${eChallans.donationDate} DESC`);
@@ -264,6 +273,11 @@ export class DonorsService {
         type: d.categoryName || 'General Fund',
         status: 'Success',
         eligible80G: d.is80gEligible ?? false,
+        donorName: d.donorName || '',
+        donorEmail: d.donorEmail || '',
+        donorMobile: d.donorMobile || '',
+        donorPan: d.donorPan || '',
+        donorAddress: d.donorAddress || '',
       }));
 
       // Calculate overall statistics from all donations

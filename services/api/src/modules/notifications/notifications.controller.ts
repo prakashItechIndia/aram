@@ -8,8 +8,14 @@ export class NotificationsController {
   constructor(private readonly service: NotificationsService) {}
 
   @Get()
-  findAll(@Query('userId') userId?: number) {
-    return this.service.findAll(userId ? Number(userId) : undefined);
+  findAll(
+    @Query('userId') userId?: number,
+    @Query('limit') limit?: number
+  ) {
+    return this.service.findAll(
+      userId ? Number(userId) : undefined,
+      limit ? Number(limit) : undefined
+    );
   }
 
   @Post()
