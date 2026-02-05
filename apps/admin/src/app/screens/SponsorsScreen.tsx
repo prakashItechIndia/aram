@@ -15,6 +15,7 @@ import {
   X,
   Image as ImageIcon,
 } from 'lucide-react';
+import { Reorder } from 'motion/react';
 import { useApi } from '../context/ApiContext';
 import { toast } from '../components/ui/toast';
 
@@ -61,6 +62,8 @@ export function SponsorsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [selectedPreviewSponsor, setSelectedPreviewSponsor] = useState<Sponsor | null>(null);
   const [selectedSponsor, setSelectedSponsor] = useState<Sponsor | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -82,7 +85,6 @@ export function SponsorsScreen() {
   const [sponsorWebsite, setSponsorWebsite] = useState('');
   const [contributionType, setContributionType] = useState<Sponsor['contributionType']>('Financial');
   const [tier, setTier] = useState<Sponsor['tier']>('Silver');
-  const [displayOrder, setDisplayOrder] = useState(0);
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
   const [showOnHomepage, setShowOnHomepage] = useState(false);
@@ -111,7 +113,9 @@ export function SponsorsScreen() {
       if (!res.ok) throw new Error('Failed to fetch sponsors');
 
       const list = await res.json();
-      setSponsors(Array.isArray(list) ? list.map((row: Record<string, unknown>) => mapApiToSponsor(row)) : []);
+      const mapped = Array.isArray(list) ? list.map((row: Record<string, unknown>) => mapApiToSponsor(row)) : [];
+      // Sort by displayOrder
+      setSponsors(mapped.sort((a, b) => a.displayOrder - b.displayOrder));
 
       if (isInitialLoad) {
         setIsInitialLoad(false);
@@ -138,7 +142,6 @@ export function SponsorsScreen() {
     setSponsorWebsite(sponsor.website);
     setContributionType(sponsor.contributionType);
     setTier(sponsor.tier);
-    setDisplayOrder(sponsor.displayOrder);
     setIsActive(sponsor.active);
     setIsFeatured(sponsor.featured);
     setShowOnHomepage(sponsor.featured); // Using featured as showOnHomepage
@@ -152,7 +155,6 @@ export function SponsorsScreen() {
     setSponsorWebsite('');
     setContributionType('Financial');
     setTier('Silver');
-    setDisplayOrder(0);
     setIsActive(true);
     setIsFeatured(false);
     setShowOnHomepage(false);
@@ -181,25 +183,8 @@ export function SponsorsScreen() {
       const formData = new FormData();
       formData.append('file', file);
 
-      // Get auth token from session storage
-      const authStr = sessionStorage.getItem('aram_admin_auth');
-      const authData = authStr ? JSON.parse(authStr) : null;
-      const accessToken = authData?.accessToken;
-
-      if (!accessToken) {
-        throw new Error('Not authenticated');
-      }
-
-      // Use API base URL
-      const apiBase = window.location.origin.includes('5173')
-        ? 'http://localhost:3000/api'
-        : '/api';
-
-      const res = await fetch(`${apiBase}/website/sponsors/upload-logo`, {
+      const res = await apiFetch('/website/sponsors/upload-logo', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
         body: formData,
       });
 
@@ -229,17 +214,21 @@ export function SponsorsScreen() {
 
     try {
       setSaving(true);
+
+      // Determine displayOrder: new sponsors go to the end, existing stay the same
+      const finalOrder = selectedSponsor ? selectedSponsor.displayOrder : sponsors.length;
+
       const body = JSON.stringify({
         name: sponsorName,
         logoUrl: sponsorLogo || undefined,
         websiteUrl: sponsorWebsite || undefined,
         contributionType,
         tier,
-        displayOrder,
+        displayOrder: finalOrder,
         isActive,
         featured: isFeatured,
         showOnHomepage,
-        addedBy: 'Admin', // You can replace with actual user info if available
+        addedBy: 'Admin',
       });
 
       if (selectedSponsor) {
@@ -262,6 +251,40 @@ export function SponsorsScreen() {
     }
   };
 
+  const handlePreview = (sponsor: Sponsor) => {
+    setSelectedPreviewSponsor(sponsor);
+    setShowPreview(true);
+  };
+
+  const handleReorder = async (newOrder: Sponsor[]) => {
+    // Update local state immediately with new displayOrder values
+    const updatedSponsors = newOrder.map((s, idx) => ({
+      ...s,
+      displayOrder: idx,
+    }));
+    setSponsors(updatedSponsors);
+
+    // Sync to backend
+    try {
+      const items = updatedSponsors.map((s) => ({
+        id: parseInt(s.id),
+        displayOrder: s.displayOrder,
+      }));
+
+      const res = await apiFetch('/website/sponsors/reorder', {
+        method: 'PATCH',
+        body: JSON.stringify({ items }),
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+    } catch (e: unknown) {
+      console.error('Reorder sync failed:', e);
+      toast.error('Failed to save new order');
+      // Optionally refetch to reset order
+      fetchSponsors();
+    }
+  };
+
   const handleDelete = (sponsor: Sponsor) => {
     setSponsorToDelete(sponsor);
     setShowDeleteModal(true);
@@ -273,6 +296,22 @@ export function SponsorsScreen() {
       setSaving(true);
       const res = await apiFetch(`/website/sponsors/${sponsorToDelete.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error(await res.text());
+
+      // Recalculate and sync orders for remaining sponsors in the current view
+      // Note: This works best when not filtered, but still improves consistency
+      const remainingSponsors = sponsors.filter((s: Sponsor) => s.id !== sponsorToDelete.id);
+      if (remainingSponsors.length > 0) {
+        const updatePayload = remainingSponsors.map((s: Sponsor, idx: number) => ({
+          id: parseInt(s.id),
+          displayOrder: idx
+        }));
+
+        await apiFetch('/website/sponsors/reorder', {
+          method: 'PATCH',
+          body: JSON.stringify({ items: updatePayload })
+        });
+      }
+
       toast.success('Sponsor deleted successfully');
       setShowDeleteModal(false);
       setDeleteReason('');
@@ -475,7 +514,12 @@ export function SponsorsScreen() {
               <p className="text-[13px] text-[#6E6E6E]">Drag to reorder</p>
             </div>
 
-            <div className="space-y-3">
+            <Reorder.Group
+              axis="y"
+              values={sponsors}
+              onReorder={handleReorder}
+              className="space-y-3"
+            >
               {filterLoading ? (
                 <div className="text-center py-12">
                   <div className="inline-block w-8 h-8 border-4 border-[#F36A4F] border-t-transparent rounded-full animate-spin"></div>
@@ -495,8 +539,9 @@ export function SponsorsScreen() {
                 </div>
               ) : (
                 sponsors.map((sponsor: Sponsor) => (
-                  <div
+                  <Reorder.Item
                     key={sponsor.id}
+                    value={sponsor}
                     className="flex items-center gap-4 p-[16px] bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB] hover:bg-white transition-colors"
                   >
                     <button className="cursor-grab active:cursor-grabbing">
@@ -539,14 +584,20 @@ export function SponsorsScreen() {
 
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1">
-                        {sponsor.active ? (
-                          <Eye className="w-4 h-4 text-[#2E7D32]" />
-                        ) : (
-                          <EyeOff className="w-4 h-4 text-[#6E6E6E]" />
-                        )}
-                        <span className="text-[12px] text-[#6E6E6E]">
-                          {sponsor.active ? 'Active' : 'Inactive'}
-                        </span>
+                        <button
+                          onClick={() => handlePreview(sponsor)}
+                          className="flex items-center gap-1 hover:bg-[#F3F3F3] p-1 rounded-lg transition-colors"
+                          title="Preview"
+                        >
+                          {sponsor.active ? (
+                            <Eye className="w-4 h-4 text-[#2E7D32]" />
+                          ) : (
+                            <EyeOff className="w-4 h-4 text-[#6E6E6E]" />
+                          )}
+                          <span className="text-[12px] text-[#6E6E6E]">
+                            {sponsor.active ? 'Active' : 'Inactive'}
+                          </span>
+                        </button>
                       </div>
 
                       <button
@@ -564,9 +615,9 @@ export function SponsorsScreen() {
                         <Trash2 className="w-4 h-4 text-[#C62828]" />
                       </button>
                     </div>
-                  </div>
+                  </Reorder.Item>
                 )))}
-            </div>
+            </Reorder.Group>
           </div>
 
           {/* Sponsor Editor Modal */}
@@ -685,24 +736,6 @@ export function SponsorsScreen() {
                       </select>
                     </div>
 
-                    <div className="col-span-2">
-                      <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                        Display Order
-                      </label>
-                      <input
-                        type="number"
-                        value={displayOrder}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setDisplayOrder(val === '' ? '' : Math.max(0, parseInt(val)));
-                        }}
-                        className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
-                        placeholder="0"
-                      />
-                      <p className="text-[12px] text-[#6E6E6E] mt-1">
-                        Lower numbers appear first (0 = highest priority)
-                      </p>
-                    </div>
                   </div>
 
                   {/* Toggles */}
@@ -801,6 +834,81 @@ export function SponsorsScreen() {
                     Confirm Delete
                   </button>
                 </div>
+              </div>
+            </div>
+          )}
+          {/* Sponsor Preview Modal */}
+          {showPreview && selectedPreviewSponsor && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-[24px]">
+              <div className="bg-white rounded-[16px] w-full max-w-[540px]">
+                <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
+                  <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Sponsor Preview</h3>
+                  <button
+                    onClick={() => setShowPreview(false)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
+                  >
+                    <X className="w-5 h-5 text-[#6E6E6E]" />
+                  </button>
+                </div>
+
+                <div className="p-[32px] flex flex-col items-center">
+                  <div className="w-32 h-32 bg-[#F8F8F8] rounded-[24px] border border-[#DBDBDB] flex items-center justify-center mb-6 overflow-hidden">
+                    {selectedPreviewSponsor.logo ? (
+                      <img
+                        src={selectedPreviewSponsor.logo}
+                        alt={selectedPreviewSponsor.name}
+                        className="w-full h-full object-contain p-4"
+                      />
+                    ) : (
+                      <ImageIcon className="w-12 h-12 text-[#DBDBDB]" />
+                    )}
+                  </div>
+
+                  <h2 className="text-[24px] font-bold text-[#0D0D0D] mb-2 text-center">
+                    {selectedPreviewSponsor.name}
+                  </h2>
+
+                  <div className="flex flex-wrap justify-center gap-2 mb-6">
+                    <span className={`px-3 py-1 text-[12px] font-semibold rounded-full ${getTierColor(selectedPreviewSponsor.tier)}`}>
+                      {selectedPreviewSponsor.tier} Tier
+                    </span>
+                    <span className="px-3 py-1 text-[12px] font-medium bg-[#F3F3F3] text-[#6E6E6E] rounded-full">
+                      {selectedPreviewSponsor.contributionType}
+                    </span>
+                    {selectedPreviewSponsor.active ? (
+                      <span className="px-3 py-1 text-[12px] font-medium bg-[#E8F5E9] text-[#2E7D32] rounded-full flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]" />
+                        Active
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 text-[12px] font-medium bg-[#FAFAFA] text-[#6E6E6E] rounded-full flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#6E6E6E]" />
+                        Inactive
+                      </span>
+                    )}
+                  </div>
+
+                  {selectedPreviewSponsor.website && (
+                    <a
+                      href={selectedPreviewSponsor.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full h-[48px] bg-[#F8F8F8] hover:bg-[#F3F3F3] rounded-[12px] border border-[#DBDBDB] flex items-center justify-center gap-2 text-[14px] font-medium text-[#3D3D3D] transition-colors"
+                    >
+                      <LinkIcon className="w-4 h-4" />
+                      Visit Website
+                    </a>
+                  )}
+                </div>
+
+                {/* <div className="p-[24px] border-t border-[#DBDBDB] flex justify-center">
+                  <button
+                    onClick={() => setShowPreview(false)}
+                    className="h-[44px] px-[32px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-white text-[14px] font-medium transition-colors"
+                  >
+                    Close Preview
+                  </button>
+                </div> */}
               </div>
             </div>
           )}

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Image as ImageIcon,
@@ -12,7 +13,9 @@ import {
   Download,
   X,
   FolderPlus,
+  Plus,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useApi, getApiBaseUrl } from '../context/ApiContext';
 
 interface GalleryImage {
@@ -108,6 +111,23 @@ export function GalleryScreen() {
   const [filterVisibility, setFilterVisibility] = useState('');
   const [filterSearch, setFilterSearch] = useState('');
 
+  const fetchAlbums = useCallback(async () => {
+    try {
+      const albumsApi = (api as { galleryAlbumsApi?: { galleryAlbumsControllerFindAll: () => Promise<unknown> } }).galleryAlbumsApi;
+      if (albumsApi?.galleryAlbumsControllerFindAll) {
+        const albRes = await albumsApi.galleryAlbumsControllerFindAll();
+        const albData = (albRes as { data?: unknown }).data;
+        const albList = Array.isArray(albData) ? albData : [];
+        setAlbums(albList.map((row: Record<string, unknown>) => mapApiToAlbum(row)));
+      } else {
+        setAlbums([]);
+      }
+    } catch (e: unknown) {
+      console.error('Failed to fetch albums:', e);
+      setAlbums([]);
+    }
+  }, [api]);
+
   const fetchGallery = useCallback(async () => {
     try {
       if (isInitialLoad) {
@@ -135,15 +155,7 @@ export function GalleryScreen() {
 
       // Fetch albums only on initial load
       if (isInitialLoad) {
-        const albumsApi = (api as { galleryAlbumsApi?: { galleryAlbumsControllerFindAll: () => Promise<unknown> } }).galleryAlbumsApi;
-        if (albumsApi?.galleryAlbumsControllerFindAll) {
-          const albRes = await albumsApi.galleryAlbumsControllerFindAll();
-          const albData = (albRes as { data?: unknown }).data;
-          const albList = Array.isArray(albData) ? albData : [];
-          setAlbums(albList.map((row: Record<string, unknown>) => mapApiToAlbum(row)));
-        } else {
-          setAlbums([]);
-        }
+        await fetchAlbums();
         setIsInitialLoad(false);
       }
     } catch (e: unknown) {
@@ -154,7 +166,7 @@ export function GalleryScreen() {
       setLoading(false);
       setFilterLoading(false);
     }
-  }, [api, apiFetch, filterAlbum, filterTag, filterVisibility, filterSearch, isInitialLoad]);
+  }, [apiFetch, filterAlbum, filterTag, filterVisibility, filterSearch, isInitialLoad, fetchAlbums]);
 
   useEffect(() => {
     fetchGallery();
@@ -164,13 +176,24 @@ export function GalleryScreen() {
   const [showUpload, setShowUpload] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
   const [showAlbums, setShowAlbums] = useState(false);
-  const [showNewAlbum, setShowNewAlbum] = useState(false);
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [previewImage, setPreviewImage] = useState<GalleryImage | null>(null);
+  const [showNewAlbum, setShowNewAlbum] = useState(false);
+  const [newAlbumName, setNewAlbumName] = useState('');
+  const [newAlbumDescription, setNewAlbumDescription] = useState('');
+  const [newAlbumVisibility, setNewAlbumVisibility] = useState<'Public' | 'Private'>('Public');
+  const [newAlbumCover, setNewAlbumCover] = useState<File | null>(null);
+  const [newAlbumImages, setNewAlbumImages] = useState<File[]>([]);
+  const [showBulkTag, setShowBulkTag] = useState(false);
+  const [showBulkVisibility, setShowBulkVisibility] = useState(false);
+  const [isMovingToAlbum, setIsMovingToAlbum] = useState(false);
+  const [editorHighlight, setEditorHighlight] = useState<'tags' | 'visibility' | null>(null);
+  const [bulkTags, setBulkTags] = useState<string[]>([]);
+  const [bulkVisibility, setBulkVisibility] = useState<'Public' | 'Private'>('Public');
 
   // Upload modal state
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
@@ -192,7 +215,7 @@ export function GalleryScreen() {
   const [imageAlbum, setImageAlbum] = useState('');
   const [imageVisibility, setImageVisibility] = useState<'Public' | 'Private'>('Public');
 
-  const handleEdit = (image: GalleryImage) => {
+  const handleEdit = (image: GalleryImage, highlight: 'tags' | 'visibility' | null = null) => {
     setSelectedImage(image);
     setImageTitle(image.title);
     setImageCaption(image.caption);
@@ -201,6 +224,7 @@ export function GalleryScreen() {
     setImageTags(image.tags);
     setImageAlbum(image.album);
     setImageVisibility(image.visibility);
+    setEditorHighlight(highlight);
     if (replacementPreviewUrl) URL.revokeObjectURL(replacementPreviewUrl);
     setReplacementFile(null);
     setReplacementPreviewUrl(null);
@@ -292,17 +316,157 @@ export function GalleryScreen() {
       setShowDeleteModal(false);
       setDeleteReason('');
       setSelectedImages([]);
+      toast.success('Images deleted successfully');
       await fetchGallery();
     } catch (e: unknown) {
-      setError((e as Error)?.message ?? 'Failed to delete images');
+      toast.error((e as Error)?.message ?? 'Failed to delete images');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBulkMove = async (albumId: string | null) => {
+    try {
+      setSaving(true);
+      for (const id of selectedImages) {
+        const res = await apiFetch(`/website/gallery/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ albumId: albumId || null })
+        });
+        if (!res.ok) throw new Error(await res.text());
+      }
+      setSelectedImages([]);
+      setIsMovingToAlbum(false);
+      setShowAlbums(false);
+      toast.success('Images moved successfully');
+      await fetchGallery();
+      await fetchAlbums();
+    } catch (e: unknown) {
+      toast.error((e as Error)?.message ?? 'Failed to move images');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBulkTagUpdate = async (tags: string[]) => {
+    try {
+      setSaving(true);
+      for (const id of selectedImages) {
+        const img = images.find((i: GalleryImage) => i.id === id);
+        if (!img) continue;
+        const newTags = Array.from(new Set([...img.tags, ...tags]));
+        const res = await apiFetch(`/website/gallery/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ tagsJson: JSON.stringify(newTags) })
+        });
+        if (!res.ok) throw new Error(await res.text());
+      }
+      setSelectedImages([]);
+      setShowBulkTag(false);
+      toast.success('Tags applied successfully');
+      await fetchGallery();
+    } catch (e: unknown) {
+      toast.error((e as Error)?.message ?? 'Failed to apply tags');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBulkVisibilityUpdate = async (visibility: 'Public' | 'Private') => {
+    try {
+      setSaving(true);
+      for (const id of selectedImages) {
+        const res = await apiFetch(`/website/gallery/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ visibility })
+        });
+        if (!res.ok) throw new Error(await res.text());
+      }
+      setSelectedImages([]);
+      setShowBulkVisibility(false);
+      toast.success(`Visibility set to ${visibility} successfully`);
+      await fetchGallery();
+    } catch (e: unknown) {
+      toast.error((e as Error)?.message ?? 'Failed to update visibility');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCreateAlbum = async () => {
+    if (!newAlbumName.trim()) {
+      toast.error('Album name is required');
+      return;
+    }
+    try {
+      setSaving(true);
+      const res = await apiFetch('/website/gallery/albums', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: newAlbumName,
+          description: newAlbumDescription,
+          visibility: newAlbumVisibility,
+        })
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const album = await res.json();
+
+      if (newAlbumCover) {
+        const formData = new FormData();
+        formData.append('file', newAlbumCover);
+        const coverRes = await apiFetch(`/website/gallery/albums/${album.id}/cover`, {
+          method: 'POST',
+          body: formData
+        });
+        if (!coverRes.ok) throw new Error(await coverRes.text());
+      }
+
+      if (newAlbumImages.length > 0) {
+        for (const file of newAlbumImages) {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('title', file.name.split('.')[0]);
+          formData.append('albumId', album.id);
+          formData.append('visibility', newAlbumVisibility);
+          const uploadRes = await apiFetch('/website/gallery/upload', {
+            method: 'POST',
+            body: formData
+          });
+          if (!uploadRes.ok) throw new Error(await uploadRes.text());
+        }
+      }
+
+      if (isMovingToAlbum && selectedImages.length > 0) {
+        for (const id of selectedImages) {
+          const moveRes = await apiFetch(`/website/gallery/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ albumId: album.id })
+          });
+          if (!moveRes.ok) throw new Error(await moveRes.text());
+        }
+      }
+
+      toast.success('Album created successfully');
+      setShowNewAlbum(false);
+      setNewAlbumName('');
+      setNewAlbumDescription('');
+      setNewAlbumCover(null);
+      setNewAlbumImages([]);
+      setSelectedImages([]);
+      setIsMovingToAlbum(false);
+      setShowAlbums(false);
+      await fetchGallery();
+      await fetchAlbums();
+    } catch (e: unknown) {
+      toast.error((e as Error)?.message ?? 'Failed to create album');
     } finally {
       setSaving(false);
     }
   };
 
   const toggleImageSelection = (id: string) => {
-    setSelectedImages((prev) =>
-      prev.includes(id) ? prev.filter((imgId) => imgId !== id) : [...prev, id]
+    setSelectedImages((prev: string[]) =>
+      prev.includes(id) ? prev.filter((imgId: string) => imgId !== id) : [...prev, id]
     );
   };
 
@@ -562,13 +726,39 @@ export function GalleryScreen() {
                     <p className="text-[13px] text-[#3D3D3D]">
                       {selectedImages.length} selected
                     </p>
-                    <button className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
+                    <button
+                      onClick={() => {
+                        setIsMovingToAlbum(true);
+                        setShowAlbums(true);
+                      }}
+                      className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium"
+                    >
                       Move to Album
                     </button>
-                    <button className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
+                    <button
+                      onClick={() => {
+                        if (selectedImages.length === 1) {
+                          const img = images.find((i: GalleryImage) => i.id === selectedImages[0]);
+                          if (img) handleEdit(img, 'tags');
+                        } else {
+                          setShowBulkTag(true);
+                        }
+                      }}
+                      className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium"
+                    >
                       Apply Tag
                     </button>
-                    <button className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium">
+                    <button
+                      onClick={() => {
+                        if (selectedImages.length === 1) {
+                          const img = images.find((i: GalleryImage) => i.id === selectedImages[0]);
+                          if (img) handleEdit(img, 'visibility');
+                        } else {
+                          setShowBulkVisibility(true);
+                        }
+                      }}
+                      className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium"
+                    >
                       Set Visibility
                     </button>
                     <button
@@ -720,7 +910,7 @@ export function GalleryScreen() {
                       <p className="text-[14px] font-semibold text-[#0D0D0D]">{image.title}</p>
                       <p className="text-[12px] text-[#6E6E6E]">{image.caption}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        {image.tags.map((tag) => (
+                        {image.tags.map((tag: string) => (
                           <span
                             key={tag}
                             className="px-2 py-0.5 bg-[#F3F3F3] text-[10px] text-[#3D3D3D] rounded"
@@ -1014,18 +1204,18 @@ export function GalleryScreen() {
                       className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
                     >
                       <option value="">No album</option>
-                      {albums.map((album) => (
+                      {albums.map((album: Album) => (
                         <option key={album.id} value={album.id}>{album.name}</option>
                       ))}
                     </select>
                   </div>
 
-                  <div>
+                  <div className={`p-4 rounded-[12px] transition-all duration-500 ${editorHighlight === 'tags' ? 'bg-[#FEF1EE] ring-2 ring-[#F36A4F]' : ''}`}>
                     <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
                       Tags
                     </label>
                     <div className="flex flex-wrap gap-2 mb-2">
-                      {imageTags.map((tag) => (
+                      {imageTags.map((tag: string) => (
                         <span
                           key={tag}
                           className="px-2 py-1 bg-[#FEF1EE] text-[12px] text-[#F36A4F] rounded flex items-center gap-1"
@@ -1058,7 +1248,7 @@ export function GalleryScreen() {
                     </select>
                   </div>
 
-                  <div>
+                  <div className={`p-4 rounded-[12px] transition-all duration-500 ${editorHighlight === 'visibility' ? 'bg-[#FEF1EE] ring-2 ring-[#F36A4F]' : ''}`}>
                     <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
                       Visibility
                     </label>
@@ -1097,22 +1287,37 @@ export function GalleryScreen() {
         </div>
       )}
 
-      {/* Albums Modal */}
+      {/* Albums Sidebar Drawer */}
       {showAlbums && (
-        <div className="fixed inset-0 bg-black/50 flex items-end justify-end z-50">
-          <div className="bg-white w-[600px] h-full overflow-auto">
-            <div className="sticky top-0 bg-white border-b border-[#DBDBDB] p-[24px] flex items-center justify-between">
-              <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Albums</h3>
+        <div
+          className="fixed inset-0 z-50 overflow-hidden"
+          onClick={() => {
+            setShowAlbums(false);
+            setIsMovingToAlbum(false);
+          }}
+        >
+          <div className="absolute inset-0 bg-black/50" />
+          <div
+            className="absolute inset-y-0 right-0 max-w-[400px] w-full bg-white shadow-xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
+              <h2 className="text-[20px] font-semibold text-[#0D0D0D]">
+                {isMovingToAlbum ? 'Move to Album' : 'Albums'}
+              </h2>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowNewAlbum(true)}
                   className="h-[36px] px-[16px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-white text-[13px] font-medium flex items-center gap-2"
                 >
-                  <FolderPlus className="w-3 h-3" />
+                  <FolderPlus className="w-4 h-4" />
                   New Album
                 </button>
                 <button
-                  onClick={() => setShowAlbums(false)}
+                  onClick={() => {
+                    setShowAlbums(false);
+                    setIsMovingToAlbum(false);
+                  }}
                   className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
                 >
                   <X className="w-5 h-5 text-[#3D3D3D]" />
@@ -1120,33 +1325,377 @@ export function GalleryScreen() {
               </div>
             </div>
 
-            <div className="p-[24px] space-y-3">
-              {albums.map((album) => (
+            <div className="p-[24px] overflow-auto flex-1 space-y-3">
+              {isMovingToAlbum && (
+                <div
+                  onClick={() => handleBulkMove(null)}
+                  className="p-[16px] bg-[#F8F8F8] rounded-[12px] border-2 border-dashed border-[#DBDBDB] hover:border-[#F36A4F] hover:bg-white transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-[56px] h-[56px] rounded-[12px] bg-[#E0E0E0] flex items-center justify-center">
+                      <X className="w-6 h-6 text-[#9E9E9E]" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-[15px] font-semibold text-[#0D0D0D]">No Album</h4>
+                      <p className="text-[12px] text-[#6E6E6E]">Remove from current album</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {albums.map((album: Album) => (
                 <div
                   key={album.id}
-                  className="p-[16px] bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB] hover:bg-white transition-colors"
+                  onClick={() => {
+                    if (isMovingToAlbum) {
+                      handleBulkMove(album.id);
+                    } else {
+                      setFilterAlbum(album.id);
+                      setShowAlbums(false);
+                    }
+                  }}
+                  className={`p-[16px] bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB] hover:bg-white transition-colors cursor-pointer group ${filterAlbum === album.id && !isMovingToAlbum ? 'ring-2 ring-[#F36A4F] bg-white' : ''
+                    }`}
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-center gap-4">
                     <img
                       src={galleryAssetUrl(album.coverImage)}
                       alt={album.name}
-                      className="w-20 h-20 object-cover rounded-[8px]"
+                      className="w-[56px] h-[56px] rounded-[12px] object-cover"
                     />
-                    <div className="flex-1">
-                      <h4 className="text-[14px] font-semibold text-[#0D0D0D] mb-1">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-[15px] font-semibold text-[#0D0D0D] truncate group-hover:text-[#F36A4F] transition-colors">
                         {album.name}
                       </h4>
-                      <p className="text-[12px] text-[#6E6E6E] mb-2">
-                        {album.imageCount} images • {album.visibility}
-                      </p>
-                      <p className="text-[11px] text-[#6E6E6E]">Created: {album.createdOn}</p>
+                      <div className="flex items-center gap-3 mt-1 text-[12px] text-[#6E6E6E]">
+                        <span>{album.imageCount} images</span>
+                        <span>•</span>
+                        <span>{album.visibility}</span>
+                      </div>
                     </div>
-                    <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]">
-                      <Edit className="w-4 h-4 text-[#3D3D3D]" />
-                    </button>
                   </div>
                 </div>
               ))}
+              {albums.length === 0 && (
+                <div className="py-12 text-center text-[#6E6E6E]">
+                  <Folder className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                  <p className="text-[14px]">No albums yet.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Apply Tag Modal */}
+      {showBulkTag && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-[24px]">
+          <div className="bg-white rounded-[16px] w-full max-w-[500px]">
+            <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
+              <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Apply Tag</h3>
+              <button
+                onClick={() => setShowBulkTag(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
+              >
+                <X className="w-5 h-5 text-[#3D3D3D]" />
+              </button>
+            </div>
+
+            <div className="p-[24px]">
+              <div className="mb-6 p-4 bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB]">
+                <p className="text-[13px] text-[#3D3D3D]">
+                  Adding tags to <strong>{selectedImages.length}</strong> image(s).
+                </p>
+              </div>
+
+              <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                Select Tags to Apply
+              </label>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {bulkTags.map((tag: string) => (
+                  <span
+                    key={tag}
+                    className="px-2 py-1 bg-[#FEF1EE] text-[12px] text-[#F36A4F] rounded flex items-center gap-1"
+                  >
+                    {tag}
+                    <button
+                      onClick={() => setBulkTags(bulkTags.filter((t: string) => t !== tag))}
+                      className="hover:text-[#E55A3F]"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <select
+                onChange={(e) => {
+                  if (e.target.value && !bulkTags.includes(e.target.value)) {
+                    setBulkTags([...bulkTags, e.target.value]);
+                  }
+                  e.target.value = '';
+                }}
+                className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+              >
+                <option value="">Add tag...</option>
+                {TAGS.filter((tag: string) => !bulkTags.includes(tag)).map((tag: string) => (
+                  <option key={tag} value={tag}>
+                    {tag}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="p-[24px] border-t border-[#DBDBDB] flex justify-end gap-3">
+              <button
+                onClick={() => setShowBulkTag(false)}
+                className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleBulkTagUpdate(bulkTags)}
+                disabled={saving || bulkTags.length === 0}
+                className="h-[44px] px-[24px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] disabled:opacity-50 text-white text-[14px] font-medium transition-colors"
+              >
+                {saving ? 'Applying...' : `Apply Tags to ${selectedImages.length} Images`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Set Visibility Modal */}
+      {showBulkVisibility && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-[24px]">
+          <div className="bg-white rounded-[16px] w-full max-w-[400px]">
+            <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
+              <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Set Visibility</h3>
+              <button
+                onClick={() => setShowBulkVisibility(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
+              >
+                <X className="w-5 h-5 text-[#3D3D3D]" />
+              </button>
+            </div>
+
+            <div className="p-[24px]">
+              <div className="mb-6 p-4 bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB]">
+                <p className="text-[13px] text-[#3D3D3D]">
+                  Updating visibility for <strong>{selectedImages.length}</strong> image(s).
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setBulkVisibility('Public')}
+                  className={`h-[44px] rounded-[12px] border flex items-center justify-center gap-2 text-[14px] font-medium transition-all ${bulkVisibility === 'Public' ? 'bg-[#E8F5E9] border-[#2E7D32] text-[#2E7D32]' : 'bg-white border-[#DBDBDB] hover:border-[#F36A4F] text-[#3D3D3D]'}`}
+                >
+                  <Eye className="w-4 h-4" />
+                  Public
+                </button>
+                <button
+                  onClick={() => setBulkVisibility('Private')}
+                  className={`h-[44px] rounded-[12px] border flex items-center justify-center gap-2 text-[14px] font-medium transition-all ${bulkVisibility === 'Private' ? 'bg-[#F5F5F5] border-[#6E6E6E] text-[#6E6E6E]' : 'bg-white border-[#DBDBDB] hover:border-[#F36A4F] text-[#3D3D3D]'}`}
+                >
+                  <EyeOff className="w-4 h-4" />
+                  Private
+                </button>
+              </div>
+            </div>
+
+            <div className="p-[24px] border-t border-[#DBDBDB] flex justify-end gap-3">
+              <button
+                onClick={() => setShowBulkVisibility(false)}
+                className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleBulkVisibilityUpdate(bulkVisibility)}
+                disabled={saving}
+                className="h-[44px] px-[24px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] disabled:opacity-50 text-white text-[14px] font-medium transition-colors"
+              >
+                {saving ? 'Updating...' : `Set to ${bulkVisibility}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Album Modal */}
+      {showNewAlbum && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-[24px]">
+          <div className="bg-white rounded-[16px] w-full max-w-[600px] max-h-[90vh] flex flex-col">
+            <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
+              <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Create New Album</h3>
+              <button
+                onClick={() => setShowNewAlbum(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
+              >
+                <X className="w-5 h-5 text-[#3D3D3D]" />
+              </button>
+            </div>
+
+            <div className="p-[24px] overflow-auto flex-1 space-y-6">
+              <div>
+                <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                  Album Name *
+                </label>
+                <input
+                  type="text"
+                  value={newAlbumName}
+                  onChange={(e) => setNewAlbumName(e.target.value)}
+                  placeholder="e.g., Annual Event 2025"
+                  className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={newAlbumDescription}
+                  onChange={(e) => setNewAlbumDescription(e.target.value)}
+                  className="w-full h-[80px] px-[12px] py-[10px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F] resize-none"
+                  placeholder="What is this album about?"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-[24px]">
+                <div>
+                  <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                    Visibility
+                  </label>
+                  <select
+                    value={newAlbumVisibility}
+                    onChange={(e) => setNewAlbumVisibility(e.target.value as any)}
+                    className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                  >
+                    <option>Public</option>
+                    <option>Private</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                    Cover Image
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = (e: any) => setNewAlbumCover(e.target.files[0]);
+                        input.click();
+                      }}
+                      className="h-[44px] px-[16px] rounded-[12px] border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[13px] font-medium text-[#3D3D3D] flex-1 flex items-center justify-center gap-2"
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                      {newAlbumCover ? 'Change Cover' : 'Pick Cover'}
+                    </button>
+                    {newAlbumCover && (
+                      <div className="w-11 h-11 rounded-lg border border-[#DBDBDB] overflow-hidden relative group">
+                        <img
+                          src={URL.createObjectURL(newAlbumCover)}
+                          className="w-full h-full object-cover"
+                          alt="Cover preview"
+                        />
+                        <button
+                          onClick={() => setNewAlbumCover(null)}
+                          className="absolute inset-0 bg-black/50 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-[#F0F0F0]">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-[13px] font-semibold text-[#0D0D0D]">
+                    Upload Images to this Album
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = 'image/*';
+                      input.multiple = true;
+                      input.onchange = (e: any) => {
+                        const files = Array.from(e.target.files as FileList);
+                        setNewAlbumImages((prev: File[]) => [...prev, ...files]);
+                      };
+                      input.click();
+                    }}
+                    className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium flex items-center gap-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Images
+                  </button>
+                </div>
+
+                {newAlbumImages.length > 0 ? (
+                  <div className="grid grid-cols-4 gap-3 max-h-[150px] overflow-y-auto pr-1">
+                    {newAlbumImages.map((file: File, i: number) => (
+                      <div key={i} className="relative aspect-square rounded-[8px] border border-[#DBDBDB] overflow-hidden group">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          className="w-full h-full object-cover"
+                          alt="Preview"
+                        />
+                        <button
+                          onClick={() => setNewAlbumImages((prev: File[]) => prev.filter((_: File, idx: number) => idx !== i))}
+                          className="absolute top-1 right-1 w-5 h-5 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-8 border border-dashed border-[#DBDBDB] rounded-[12px] flex flex-col items-center justify-center bg-[#FDFDFD]">
+                    <Upload className="w-6 h-6 text-[#9E9E9E] mb-2" />
+                    <p className="text-[12px] text-[#9E9E9E]">No images added yet</p>
+                  </div>
+                )}
+              </div>
+
+              {selectedImages.length > 0 && isMovingToAlbum && (
+                <div className="p-3 bg-[#FEF1EE] rounded-[12px] border border-[#F36A4F]/20 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#F36A4F] text-white flex items-center justify-center text-[12px] font-bold">
+                    {selectedImages.length}
+                  </div>
+                  <p className="text-[12px] text-[#3D3D3D]">
+                    Selected images will be moved to this new album automatically.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-[24px] border-t border-[#DBDBDB] flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowNewAlbum(false);
+                  setNewAlbumImages([]);
+                  setNewAlbumCover(null);
+                }}
+                className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateAlbum}
+                disabled={saving || !newAlbumName.trim()}
+                className="h-[44px] px-[24px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] disabled:opacity-50 text-white text-[14px] font-medium transition-colors"
+              >
+                {saving ? 'Creating...' : 'Create Album'}
+              </button>
             </div>
           </div>
         </div>
@@ -1239,7 +1788,7 @@ export function GalleryScreen() {
                   </div>
                   {previewImage.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {previewImage.tags.map((tag) => (
+                      {previewImage.tags.map((tag: string) => (
                         <span
                           key={tag}
                           className="px-2 py-0.5 bg-white/20 text-[11px] text-white rounded"
