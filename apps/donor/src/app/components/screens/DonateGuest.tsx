@@ -322,7 +322,7 @@ export function DonateGuest() {
               <AramInput
                 label="Mobile Number"
                 type="tel"
-                placeholder={countryPhoneConfigs[country]?.maxLength === 10 ? '10-digit mobile number' : '11-digit mobile number'}
+                placeholder={`${countryPhoneConfigs[country]?.maxLength || 10}-digit mobile number`}
                 value={mobile}
                 onChange={handleMobileChange}
                 required
@@ -348,6 +348,16 @@ export function DonateGuest() {
 
           {/* Donation Details */}
           <div className="flex flex-col gap-[16px]">
+
+            <AramSelect
+              label="Donation Type"
+              placeholder="Select donation type"
+              value={donationType}
+              onChange={setDonationType}
+              options={donationTypes}
+              required
+              error={errors.donationType}
+            />
             <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#0D0D0D' }}>Donation Details</h3>
 
             {/* Amount Selection */}
@@ -394,15 +404,7 @@ export function DonateGuest() {
 
 
 
-            <AramSelect
-              label="Donation Type"
-              placeholder="Select donation type"
-              value={donationType}
-              onChange={setDonationType}
-              options={donationTypes}
-              required
-              error={errors.donationType}
-            />
+            
           </div>
 
 
