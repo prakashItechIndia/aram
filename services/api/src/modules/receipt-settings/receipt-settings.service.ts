@@ -50,13 +50,7 @@ export class ReceiptSettingsService {
     if (dto.showBackdateStamp !== undefined) updates.showBackdateStamp = dto.showBackdateStamp;
     if (dto.requireReasonManual !== undefined) updates.requireReasonManual = dto.requireReasonManual;
 
-    // Template Rules
-    if (dto.defaultTemplateOnline !== undefined) updates.defaultTemplateOnline = dto.defaultTemplateOnline;
-    if (dto.defaultTemplateOffline !== undefined) updates.defaultTemplateOffline = dto.defaultTemplateOffline;
-    if (dto.template80g !== undefined) updates.template80g = dto.template80g;
-    if (dto.templateNon80g !== undefined) updates.templateNon80g = dto.templateNon80g;
-    if (dto.forceRegenerateOnUpdate !== undefined) updates.forceRegenerateOnUpdate = dto.forceRegenerateOnUpdate;
-    if (dto.lockContentAfterGeneration !== undefined) updates.lockContentAfterGeneration = dto.lockContentAfterGeneration;
+
 
     // Mandatory Fields
     if (dto.mobileRequired !== undefined) updates.mobileRequired = dto.mobileRequired;
@@ -67,19 +61,18 @@ export class ReceiptSettingsService {
     if (dto.panRule !== undefined) updates.panRule = dto.panRule;
     if (dto.panThreshold !== undefined) updates.panThreshold = dto.panThreshold;
     if (dto.panAutoUppercase !== undefined) updates.panAutoUppercase = dto.panAutoUppercase;
-    if (dto.pincodeValidation !== undefined) updates.pincodeValidation = dto.pincodeValidation;
-    if (dto.duplicateWarning !== undefined) updates.duplicateWarning = dto.duplicateWarning;
+
 
     // Delivery Settings
     if (dto.autoSendEmailOnReceiptGeneration !== undefined) updates.autoSendEmailOnReceiptGeneration = dto.autoSendEmailOnReceiptGeneration;
     if (dto.emailSubjectFormat !== undefined) updates.emailSubjectFormat = dto.emailSubjectFormat;
     if (dto.emailSenderName !== undefined) updates.emailSenderName = dto.emailSenderName;
     if (dto.emailReplyTo !== undefined) updates.emailReplyTo = dto.emailReplyTo;
-    if (dto.emailRetryAttempts !== undefined) updates.emailRetryAttempts = dto.emailRetryAttempts;
+
     if (dto.emailFailureAlertsNotifyAdmin !== undefined) updates.emailFailureAlertsNotifyAdmin = dto.emailFailureAlertsNotifyAdmin;
     if (dto.autoSendSmsOnReceiptGeneration !== undefined) updates.autoSendSmsOnReceiptGeneration = dto.autoSendSmsOnReceiptGeneration;
-    if (dto.smsTemplate !== undefined) updates.smsTemplate = dto.smsTemplate;
     if (dto.smsShortLink !== undefined) updates.smsShortLink = dto.smsShortLink;
+
 
     // Reprint & Reissue
     if (dto.allowReprint !== undefined) updates.allowReprint = dto.allowReprint;
@@ -135,13 +128,7 @@ export class ReceiptSettingsService {
       backdateWindow: row.backdateWindow,
       showBackdateStamp: row.showBackdateStamp,
       requireReasonManual: row.requireReasonManual,
-      // Template Rules
-      defaultTemplateOnline: row.defaultTemplateOnline,
-      defaultTemplateOffline: row.defaultTemplateOffline,
-      template80g: row.template80g,
-      templateNon80g: row.templateNon80g,
-      forceRegenerateOnUpdate: row.forceRegenerateOnUpdate,
-      lockContentAfterGeneration: row.lockContentAfterGeneration,
+
       // Mandatory Fields
       mobileRequired: row.mobileRequired,
       emailRequired: row.emailRequired,
@@ -151,18 +138,17 @@ export class ReceiptSettingsService {
       panRule: row.panRule,
       panThreshold: row.panThreshold,
       panAutoUppercase: row.panAutoUppercase,
-      pincodeValidation: row.pincodeValidation,
-      duplicateWarning: row.duplicateWarning,
+
       // Delivery Settings
       autoSendEmailOnReceiptGeneration: row.autoSendEmailOnReceiptGeneration,
       emailSubjectFormat: row.emailSubjectFormat,
       emailSenderName: row.emailSenderName,
       emailReplyTo: row.emailReplyTo,
-      emailRetryAttempts: row.emailRetryAttempts,
+
       emailFailureAlertsNotifyAdmin: row.emailFailureAlertsNotifyAdmin,
       autoSendSmsOnReceiptGeneration: row.autoSendSmsOnReceiptGeneration,
-      smsTemplate: row.smsTemplate,
       smsShortLink: row.smsShortLink,
+
       // Reprint & Reissue
       allowReprint: row.allowReprint,
       allowResendEmail: row.allowResendEmail,
@@ -206,13 +192,7 @@ export class ReceiptSettingsService {
       backdateWindow: 30,
       showBackdateStamp: true,
       requireReasonManual: true,
-      // Template Rules
-      defaultTemplateOnline: 'template_1',
-      defaultTemplateOffline: 'template_2',
-      template80g: 'template_80g',
-      templateNon80g: 'template_non_80g',
-      forceRegenerateOnUpdate: false,
-      lockContentAfterGeneration: true,
+
       // Mandatory Fields
       mobileRequired: true,
       emailRequired: true,
@@ -222,18 +202,17 @@ export class ReceiptSettingsService {
       panRule: 'threshold',
       panThreshold: 2000,
       panAutoUppercase: true,
-      pincodeValidation: true,
-      duplicateWarning: true,
+
       // Delivery Settings
       autoSendEmailOnReceiptGeneration: true,
       emailSubjectFormat: 'Your donation receipt {receipt_no} - Aram Foundation',
       emailSenderName: 'Aram Foundation',
       emailReplyTo: 'donations@aramfoundation.org',
-      emailRetryAttempts: 3,
+
       emailFailureAlertsNotifyAdmin: true,
       autoSendSmsOnReceiptGeneration: false,
-      smsTemplate: 'Thank you for your donation! Receipt: {receipt_no}. Download: {short_link}',
       smsShortLink: true,
+
       // Reprint & Reissue
       allowReprint: true,
       allowResendEmail: true,

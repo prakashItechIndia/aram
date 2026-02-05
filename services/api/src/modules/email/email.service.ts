@@ -192,17 +192,12 @@ export class EmailService {
         </div>
 
         <p>We have attached your official receipt to this email. You can also download it at any time by logging into your portal.</p>
-        <div style="text-align: center; margin-top: 30px;">
-          <a href="${(this.configService.get<string>('FRONTEND_URL') || 'https://aram-donor.vercel.app').replace(/\/$/, '')}/home" 
-             style="background-color: #F36A4F; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
-             Visit Donor Portal
-          </a>
-        </div>
+        
+          <p>Regards,<br>Aram Team</p>
+       
         
         <br>
-        <p style="font-size: 12px; color: #999; text-align: center;">
-          This is an automated receipt for your records. If you have any questions, please contact us at support@aram.org
-        </p>
+        
       </div>
     `;
     try {

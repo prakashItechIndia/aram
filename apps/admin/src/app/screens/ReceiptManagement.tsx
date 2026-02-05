@@ -5,7 +5,6 @@ import { useApi, getApiBaseUrl } from '../context/ApiContext';
 type TabType =
   | 'numbering'
   | 'generation'
-  | 'templates'
   | 'fields'
   | 'delivery'
   | 'reissue';
@@ -54,13 +53,7 @@ export function ReceiptManagement() {
   const [showBackdateStamp, setShowBackdateStamp] = useState(true);
   const [requireReasonManual, setRequireReasonManual] = useState(true);
 
-  // Template rules
-  const [defaultTemplateOnline, setDefaultTemplateOnline] = useState('template_1');
-  const [defaultTemplateOffline, setDefaultTemplateOffline] = useState('template_2');
-  const [template80G, setTemplate80G] = useState('template_80g');
-  const [templateNon80G, setTemplateNon80G] = useState('template_non_80g');
-  const [forceRegenerateOnUpdate, setForceRegenerateOnUpdate] = useState(false);
-  const [lockContentAfterGeneration, setLockContentAfterGeneration] = useState(true);
+
 
   // Mandatory fields
   const [mobileRequired, setMobileRequired] = useState(true);
@@ -71,19 +64,18 @@ export function ReceiptManagement() {
   const [categoryRequired, setCategoryRequired] = useState(true);
   const [typeRequired, setTypeRequired] = useState(true);
   const [panAutoUppercase, setPanAutoUppercase] = useState(true);
-  const [pincodeValidation, setPincodeValidation] = useState(true);
-  const [duplicateWarning, setDuplicateWarning] = useState(true);
+
 
   // Delivery settings
   const [autoSendEmail, setAutoSendEmail] = useState(true);
   const [emailSubject, setEmailSubject] = useState('Your donation receipt {receipt_no} - Aram Foundation');
   const [senderName, setSenderName] = useState('Aram Foundation');
   const [replyToEmail, setReplyToEmail] = useState('donations@aramfoundation.org');
-  const [emailRetryAttempts, setEmailRetryAttempts] = useState('3');
+
   const [emailFailureAlert, setEmailFailureAlert] = useState(true);
   const [autoSendSMS, setAutoSendSMS] = useState(false);
-  const [smsTemplate, setSmsTemplate] = useState('Thank you for your donation! Receipt: {receipt_no}. Download: {short_link}');
   const [smsShortLink, setSmsShortLink] = useState(true);
+
 
   // Reprint/Reissue
   const [allowReprint, setAllowReprint] = useState(true);
@@ -103,10 +95,9 @@ export function ReceiptManagement() {
   const tabs = [
     { id: 'numbering', label: 'Numbering & Series' },
     { id: 'generation', label: 'Generation Rules' },
-    { id: 'templates', label: 'Template Rules' },
     { id: 'fields', label: 'Mandatory Fields' },
     { id: 'delivery', label: 'Delivery Settings' },
-    { id: 'reissue', label: 'Reprint & Reissue' },
+    { id: 'reissue', label: 'Reprint & Re issue' },
   ];
 
   const fetchSettings = useCallback(async () => {
@@ -139,13 +130,7 @@ export function ReceiptManagement() {
       if (data.showBackdateStamp !== undefined) setShowBackdateStamp(data.showBackdateStamp);
       if (data.requireReasonManual !== undefined) setRequireReasonManual(data.requireReasonManual);
 
-      // Template Rules
-      if (data.defaultTemplateOnline) setDefaultTemplateOnline(data.defaultTemplateOnline);
-      if (data.defaultTemplateOffline) setDefaultTemplateOffline(data.defaultTemplateOffline);
-      if (data.template80g) setTemplate80G(data.template80g);
-      if (data.templateNon80g) setTemplateNon80G(data.templateNon80g);
-      if (data.forceRegenerateOnUpdate !== undefined) setForceRegenerateOnUpdate(data.forceRegenerateOnUpdate);
-      if (data.lockContentAfterGeneration !== undefined) setLockContentAfterGeneration(data.lockContentAfterGeneration);
+
 
       // Mandatory Fields
       if (data.mobileRequired !== undefined) setMobileRequired(data.mobileRequired);
@@ -156,19 +141,18 @@ export function ReceiptManagement() {
       if (data.donationCategoryRequired !== undefined) setCategoryRequired(data.donationCategoryRequired);
       if (data.donationTypeRequired !== undefined) setTypeRequired(data.donationTypeRequired);
       if (data.panAutoUppercase !== undefined) setPanAutoUppercase(data.panAutoUppercase);
-      if (data.pincodeValidation !== undefined) setPincodeValidation(data.pincodeValidation);
-      if (data.duplicateWarning !== undefined) setDuplicateWarning(data.duplicateWarning);
+
 
       // Delivery Settings
       if (data.autoSendEmailOnReceiptGeneration !== undefined) setAutoSendEmail(data.autoSendEmailOnReceiptGeneration);
       if (data.emailSubjectFormat) setEmailSubject(data.emailSubjectFormat);
       if (data.emailSenderName) setSenderName(data.emailSenderName);
       if (data.emailReplyTo) setReplyToEmail(data.emailReplyTo);
-      if (data.emailRetryAttempts !== undefined) setEmailRetryAttempts(String(data.emailRetryAttempts));
+
       if (data.emailFailureAlertsNotifyAdmin !== undefined) setEmailFailureAlert(data.emailFailureAlertsNotifyAdmin);
       if (data.autoSendSmsOnReceiptGeneration !== undefined) setAutoSendSMS(data.autoSendSmsOnReceiptGeneration);
-      if (data.smsTemplate) setSmsTemplate(data.smsTemplate);
       if (data.smsShortLink !== undefined) setSmsShortLink(data.smsShortLink);
+
 
       // Reprint/Reissue
       if (data.allowReprint !== undefined) setAllowReprint(data.allowReprint);
@@ -220,13 +204,7 @@ export function ReceiptManagement() {
         backdateWindow: parseInt(backdateWindow),
         showBackdateStamp,
         requireReasonManual,
-        // Template Rules
-        defaultTemplateOnline,
-        defaultTemplateOffline,
-        template80g: template80G,
-        templateNon80g: templateNon80G,
-        forceRegenerateOnUpdate,
-        lockContentAfterGeneration,
+
         // Mandatory Fields
         mobileRequired,
         emailRequired,
@@ -236,18 +214,17 @@ export function ReceiptManagement() {
         panRule,
         panThreshold: parseInt(panThreshold),
         panAutoUppercase,
-        pincodeValidation,
-        duplicateWarning,
+
         // Delivery Settings
         autoSendEmailOnReceiptGeneration: autoSendEmail,
         emailSubjectFormat: emailSubject,
         emailSenderName: senderName,
         emailReplyTo: replyToEmail,
-        emailRetryAttempts: parseInt(emailRetryAttempts),
+
         emailFailureAlertsNotifyAdmin: emailFailureAlert,
         autoSendSmsOnReceiptGeneration: autoSendSMS,
-        smsTemplate,
         smsShortLink,
+
         // Reprint & Reissue
         allowReprint,
         allowResendEmail,
@@ -783,151 +760,7 @@ export function ReceiptManagement() {
                 </div>
               )}
 
-              {/* Template Rules Tab */}
-              {activeTab === 'templates' && (
-                <div className="space-y-[24px]">
-                  <div>
-                    <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D] mb-[16px]">
-                      Default Template Selection
-                    </h3>
-                    <div className="space-y-[16px]">
-                      <div>
-                        <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[8px]">
-                          Default Template for Online Donations
-                        </label>
-                        <select
-                          value={defaultTemplateOnline}
-                          onChange={(e) => {
-                            setDefaultTemplateOnline(e.target.value);
-                            setHasChanges(true);
-                          }}
-                          className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
-                        >
-                          <option value="template_1">Standard Template (Online)</option>
-                          <option value="template_2">Detailed Template</option>
-                          <option value="template_3">Compact Template</option>
-                        </select>
-                      </div>
 
-                      <div>
-                        <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[8px]">
-                          Default Template for Offline Donations
-                        </label>
-                        <select
-                          value={defaultTemplateOffline}
-                          onChange={(e) => {
-                            setDefaultTemplateOffline(e.target.value);
-                            setHasChanges(true);
-                          }}
-                          className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
-                        >
-                          <option value="template_1">Standard Template (Online)</option>
-                          <option value="template_2">Detailed Template</option>
-                          <option value="template_3">Compact Template</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D] mb-[16px]">
-                      80G Eligibility-Based Templates
-                    </h3>
-                    <div className="space-y-[16px]">
-                      <div>
-                        <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[8px]">
-                          Template for 80G Donations
-                        </label>
-                        <select
-                          value={template80G}
-                          onChange={(e) => {
-                            setTemplate80G(e.target.value);
-                            setHasChanges(true);
-                          }}
-                          className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
-                        >
-                          <option value="template_80g">80G Compliant Template</option>
-                          <option value="template_1">Standard Template (Online)</option>
-                          <option value="template_2">Detailed Template</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[8px]">
-                          Template for Non-80G Donations
-                        </label>
-                        <select
-                          value={templateNon80G}
-                          onChange={(e) => {
-                            setTemplateNon80G(e.target.value);
-                            setHasChanges(true);
-                          }}
-                          className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
-                        >
-                          <option value="template_non_80g">Non-80G Template</option>
-                          <option value="template_1">Standard Template (Online)</option>
-                          <option value="template_2">Detailed Template</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D] mb-[16px]">
-                      Template Update Behavior
-                    </h3>
-                    <div className="space-y-[16px]">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[4px]">
-                            Force regenerate PDF when template updates
-                          </label>
-                          <p className="text-[13px] leading-[18px] text-[#6E6E6E]">
-                            Automatically regenerate all existing receipts using this template
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setForceRegenerateOnUpdate(!forceRegenerateOnUpdate);
-                            setHasChanges(true);
-                          }}
-                          className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${forceRegenerateOnUpdate ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                            }`}
-                        >
-                          <div
-                            className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${forceRegenerateOnUpdate ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                              }`}
-                          />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[4px]">
-                            Lock receipt content after generation
-                          </label>
-                          <p className="text-[13px] leading-[18px] text-[#6E6E6E]">
-                            Allow PDF regeneration but disallow changing donor values
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setLockContentAfterGeneration(!lockContentAfterGeneration);
-                            setHasChanges(true);
-                          }}
-                          className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${lockContentAfterGeneration ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                            }`}
-                        >
-                          <div
-                            className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${lockContentAfterGeneration ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                              }`}
-                          />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Mandatory Fields Tab */}
               {activeTab === 'fields' && (
@@ -1160,53 +993,7 @@ export function ReceiptManagement() {
                         </button>
                       </div>
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[4px]">
-                            Pincode Validation (India)
-                          </label>
-                          <p className="text-[13px] leading-[18px] text-[#6E6E6E]">
-                            Validate 6-digit Indian postal codes
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setPincodeValidation(!pincodeValidation);
-                            setHasChanges(true);
-                          }}
-                          className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${pincodeValidation ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                            }`}
-                        >
-                          <div
-                            className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${pincodeValidation ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                              }`}
-                          />
-                        </button>
-                      </div>
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[4px]">
-                            Duplicate Donor Warning
-                          </label>
-                          <p className="text-[13px] leading-[18px] text-[#6E6E6E]">
-                            Alert if same email/mobile/PAN already exists
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setDuplicateWarning(!duplicateWarning);
-                            setHasChanges(true);
-                          }}
-                          className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${duplicateWarning ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                            }`}
-                        >
-                          <div
-                            className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${duplicateWarning ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                              }`}
-                          />
-                        </button>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -1292,26 +1079,7 @@ export function ReceiptManagement() {
                             </div>
                           </div>
 
-                          <div>
-                            <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[8px]">
-                              Retry Failed Emails
-                            </label>
-                            <input
-                              type="number"
-                              value={emailRetryAttempts}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setEmailRetryAttempts(val === '' ? '' : Math.max(0, Math.min(5, parseInt(val))));
-                                setHasChanges(true);
-                              }}
-                              min="0"
-                              max="5"
-                              className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
-                            />
-                            <p className="text-[13px] leading-[18px] text-[#6E6E6E] mt-[6px]">
-                              Number of retry attempts (exponential backoff)
-                            </p>
-                          </div>
+
 
                           <div className="flex items-center justify-between">
                             <label className="text-[16px] leading-[24px] font-medium text-[#0D0D0D]">
@@ -1362,47 +1130,27 @@ export function ReceiptManagement() {
                       </div>
 
                       {autoSendSMS && (
-                        <>
-                          <div>
-                            <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[8px]">
-                              SMS Template (160 chars max)
-                            </label>
-                            <textarea
-                              value={smsTemplate}
-                              onChange={(e) => {
-                                if (e.target.value.length <= 160) {
-                                  setSmsTemplate(e.target.value);
-                                  setHasChanges(true);
-                                }
-                              }}
-                              rows={3}
-                              className="w-full px-[14px] py-[12px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20 resize-none"
-                            />
-                            <p className="text-[13px] leading-[18px] text-[#6E6E6E] mt-[6px]">
-                              {smsTemplate.length}/160 characters
-                            </p>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <label className="text-[16px] leading-[24px] font-medium text-[#0D0D0D]">
-                              Use short link for PDF URL
-                            </label>
-                            <button
-                              onClick={() => {
-                                setSmsShortLink(!smsShortLink);
-                                setHasChanges(true);
-                              }}
-                              className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${smsShortLink ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
+                        <div className="flex items-center justify-between">
+                          <label className="text-[16px] leading-[24px] font-medium text-[#0D0D0D]">
+                            Use short link for PDF URL
+                          </label>
+                          <button
+                            onClick={() => {
+                              setSmsShortLink(!smsShortLink);
+                              setHasChanges(true);
+                            }}
+                            className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${smsShortLink ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
+                              }`}
+                          >
+                            <div
+                              className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${smsShortLink ? 'translate-x-[22px]' : 'translate-x-[2px]'
                                 }`}
-                            >
-                              <div
-                                className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${smsShortLink ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                                  }`}
-                              />
-                            </button>
-                          </div>
-                        </>
+                            />
+                          </button>
+                        </div>
                       )}
+
+
                     </div>
                   </div>
 
