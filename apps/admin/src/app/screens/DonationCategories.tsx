@@ -44,7 +44,6 @@ interface DonationCategory {
 
   // Gateway restrictions
   allowedGateways: ('razorpay' | 'paytm')[];
-  allowedPaymentMethods: string[];
   internationalAllowed: boolean;
 
   // Accounting
@@ -108,7 +107,6 @@ export function DonationCategories() {
         showPurposeField: row.showPurposeField ?? true,
         allowAnonymous: row.allowAnonymous ?? false,
         allowedGateways: row.allowedGateways || [],
-        allowedPaymentMethods: row.allowedPaymentMethods || [],
         internationalAllowed: row.internationalAllowed ?? false,
         accountingHead: row.accountingHead,
         costCenter: row.costCenter,
@@ -159,7 +157,6 @@ export function DonationCategories() {
       showPurposeField: true,
       allowAnonymous: false,
       allowedGateways: ['razorpay', 'paytm'],
-      allowedPaymentMethods: ['upi', 'cards', 'netbanking', 'wallet'],
       internationalAllowed: false,
     });
     setActiveTab('basic');
@@ -208,7 +205,6 @@ export function DonationCategories() {
         showPurposeField: formData.showPurposeField,
         allowAnonymous: formData.allowAnonymous,
         allowedGateways: formData.allowedGateways,
-        allowedPaymentMethods: formData.allowedPaymentMethods,
         internationalAllowed: formData.internationalAllowed,
         accountingHead: formData.accountingHead,
         costCenter: formData.costCenter,
@@ -1103,34 +1099,7 @@ export function DonationCategories() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[12px]">
-                      Allowed Payment Methods
-                    </label>
-                    <div className="grid grid-cols-2 gap-[8px]">
-                      {['upi', 'cards', 'netbanking', 'wallet'].map((method) => (
-                        <label key={method} className="flex items-center gap-[12px] cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={formData.allowedPaymentMethods?.includes(method) || false}
-                            onChange={(e) => {
-                              const current = formData.allowedPaymentMethods || [];
-                              updateFormData(
-                                'allowedPaymentMethods',
-                                e.target.checked
-                                  ? [...current, method]
-                                  : current.filter((m: string) => m !== method)
-                              );
-                            }}
-                            className="w-[20px] h-[20px] rounded-[4px] border-2 border-[#DBDBDB] checked:bg-[#F36A4F] checked:border-[#F36A4F]"
-                          />
-                          <span className="text-[14px] leading-[20px] text-[#3D3D3D] capitalize">
-                            {method}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
+
 
                   <div className="p-[16px] bg-[#FAFAFA] border border-[#DBDBDB] rounded-[16px]">
                     <label className="flex items-center gap-[12px] cursor-pointer">

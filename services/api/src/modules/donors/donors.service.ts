@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, Inject, BadRequestException } from '@nestjs/common';
-import { eq, and, sql, desc, like } from 'drizzle-orm';
+import { eq, and, sql, desc, like, or } from 'drizzle-orm';
 import { DRIZZLE } from '../../database/database.module';
 import { tUser } from '../../database/models/t-user.model';
 import { donors } from '../../database/models/donors.model';
@@ -12,6 +12,7 @@ import { EmailService } from '../email/email.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { generateStrongPassword } from '../../common/utils/password.util';
 import { QueryDonationsDto } from './dto/query-donations.dto';
+import { QueryDonorsListDto } from './dto/query-donors-list.dto';
 import { ReceiptSettingsService } from '../receipt-settings/receipt-settings.service';
 
 /** User_Type value for donor/portal users (T_USER). */
@@ -89,12 +90,81 @@ export class DonorsService {
   }
 
   /** List users from T_USER where User_Type = Standard User (donors). */
-  async findAll() {
-    const rows = await this.db
-      .select()
+  async findAll(query: QueryDonorsListDto) {
+    const { page = 1, limit = 10, search, status } = query;
+    const offset = (page - 1) * limit;
+
+    const whereCondition = and(
+      eq(tUser.userType, DONOR_USER_TYPE),
+      eq(tUser.isActive, true),
+      search ? or(
+        like(tUser.name, `%${search}%`),
+        like(tUser.eMail, `%${search}%`),
+        like(tUser.mobileNumber, `%${search}%`),
+      ) : undefined,
+      status && status !== 'all' ? eq(donors.status, status) : undefined
+    );
+
+    const dbQuery = this.db
+      .select({
+        id: tUser.id,
+        name: tUser.name,
+        email: tUser.eMail,
+        userName: tUser.userName,
+        mobileNumber: tUser.mobileNumber,
+        location: tUser.location,
+        isActive: tUser.isActive,
+        userType: tUser.userType,
+        createdDate: tUser.createdDate,
+        // From donors table (Live stats using subqueries for immediate accuracy)
+        totalDonated: sql<number>`(SELECT ISNULL(SUM(amount), 0) FROM e_challans WHERE donor_id = ${donors.id})`,
+        donationCount: sql<number>`(SELECT COUNT(id) FROM e_challans WHERE donor_id = ${donors.id})`,
+        lastDonationAt: sql<Date>`(SELECT MAX(donation_date) FROM e_challans WHERE donor_id = ${donors.id})`,
+        tags: donors.tags,
+        status: donors.status,
+        pan: donors.pan,
+        address: donors.address,
+      })
       .from(tUser)
-      .where(and(eq(tUser.userType, DONOR_USER_TYPE), eq(tUser.isActive, true)));
-    return rows.map(mapTUserToDonor);
+      // Use SQL to ensure case-insensitive join on email, matching AuthService logic
+      .leftJoin(donors, sql`LOWER(${tUser.eMail}) = LOWER(${donors.email})`)
+      .where(whereCondition)
+      .orderBy(desc(tUser.createdDate));
+    
+    // NOTE: Driver doesn't support offset/limit properly, using in-memory slice
+    const allRows = await dbQuery;
+    const total = allRows.length;
+    const rows = allRows.slice(offset, offset + limit);
+
+    const data = rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      userName: row.userName,
+      mobileNumber: row.mobileNumber,
+      // Prefer address from donors table (e.g. from donation form), fallback to T_USER location
+      location: row.address || row.location,
+      isActive: row.isActive,
+      userType: row.userType,
+      createdDate: row.createdDate,
+      totalDonated: row.totalDonated ? parseFloat(row.totalDonated as any) : 0,
+      donationCount: row.donationCount || 0,
+      lastDonationAt: row.lastDonationAt,
+      tags: row.tags,
+      status: row.status || 'active',
+      pan: row.pan,
+      address: row.address, // Include address in response
+    }));
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      }
+    };
   }
 
   /** Get user by Id from T_USER (any User_Type for admin lookup). */
@@ -537,6 +607,9 @@ export class DonorsService {
       message: `Thank you for your donation of ₹${dto.amount}! Transaction recorded as ${challanNumber}.`,
     });
 
+    // 6. Update Donor Aggregated Stats
+    await this.syncDonorStats(donorId);
+
     return {
       success: true,
       receiptNo: challanNumber,
@@ -545,6 +618,38 @@ export class DonorsService {
       date: now.toISOString().split('T')[0],
       donationType: dto.donationType // Return original code too if needed
     };
+  }
+
+  /**
+   * Recalculate and update totalDonated, donationCount, and lastDonationAt for a donor.
+   */
+  async syncDonorStats(donorId: number) {
+    try {
+      const stats = await this.db
+        .select({
+          total: sql<number>`COALESCE(SUM(amount), 0)`,
+          count: sql<number>`COUNT(id)`,
+          lastDate: sql<Date>`MAX(donation_date)`,
+        })
+        .from(eChallans)
+        .where(eq(eChallans.donorId, donorId));
+
+      const { total, count, lastDate } = stats[0];
+
+      await this.db
+        .update(donors)
+        .set({
+          totalDonated: total.toString(),
+          donationCount: count,
+          lastDonationAt: lastDate ? new Date(lastDate) : null,
+          updatedAt: new Date(),
+        })
+        .where(eq(donors.id, donorId));
+        
+      console.log(`[DonorsService] Synced stats for donor ${donorId}: Total=${total}, Count=${count}`);
+    } catch (err) {
+      console.error(`[DonorsService] Failed to sync donor stats for ${donorId}:`, err);
+    }
   }
 
   /**
@@ -653,6 +758,14 @@ export class DonorsService {
       donorId: inserted.id,
       ...donationResult
     };
+  }
+
+  async sendHistoryReport(donorId: number, file: any) {
+    const donor = await this.findById(donorId);
+    if (!donor) throw new Error('Donor not found');
+    
+    await this.emailService.sendHistoryReport(donor.email, donor.name, file.buffer);
+    return { success: true };
   }
 }
 
