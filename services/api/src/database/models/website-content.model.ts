@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import {
   int,
   nvarchar,
+  bit,
   datetime2,
   mssqlTable,
 } from 'drizzle-orm/mssql-core';
@@ -21,6 +22,7 @@ export const websiteContent = mssqlTable('website_content', {
   modifiedBy: nvarchar('modified_by', { length: 128 }),
   createdAt: datetime2('created_at', { precision: 3 }).default(sql`GETUTCDATE()`),
   updatedAt: datetime2('updated_at', { precision: 3 }),
+  isDefault: bit('is_default').default(false).notNull(),
 });
 
 export type WebsiteContent = typeof websiteContent.$inferSelect;

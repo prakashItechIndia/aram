@@ -28,6 +28,11 @@ export class WebsiteContentService {
   async create(dto: CreateWebsiteContentDto) {
     const publishedAt = dto.status === 'Published' ? new Date() : null;
 
+    // If making this one default, unset all others
+    if (dto.isDefault) {
+      await this.db.update(websiteContent).set({ isDefault: false });
+    }
+
     await this.db.insert(websiteContent).values({
       sectionKey: dto.sectionKey,
       contentJson: dto.contentJson,
@@ -38,6 +43,7 @@ export class WebsiteContentService {
       modifiedBy: dto.modifiedBy ?? null,
       publishedAt,
       updatedAt: new Date(),
+      isDefault: dto.isDefault ?? false,
     });
     const rows = await this.db
       .select()
@@ -52,6 +58,12 @@ export class WebsiteContentService {
   async update(id: number, dto: UpdateWebsiteContentDto) {
     const existing = await this.findById(id);
     if (!existing) throw new NotFoundException(`Website content #${id} not found`);
+
+    // If making this one default, unset all others first
+    if (dto.isDefault === true) {
+      await this.db.update(websiteContent).set({ isDefault: false });
+    }
+
     const updates: Record<string, unknown> = { updatedAt: new Date() };
     if (dto.sectionKey !== undefined) updates.sectionKey = dto.sectionKey;
     if (dto.contentJson !== undefined) updates.contentJson = dto.contentJson;
@@ -66,6 +78,8 @@ export class WebsiteContentService {
       }
     }
     if (dto.modifiedBy !== undefined) updates.modifiedBy = dto.modifiedBy;
+    if (dto.isDefault !== undefined) updates.isDefault = dto.isDefault;
+
     await this.db.update(websiteContent).set(updates as Record<string, unknown>).where(eq(websiteContent.id, id));
     return this.findById(id);
   }

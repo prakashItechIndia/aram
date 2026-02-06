@@ -26,6 +26,7 @@ interface Page {
   modifiedBy: string;
   version: number;
   updatedAtRaw: string;
+  isDefault: boolean;
 }
 
 interface Section {
@@ -51,6 +52,7 @@ function mapApiToPage(row: Record<string, unknown>): Page {
     modifiedBy: String(row.modifiedBy ?? ''),
     version: Number(row.version ?? 1),
     updatedAtRaw: updatedAt || '',
+    isDefault: !!row.isDefault,
   };
 }
 
@@ -76,9 +78,9 @@ export function ContentScreen() {
       const list = Array.isArray(data) ? data : [];
       const mappedPages = list.map((row: Record<string, unknown>) => mapApiToPage(row));
 
-      // Sort by updatedAtRaw ascending (newest at bottom)
+      // Sort by updatedAtRaw descending (newest next)
       const sortedPages = mappedPages.sort((a, b) => {
-        return new Date(a.updatedAtRaw).getTime() - new Date(b.updatedAtRaw).getTime();
+        return new Date(b.updatedAtRaw).getTime() - new Date(a.updatedAtRaw).getTime();
       });
 
       setPages(sortedPages);
@@ -115,6 +117,8 @@ export function ContentScreen() {
   const [sectionKey, setSectionKey] = useState('');
   const [isSlugEdited, setIsSlugEdited] = useState(false);
   const [isSectionKeyEdited, setIsSectionKeyEdited] = useState(false);
+  const [isDefault, setIsDefault] = useState(false);
+  const [showDefaultConfirm, setShowDefaultConfirm] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validatePageForm = () => {
@@ -148,6 +152,7 @@ export function ContentScreen() {
     setSelectedPage(page);
     setPageName(page.name);
     setPageSlug(page.slug);
+    setIsDefault(page.isDefault);
     setIsSlugEdited(true); // Don't auto-sync when editing existing page
     setIsSectionKeyEdited(true);
     setErrors({});
@@ -215,6 +220,7 @@ export function ContentScreen() {
     setPageName('');
     setPageSlug('');
     setSectionKey('');
+    setIsDefault(false);
     setIsSlugEdited(false);
     setIsSectionKeyEdited(false);
     setErrors({});
@@ -266,6 +272,7 @@ export function ContentScreen() {
         status: 'Draft',
         modifiedBy: user?.email || 'Admin',
         version: selectedPage ? (selectedPage.version + 1) : 1,
+        isDefault,
       };
 
       if (selectedPage) {
@@ -300,7 +307,11 @@ export function ContentScreen() {
     if (!validatePageForm()) {
       return;
     }
-    setShowReasonModal(true);
+    if (isDefault) {
+      setShowDefaultConfirm(true);
+    } else {
+      setShowReasonModal(true);
+    }
   };
 
   const confirmPublish = async () => {
@@ -339,6 +350,7 @@ export function ContentScreen() {
         status: 'Published',
         modifiedBy: user?.email || 'Admin',
         version: selectedPage ? (selectedPage.version + 1) : 1,
+        isDefault,
       };
 
       if (selectedPage) {
@@ -403,14 +415,6 @@ export function ContentScreen() {
 
     try {
       setRestoringVersion(true);
-
-      // Parse the version's content
-      let contentData = {};
-      try {
-        contentData = JSON.parse(versionData.contentJson || '{}');
-      } catch (e) {
-        console.error('Failed to parse version content:', e);
-      }
 
       // Create new version with restored content
       const payload = {
@@ -624,7 +628,7 @@ export function ContentScreen() {
             <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
               <p className="text-[13px] text-[#6E6E6E] mb-1">Last Updated</p>
               <p className="text-[13px] font-semibold text-[#0D0D0D]">
-                {pages.length > 0 ? pages[pages.length - 1].lastModified : '—'}
+                {pages.length > 0 ? pages[0].lastModified : '—'}
               </p>
             </div>
           </div>
@@ -644,9 +648,14 @@ export function ContentScreen() {
                     <th className="h-[48px] px-[16px] text-center text-[13px] font-semibold text-[#3D3D3D]">
                       Status
                     </th>
+                    <th className="h-[48px] px-[16px] text-center text-[13px] font-semibold text-[#3D3D3D]">
+                      Default
+                    </th>
+
                     <th className="h-[48px] px-[16px] text-left text-[13px] font-semibold text-[#3D3D3D]">
                       Last Modified
                     </th>
+
                     <th className="h-[48px] px-[16px] text-left text-[13px] font-semibold text-[#3D3D3D]">
                       Modified By
                     </th>
@@ -678,6 +687,13 @@ export function ContentScreen() {
                         >
                           {page.status}
                         </span>
+                      </td>
+                      <td className="h-[56px] px-[16px] text-center">
+                        {page.isDefault && (
+                          <span className="px-2 py-0.5 text-[10px] bg-[#E3F2FD] text-[#0288D1] font-bold rounded-full border border-[#B3E5FC] uppercase tracking-wider">
+                            Default
+                          </span>
+                        )}
                       </td>
                       <td className="h-[56px] px-[16px] text-[13px] text-[#3D3D3D]">
                         {page.lastModified}
@@ -843,6 +859,20 @@ export function ContentScreen() {
                       )}
                     </div>
                   </div>
+                </div>
+
+                <div className="mb-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isDefault}
+                      onChange={(e) => setIsDefault(e.target.checked)}
+                      className="w-4 h-4 accent-[#F36A4F]"
+                    />
+                    <span className="text-[14px] font-medium text-[#3D3D3D]">
+                      Make as default
+                    </span>
+                  </label>
                 </div>
 
                 {/* SEO Settings */}
@@ -1441,6 +1471,41 @@ export function ContentScreen() {
           </div>
         )
       }
+
+      {/* Default Page Confirmation Modal */}
+      {showDefaultConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70]">
+          <div className="bg-white rounded-[16px] w-[400px] p-[24px]">
+            <h3 className="text-[18px] font-semibold text-[#0D0D0D] mb-2">Default Page Confirmation</h3>
+            <p className="text-[14px] text-[#6E6E6E] mb-6">
+              If you want to set this as the default page, please click <strong>"Okay"</strong>. Clicking <strong>"Okay"</strong> will make this page the default, while clicking <strong>"Cancel"</strong> will publish the page without setting it as the default.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setIsDefault(false);
+                  setShowDefaultConfirm(false);
+                  setShowReasonModal(true);
+                  toast.info('Page will not be set as default');
+                }}
+                className="h-[40px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowDefaultConfirm(false);
+                  setShowReasonModal(true);
+                  toast.success('Page set to be default upon publishing');
+                }}
+                className="h-[40px] px-[20px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-[14px] font-medium text-white shadow-lg"
+              >
+                Okay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Publish Reason Modal */}
       {
