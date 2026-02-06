@@ -236,6 +236,7 @@ export function ReceiptManagement() {
         requireReasonCancel,
         // Metadata
         updatedBy: (user?.accessToken && 'Admin') || 'System',
+        reasonForChange: saveReason,
       };
 
       const response = await apiFetch('/receipt-settings', {
