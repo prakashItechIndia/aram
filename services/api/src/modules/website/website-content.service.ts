@@ -15,6 +15,32 @@ export class WebsiteContentService {
     return this.db.select().from(websiteContent);
   }
 
+  async findAllPaginated(page: number, limit: number) {
+    const offset = (page - 1) * limit;
+
+    // Get total count
+    const allRecords = await this.db.select().from(websiteContent);
+    const total = allRecords.length;
+
+    // Get paginated data using raw SQL for SQL Server compatibility
+    const data = await this.db.execute(
+      `SELECT * FROM website_content 
+       ORDER BY updated_at DESC 
+       OFFSET ${offset} ROWS 
+       FETCH NEXT ${limit} ROWS ONLY`
+    );
+
+    const rows = (data as any).recordset || (data as any).rows || [];
+
+    return {
+      data: rows,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
   async findById(id: number) {
     const rows = await this.db.select().top(1).from(websiteContent).where(eq(websiteContent.id, id));
     return rows[0] ?? null;
@@ -44,6 +70,7 @@ export class WebsiteContentService {
       publishedAt,
       updatedAt: new Date(),
       isDefault: dto.isDefault ?? false,
+      publishReason: dto.publishReason ?? null,
     });
     const rows = await this.db
       .select()
@@ -79,6 +106,7 @@ export class WebsiteContentService {
     }
     if (dto.modifiedBy !== undefined) updates.modifiedBy = dto.modifiedBy;
     if (dto.isDefault !== undefined) updates.isDefault = dto.isDefault;
+    if (dto.publishReason !== undefined) updates.publishReason = dto.publishReason;
 
     await this.db.update(websiteContent).set(updates as Record<string, unknown>).where(eq(websiteContent.id, id));
     return this.findById(id);

@@ -20,11 +20,23 @@ import { UpdateWebsiteContentDto } from './dto/update-website-content.dto';
 @ApiTags('website-content')
 @Controller('website/content')
 export class WebsiteContentController {
-  constructor(private readonly service: WebsiteContentService) {}
+  constructor(private readonly service: WebsiteContentService) { }
 
   @Get()
-  findAll(@Query('sectionKey') sectionKey?: string) {
+  async findAll(
+    @Query('sectionKey') sectionKey?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageNum = page ? parseInt(page, 10) : undefined;
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+
     if (sectionKey) return this.service.findBySectionKey(sectionKey);
+
+    if (pageNum && limitNum) {
+      return this.service.findAllPaginated(pageNum, limitNum);
+    }
+
     return this.service.findAll();
   }
 
