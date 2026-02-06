@@ -88,6 +88,12 @@ export function SponsorsScreen() {
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
   const [showOnHomepage, setShowOnHomepage] = useState(false);
+  const [errors, setErrors] = useState<{
+    name?: string;
+    logo?: string;
+    contributionType?: string;
+    tier?: string;
+  }>({});
 
   const fetchSponsors = useCallback(async () => {
     try {
@@ -145,6 +151,7 @@ export function SponsorsScreen() {
     setIsActive(sponsor.active);
     setIsFeatured(sponsor.featured);
     setShowOnHomepage(sponsor.featured); // Using featured as showOnHomepage
+    setErrors({});
     setShowEditor(true);
   };
 
@@ -158,6 +165,7 @@ export function SponsorsScreen() {
     setIsActive(true);
     setIsFeatured(false);
     setShowOnHomepage(false);
+    setErrors({});
     setShowEditor(true);
   };
 
@@ -206,9 +214,38 @@ export function SponsorsScreen() {
     }
   };
 
-  const handleSave = async () => {
+
+
+  const validateForm = () => {
+    const newErrors: typeof errors = {};
+    let isValid = true;
+
     if (!sponsorName.trim()) {
-      toast.error('Sponsor name is required');
+      newErrors.name = 'Sponsor name is required';
+      isValid = false;
+    }
+
+    if (!sponsorLogo) {
+      newErrors.logo = 'Logo is required';
+      isValid = false;
+    }
+
+    if (!contributionType) {
+      newErrors.contributionType = 'Contribution type is required';
+      isValid = false;
+    }
+
+    if (!tier) {
+      newErrors.tier = 'Tier is required';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleSave = async () => {
+    if (!validateForm()) {
       return;
     }
 
@@ -250,6 +287,14 @@ export function SponsorsScreen() {
       setSaving(false);
     }
   };
+
+  // ... (handlePreview, handleReorder, etc. - ensure existing code matches file context if needed, but here we just focus on replacing/inserting the modal UI part or just use replace_file_content carefully)
+  // Actually, I should use replace_file_content for the modal section specifically or just insert the validation logic and update the modal using multi_replace or careful replace.
+  // Let's replace the handleSave and add validateForm first, then update the modal UI in a second pass or same pass if contiguous.
+  // The handleSave is at line 209.
+  // The modal UI starts around line 624.
+  // I will use multi_replace for cleaner edits.
+
 
   const handlePreview = (sponsor: Sponsor) => {
     setSelectedPreviewSponsor(sponsor);
@@ -640,10 +685,10 @@ export function SponsorsScreen() {
                   {/* Logo Upload */}
                   <div>
                     <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                      Logo * (Recommended: 400x400px)
+                      Logo <span className="text-[#C62828]">*</span> (Recommended: 400x400px)
                     </label>
                     <div className="flex items-center gap-4">
-                      <div className="w-24 h-24 bg-[#F8F8F8] rounded-[12px] border-2 border-dashed border-[#DBDBDB] flex items-center justify-center">
+                      <div className={`w-24 h-24 bg-[#F8F8F8] rounded-[12px] border-2 border-dashed ${errors.logo ? 'border-[#C62828]' : 'border-[#DBDBDB]'} flex items-center justify-center`}>
                         {sponsorLogo ? (
                           <img
                             src={sponsorLogo}
@@ -651,7 +696,7 @@ export function SponsorsScreen() {
                             className="w-full h-full object-contain p-2"
                           />
                         ) : (
-                          <ImageIcon className="w-8 h-8 text-[#DBDBDB]" />
+                          <ImageIcon className={`w-8 h-8 ${errors.logo ? 'text-[#C62828]' : 'text-[#DBDBDB]'}`} />
                         )}
                       </div>
                       <input
@@ -664,17 +709,22 @@ export function SponsorsScreen() {
                       />
                       <label
                         htmlFor="sponsor-logo-upload"
-                        className={`h-[44px] px-[20px] rounded-full border border-[#DBDBDB] ${uploading ? 'bg-[#F3F3F3] cursor-not-allowed' : 'hover:bg-[#F3F3F3] cursor-pointer'
-                          } text-[14px] font-medium text-[#3D3D3D] flex items-center gap-2`}
+                        className={`h-[44px] px-[20px] rounded-full border ${errors.logo ? 'border-[#C62828] text-[#C62828]' : 'border-[#DBDBDB] text-[#3D3D3D]'} ${uploading ? 'bg-[#F3F3F3] cursor-not-allowed' : 'hover:bg-[#F3F3F3] cursor-pointer'
+                          } text-[14px] font-medium flex items-center gap-2`}
                       >
                         <Upload className="w-4 h-4" />
                         {uploading ? 'Uploading...' : 'Upload Logo'}
                       </label>
-                      <p className="text-[12px] text-[#6E6E6E]">
-                        JPG, PNG or SVG. Max 2MB.
-                        <br />
-                        Auto-resized to standard dimensions
-                      </p>
+                      <div className="flex flex-col">
+                        <p className="text-[12px] text-[#6E6E6E]">
+                          JPG, PNG or SVG. Max 2MB.
+                          <br />
+                          Auto-resized to standard dimensions
+                        </p>
+                        {errors.logo && (
+                          <p className="text-[12px] text-[#C62828] mt-1">{errors.logo}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -682,15 +732,21 @@ export function SponsorsScreen() {
                   <div className="grid grid-cols-2 gap-[16px]">
                     <div className="col-span-2">
                       <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                        Sponsor Name *
+                        Sponsor Name <span className="text-[#C62828]">*</span>
                       </label>
                       <input
                         type="text"
                         value={sponsorName}
-                        onChange={(e) => setSponsorName(e.target.value)}
-                        className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                        onChange={(e) => {
+                          setSponsorName(e.target.value);
+                          if (errors.name) setErrors({ ...errors, name: undefined });
+                        }}
+                        className={`w-full h-[44px] px-[12px] rounded-[12px] border ${errors.name ? 'border-[#C62828]' : 'border-[#DBDBDB]'} text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]`}
                         placeholder="e.g., TCS Foundation"
                       />
+                      {errors.name && (
+                        <p className="text-[12px] text-[#C62828] mt-1">{errors.name}</p>
+                      )}
                     </div>
 
                     <div className="col-span-2">
@@ -708,32 +764,44 @@ export function SponsorsScreen() {
 
                     <div>
                       <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                        Contribution Type *
+                        Contribution Type <span className="text-[#C62828]">*</span>
                       </label>
                       <select
                         value={contributionType}
-                        onChange={(e) => setContributionType(e.target.value as any)}
-                        className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                        onChange={(e) => {
+                          setContributionType(e.target.value as any);
+                          if (errors.contributionType) setErrors({ ...errors, contributionType: undefined });
+                        }}
+                        className={`w-full h-[44px] px-[12px] rounded-[12px] border ${errors.contributionType ? 'border-[#C62828]' : 'border-[#DBDBDB]'} text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]`}
                       >
                         {CONTRIBUTION_TYPES.map((type) => (
                           <option key={type}>{type}</option>
                         ))}
                       </select>
+                      {errors.contributionType && (
+                        <p className="text-[12px] text-[#C62828] mt-1">{errors.contributionType}</p>
+                      )}
                     </div>
 
                     <div>
                       <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                        Sponsor Tier *
+                        Sponsor Tier <span className="text-[#C62828]">*</span>
                       </label>
                       <select
                         value={tier}
-                        onChange={(e) => setTier(e.target.value as any)}
-                        className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                        onChange={(e) => {
+                          setTier(e.target.value as any);
+                          if (errors.tier) setErrors({ ...errors, tier: undefined });
+                        }}
+                        className={`w-full h-[44px] px-[12px] rounded-[12px] border ${errors.tier ? 'border-[#C62828]' : 'border-[#DBDBDB]'} text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]`}
                       >
                         {TIERS.map((t) => (
                           <option key={t}>{t}</option>
                         ))}
                       </select>
+                      {errors.tier && (
+                        <p className="text-[12px] text-[#C62828] mt-1">{errors.tier}</p>
+                      )}
                     </div>
 
                   </div>
@@ -776,7 +844,7 @@ export function SponsorsScreen() {
                   </button>
                   <button
                     onClick={handleSave}
-                    disabled={!sponsorName}
+                    disabled={!sponsorName || !sponsorLogo || !contributionType || !tier}
                     className="h-[44px] px-[20px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-white text-[14px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {selectedSponsor ? 'Update Sponsor' : 'Add Sponsor'}

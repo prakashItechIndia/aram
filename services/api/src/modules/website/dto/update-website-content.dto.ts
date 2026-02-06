@@ -46,4 +46,9 @@ export class UpdateWebsiteContentDto {
   @IsOptional()
   @IsBoolean()
   isDefault?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  publishReason?: string;
 }

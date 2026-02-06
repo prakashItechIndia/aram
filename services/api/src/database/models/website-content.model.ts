@@ -23,6 +23,7 @@ export const websiteContent = mssqlTable('website_content', {
   createdAt: datetime2('created_at', { precision: 3 }).default(sql`GETUTCDATE()`),
   updatedAt: datetime2('updated_at', { precision: 3 }),
   isDefault: bit('is_default').default(false).notNull(),
+  publishReason: nvarchar('publish_reason', { length: 'max' }),
 });
 
 export type WebsiteContent = typeof websiteContent.$inferSelect;
