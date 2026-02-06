@@ -56,7 +56,6 @@ export class DonationCategoriesService {
       showPurposeField: dto.showPurposeField ?? true,
       allowAnonymous: dto.allowAnonymous ?? false,
       allowedGateways: dto.allowedGateways ? JSON.stringify(dto.allowedGateways) : undefined,
-      allowedPaymentMethods: dto.allowedPaymentMethods ? JSON.stringify(dto.allowedPaymentMethods) : undefined,
       internationalAllowed: dto.internationalAllowed ?? false,
       accountingHead: dto.accountingHead || undefined,
       costCenter: dto.costCenter || undefined,
@@ -107,7 +106,6 @@ export class DonationCategoriesService {
     if (dto.showPurposeField !== undefined) updates.showPurposeField = dto.showPurposeField;
     if (dto.allowAnonymous !== undefined) updates.allowAnonymous = dto.allowAnonymous;
     if (dto.allowedGateways !== undefined) updates.allowedGateways = JSON.stringify(dto.allowedGateways);
-    if (dto.allowedPaymentMethods !== undefined) updates.allowedPaymentMethods = JSON.stringify(dto.allowedPaymentMethods);
     if (dto.internationalAllowed !== undefined) updates.internationalAllowed = dto.internationalAllowed;
     if (dto.accountingHead !== undefined) updates.accountingHead = dto.accountingHead;
     if (dto.costCenter !== undefined) updates.costCenter = dto.costCenter;
@@ -147,14 +145,7 @@ export class DonationCategoriesService {
       }
     }
 
-    let allowedPaymentMethods: string[] = [];
-    if (row.allowedPaymentMethods) {
-      try {
-        allowedPaymentMethods = JSON.parse(row.allowedPaymentMethods);
-      } catch {
-        // ignore
-      }
-    }
+
 
     return {
       id: row.id,
@@ -187,7 +178,6 @@ export class DonationCategoriesService {
       showPurposeField: row.showPurposeField,
       allowAnonymous: row.allowAnonymous,
       allowedGateways,
-      allowedPaymentMethods,
       internationalAllowed: row.internationalAllowed,
       accountingHead: row.accountingHead,
       costCenter: row.costCenter,

@@ -160,11 +160,6 @@ export class CreateDonationCategoryDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsArray()
-  allowedPaymentMethods?: string[];
-
-  @ApiPropertyOptional()
-  @IsOptional()
   @IsBoolean()
   internationalAllowed?: boolean;
 

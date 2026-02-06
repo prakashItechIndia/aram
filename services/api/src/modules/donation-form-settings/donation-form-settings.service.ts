@@ -200,9 +200,10 @@ export class DonationFormSettingsService {
     } as any);
 
     // Broadcast notification to all donors
+    // Broadcast notification to all donors
     try {
-      const donors = await this.donorsService.findAll();
-      const notificationPromises = donors.map((donor) =>
+      const donors = await this.donorsService.findAll({ page: 1, limit: 1000000, status: 'active' });
+      const notificationPromises = donors.data.map((donor) =>
         this.notificationsService.create({
           userId: donor.id,
           type: 'info',
@@ -263,8 +264,8 @@ export class DonationFormSettingsService {
 
     // Broadcast notification to all donors (also for rollback)
     try {
-      const donors = await this.donorsService.findAll();
-      const notificationPromises = donors.map((donor) =>
+      const donors = await this.donorsService.findAll({ page: 1, limit: 1000000, status: 'active' });
+      const notificationPromises = donors.data.map((donor) =>
         this.notificationsService.create({
           userId: donor.id,
           type: 'info',

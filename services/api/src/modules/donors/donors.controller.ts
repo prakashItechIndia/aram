@@ -1,10 +1,12 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Request, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DonorsService } from './donors.service';
 import { CreateGuestDonorDto } from './dto/create-guest-donor.dto';
 import { ProcessDonationDto } from './dto/process-donation.dto';
 import { QueryDonationsDto } from './dto/query-donations.dto';
+import { QueryDonorsListDto } from './dto/query-donors-list.dto';
 
 @ApiTags('donors')
 @Controller('donors')
@@ -12,8 +14,8 @@ export class DonorsController {
   constructor(private readonly donorsService: DonorsService) { }
 
   @Get()
-  findAll() {
-    return this.donorsService.findAll();
+  findAll(@Query() query: QueryDonorsListDto) {
+    return this.donorsService.findAll(query);
   }
 
   @Get('me')
@@ -64,5 +66,16 @@ export class DonorsController {
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.donorsService.findById(id);
+  }
+
+  @Get(':id/donations')
+  async getUserDonations(@Param('id', ParseIntPipe) id: number, @Query() query: QueryDonationsDto) {
+    return this.donorsService.findDonationsByUserId(id, query);
+  }
+
+  @Post(':id/send-report')
+  @UseInterceptors(FileInterceptor('file'))
+  async sendReport(@Param('id', ParseIntPipe) id: number, @UploadedFile() file: any) {
+    return this.donorsService.sendHistoryReport(id, file);
   }
 }

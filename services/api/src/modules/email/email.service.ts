@@ -219,6 +219,44 @@ export class EmailService {
     }
   }
 
+  async sendHistoryReport(email: string, name: string, pdfBuffer: Buffer) {
+    if (!this.transporter) return;
+    const from = this.configService.get<string>('SMTP_FROM') || '"Aram Foundation" <no-reply@aram.org>';
+    const subject = 'Your Donation History Report - Aram Foundation';
+    
+    const html = `
+      <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px;">
+        <h2 style="color: #F36A4F; text-align: center;">Donation History Report</h2>
+        <p>Hello ${name},</p>
+        <p>Please find attached the donation history report you requested.</p>
+        <p>This report contains a summary of all your contributions to Aram Foundation.</p>
+        <br>
+        <p>Thank you for your continued support!</p>
+        <br>
+        <p>Regards,<br>Aram Team</p>
+      </div>
+    `;
+
+    try {
+      await this.transporter.sendMail({
+        from,
+        to: email,
+        subject,
+        html,
+        attachments: [
+          {
+            filename: `Donation_History_Report.pdf`,
+            content: pdfBuffer,
+          }
+        ]
+      });
+      this.logger.log(`History report email sent to ${email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send history report to ${email}`, error);
+      throw error;
+    }
+  }
+
   private async generateReceiptPDFBuffer(name: string, details: any): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument({ margin: 50 });
