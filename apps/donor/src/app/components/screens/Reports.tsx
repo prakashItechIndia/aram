@@ -33,12 +33,12 @@ export function Reports() {
     type?: string;
   }
 
-  const fyOptions = [
+  const [fyOptions, setFyOptions] = useState<{ value: string; label: string }[]>([
     { value: 'fy2025-26', label: 'FY 2025-26' },
     { value: 'fy2024-25', label: 'FY 2024-25' },
     { value: 'fy2023-24', label: 'FY 2023-24' },
     { value: 'fy2022-23', label: 'FY 2022-23' },
-  ];
+  ]);
 
   const donationTypeOptions = [
     { value: '', label: 'All Types' },
@@ -50,7 +50,7 @@ export function Reports() {
     { value: 'sairam-sap', label: 'Sairam SAP' },
   ];
 
-  const [activeTab, setActiveTab] = useState<'receipts' | '80g' | 'tax'>('receipts');
+  const [activeTab, setActiveTab] = useState<'receipts' | '80g'>('receipts');
 
   // Data States
   const [receipts, setReceipts] = useState<Receipt[]>([]);
@@ -62,8 +62,55 @@ export function Reports() {
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
   const [searchReceipt, setSearchReceipt] = useState('');
-  const [selectedFY, setSelectedFY] = useState('fy2025-26');
+  const [selectedFY, setSelectedFY] = useState('');
   const [selectedType, setSelectedType] = useState('');
+
+  // Fetch Available Financial Years
+  useEffect(() => {
+    if (!apiAuth?.accessToken) return;
+
+    const fetchYears = async () => {
+      try {
+        const baseUrl = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:3000/api';
+        const headers = { 'Authorization': `Bearer ${apiAuth.accessToken}` };
+
+        const res = await fetch(`${baseUrl}/donors/me/tax-summaries`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.length > 0) {
+            // Reconstruct the value to match the fy2024-25 format expected by downstream logic
+            const formattedOptions = data.map((doc: TaxDoc) => {
+              // doc.year is usually "FY 2024-25"
+              const parts = doc.year.split(' ');
+              const yearPart = parts[1] || '';
+              return {
+                value: `fy${yearPart.toLowerCase()}`,
+                label: doc.year
+              };
+            });
+
+            setFyOptions(formattedOptions);
+            setSelectedFY(formattedOptions[0].value);
+          } else {
+            // Default if no history exists
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const startYear = month < 3 ? year - 1 : year;
+            const currentFY = `fy${startYear}-${(startYear + 1).toString().slice(-2)}`;
+            const currentLabel = `FY ${startYear}-${(startYear + 1).toString().slice(-2)}`;
+
+            setFyOptions([{ value: currentFY, label: currentLabel }]);
+            setSelectedFY(currentFY);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch years:', err);
+      }
+    };
+
+    fetchYears();
+  }, [apiAuth?.accessToken]);
 
   // Debounce Search Effect
   useEffect(() => {
@@ -201,38 +248,7 @@ export function Reports() {
     );
   };
 
-  const handleDownloadTaxSummary = (fy: string) => {
-    generateGenericPDF(
-      `Tax Summary - ${fy}`,
-      [
-        `Financial Year: ${fy}`,
-        `Generated Date: ${new Date().toLocaleDateString()}`,
-        'Consolidated statement for tax filing purposes.',
-      ],
-      `Tax_Summary_${fy}.pdf`,
-      user ? {
-        name: user.name || '',
-        pan: user.pan || ''
-      } : { name: '', pan: '' }
-    );
-  };
 
-  const handleDownloadTaxDoc = (doc: TaxDoc) => {
-    generateGenericPDF(
-      `Tax Document - ${doc.type || 'Consolidated'}`,
-      [
-        `Document Type: ${doc.type || 'Consolidated'}`,
-        `Financial Year: ${doc.year}`,
-        `Generated Date: ${doc.generatedDate}`,
-        'Please consult your tax advisor for filing details.',
-      ],
-      doc.fileName,
-      user ? {
-        name: user.name || '',
-        pan: user.pan || ''
-      } : { name: '', pan: '' }
-    );
-  };
 
   return (
     <div className="flex flex-col gap-[24px]">
@@ -245,15 +261,17 @@ export function Reports() {
         </div>
       </AramCard>
 
-      {/* Tabs */}
       <div className="flex gap-[8px] border-b border-[#DBDBDB]">
         {(['receipts', '80g', 'tax'] as const).map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => tab !== 'tax' && setActiveTab(tab)}
+            disabled={tab === 'tax'}
             className={`px-[24px] py-[12px] transition-colors capitalize ${activeTab === tab
               ? 'border-b-2 border-[#F36A4F] text-[#F36A4F]'
-              : 'text-[#6E6E6E] hover:text-[#3D3D3D]'
+              : tab === 'tax'
+                ? 'text-[#DBDBDB] cursor-not-allowed'
+                : 'text-[#6E6E6E] hover:text-[#3D3D3D]'
               }`}
             style={{ fontSize: '14px', fontWeight: 600 }}
           >
@@ -263,29 +281,31 @@ export function Reports() {
       </div>
 
       <AramCard noPadding>
-        {/* Unified Filter Bar */}
-        <div className="p-[16px] border-b border-[#DBDBDB] flex flex-col md:flex-row gap-[12px]">
-          <div className="flex-1 relative">
-            <AramInput
-              placeholder="Search by receipt number"
-              value={searchTerm}
-              onChange={setSearchTerm}
+        {/* Unified Filter Bar - Only for Receipts */}
+        {activeTab === 'receipts' && (
+          <div className="p-[16px] border-b border-[#DBDBDB] flex flex-col md:flex-row gap-[12px]">
+            <div className="flex-1 relative">
+              <AramInput
+                placeholder="Search by receipt number"
+                value={searchTerm}
+                onChange={setSearchTerm}
+              />
+              <Search className="absolute right-[14px] top-[12px] pointer-events-none" size={18} color="#6E6E6E" />
+            </div>
+            <AramSelect
+              value={selectedFY}
+              onChange={setSelectedFY}
+              options={fyOptions}
+              className="w-full md:w-[220px]"
             />
-            <Search className="absolute right-[14px] top-[12px] pointer-events-none" size={18} color="#6E6E6E" />
+            <AramSelect
+              value={selectedType}
+              onChange={setSelectedType}
+              options={donationTypeOptions}
+              className="w-full md:w-[220px]"
+            />
           </div>
-          <AramSelect
-            value={selectedFY}
-            onChange={setSelectedFY}
-            options={fyOptions}
-            className="w-full md:w-[220px]"
-          />
-          <AramSelect
-            value={selectedType}
-            onChange={setSelectedType}
-            options={donationTypeOptions}
-            className="w-full md:w-[220px]"
-          />
-        </div>
+        )}
 
         {isLoading ? (
           <div className="p-[48px] text-center">
@@ -376,7 +396,7 @@ export function Reports() {
               </div>
             )}
           </div>
-        ) : activeTab === '80g' ? (
+        ) : (
           <div className="flex flex-col">
             <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
               <div>
@@ -434,71 +454,6 @@ export function Reports() {
                       <td colSpan={4} className="p-[48px] text-center">
                         <FileText size={48} color="#DBDBDB" className="mx-auto mb-[16px]" />
                         <p style={{ fontSize: '16px', color: '#6E6E6E' }}>No 80G documents available yet</p>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col">
-            <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
-              <div>
-                <h3 className="text-[18px] font-semibold">Annual Tax Summary</h3>
-                <p className="text-[14px] text-[#6E6E6E] mt-[4px]">
-                  Consolidated tax certificates for your financial records.
-                </p>
-              </div>
-              <AramButton
-                variant="primary"
-                disabled={!selectedFY}
-                onClick={() => {
-                  const label = fyOptions.find(o => o.value === selectedFY)?.label || 'Summary';
-                  handleDownloadTaxSummary(label);
-                }}
-              >
-                <Download size={18} className="inline mr-2" />
-                Download Tax Summary ({fyOptions.find(o => o.value === selectedFY)?.label || 'Select FY'})
-              </AramButton>
-            </div>
-
-            <div className="p-[24px] border-b border-[#DBDBDB]">
-              <h3 className="text-[16px] font-semibold">Generated Tax Documents</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr style={{ height: '48px', backgroundColor: '#F3F3F3' }}>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Financial Year</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Generated Date</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Certificate Type</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: 600, color: '#0D0D0D' }}>Download</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {taxDocs.map((doc) => (
-                    <tr key={doc.id} style={{ height: '52px', borderBottom: '1px solid #DBDBDB' }}>
-                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>{doc.year}</td>
-                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D' }}>{doc.generatedDate}</td>
-                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3D3D3D', fontWeight: 600 }}>{doc.type}</td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <button
-                          className="flex items-center gap-[8px] hover:opacity-80 transition-opacity"
-                          style={{ color: '#F36A4F' }}
-                          onClick={() => handleDownloadTaxDoc(doc)}
-                        >
-                          <Download size={16} />
-                          <span style={{ fontSize: '14px' }}>Download PDF</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {taxDocs.length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="p-[48px] text-center">
-                        <FileText size={48} color="#DBDBDB" className="mx-auto mb-[16px]" />
-                        <p style={{ fontSize: '16px', color: '#6E6E6E' }}>No tax documents available yet</p>
                       </td>
                     </tr>
                   )}

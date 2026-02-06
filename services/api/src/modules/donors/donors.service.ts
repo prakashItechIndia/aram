@@ -257,7 +257,7 @@ export class DonorsService {
           eq(eChallans.donorId, donors.id),
         )
         .where(and(...conditions))
-        .orderBy(sql`${eChallans.donationDate} DESC`);
+        .orderBy(desc(eChallans.id));
 
       const total = allDonations.length;
 
