@@ -10,7 +10,7 @@ import {
  * User activity – Super Admin / compliance.
  */
 export const auditLog = mssqlTable('audit_log', {
-  id: int('id').primaryKey(),
+  id: int('id').primaryKey().identity(),
   userId: int('user_id'),
   action: nvarchar('action', { length: 64 }).notNull(),
   entityType: nvarchar('entity_type', { length: 64 }),

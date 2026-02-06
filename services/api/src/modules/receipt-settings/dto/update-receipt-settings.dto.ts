@@ -228,4 +228,8 @@ export class UpdateReceiptSettingsDto {
   @IsOptional()
   @IsString()
   updatedBy?: string;
+
+  @IsOptional()
+  @IsString()
+  reasonForChange?: string;
 }

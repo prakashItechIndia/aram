@@ -1,6 +1,7 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { DRIZZLE } from '../../database/database.module';
 import { receiptSettings } from '../../database/models/receipt-settings.model';
+import { auditLog } from '../../database/models/audit-log.model';
 import { eq } from 'drizzle-orm';
 import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';
 import * as schema from '../../database/schema';
@@ -93,6 +94,22 @@ export class ReceiptSettingsService {
     } else {
       // Update existing settings
       await this.db.update(receiptSettings).set(updates).where(eq(receiptSettings.id, existing[0].id));
+    }
+
+    // Log to audit trail if reasonForChange is provided
+    if (dto.reasonForChange) {
+      await this.db.insert(auditLog).values({
+        userId: null, // Could be extracted from JWT token if available
+        action: 'UPDATE_RECEIPT_SETTINGS',
+        entityType: 'receipt_settings',
+        entityId: existing.length > 0 ? String(existing[0].id) : '1',
+        detailsJson: JSON.stringify({
+          reason: dto.reasonForChange,
+          updatedBy: dto.updatedBy || 'System',
+          timestamp: new Date().toISOString(),
+        }),
+        ipAddress: null, // Could be extracted from request if available
+      } as any);
     }
 
     return this.findSettings();
