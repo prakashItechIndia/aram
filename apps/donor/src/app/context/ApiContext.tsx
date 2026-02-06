@@ -68,6 +68,7 @@ type ApiContextValue = {
   changePassword: (data: any) => Promise<{ success: boolean; error?: string; message?: string }>;
   uploadProfileImage: (file: File) => Promise<{ success: boolean; url?: string; error?: string }>;
   updateProfile: (data: { name?: string; mobileNumber?: string; phone?: string; pan?: string; address?: string; activityStatus?: boolean }) => Promise<{ success: boolean; message?: string; error?: string }>;
+  refreshProfile: () => Promise<void>;
   enableAccount: (emailOrPhone: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   logout: () => void;
   setUser: (user: AuthUser) => void;
@@ -124,9 +125,12 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       exchangeOnlyOnce,
       logout,
       onUnauthorized: () => {
-        // Redirect to donor signin page
+        // Redirect to donor signin page only if not already on sensitive auth pages
         if (typeof window !== 'undefined') {
-          window.location.href = '/signin';
+          const path = window.location.pathname;
+          if (path !== '/signin' && path !== '/verify-otp' && path !== '/create-account') {
+            window.location.href = '/signin';
+          }
         }
       },
     }),
@@ -306,7 +310,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
           email: data.email,
           password: data.password,
           phone: data.phone,
-        });
+        } as any);
         return { success: true };
       } catch (err: unknown) {
         const message =
@@ -400,7 +404,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
   const fetchNotifications = useCallback(async (userId: number, limit?: number) => {
     try {
       const baseUrl = getApiBaseUrl();
-      const url = limit 
+      const url = limit
         ? `${baseUrl}/notifications?userId=${userId}&limit=${limit}`
         : `${baseUrl}/notifications?userId=${userId}`;
       const res = await fetch(url, {
@@ -562,11 +566,14 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
 
       const data = await res.json();
       // Update local user state with new image
-      if (data.url && user) {
-        const updatedUser = { ...user, profilePicture: data.url };
-        setUserState(updatedUser);
-        userRef.current = updatedUser;
-        setStoredDonorAuth(updatedUser);
+      if (data.url) {
+        setUserState(prev => {
+          if (!prev) return prev;
+          const updatedUser = { ...prev, profilePicture: data.url };
+          userRef.current = updatedUser;
+          setStoredDonorAuth(updatedUser);
+          return updatedUser;
+        });
       }
 
       return { success: true, url: data.url };
@@ -623,24 +630,53 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       const resData = await res.json();
 
       // Update local user state if successful and not disabling the account
-      if (user && data.activityStatus !== false) {
-        const updatedUser = {
-          ...user,
-          name: data.name ?? user.name,
-          phone: data.mobileNumber ?? user.phone,
-          address: resData.address ?? user.address,
-          pan: resData.pan ?? user.pan,
-        };
-        setUserState(updatedUser);
-        userRef.current = updatedUser;
-        setStoredDonorAuth(updatedUser);
+      if (data.activityStatus !== false) {
+        setUserState(prev => {
+          if (!prev) return prev;
+          const updatedUser = {
+            ...prev,
+            name: data.name ?? prev.name,
+            phone: data.mobileNumber ?? prev.phone,
+            address: resData.address ?? prev.address,
+            pan: resData.pan ?? prev.pan,
+          };
+          userRef.current = updatedUser;
+          setStoredDonorAuth(updatedUser);
+          return updatedUser;
+        });
       }
 
       return { success: true, message: resData.message };
     } catch (err: unknown) {
       return { success: false, error: (err as Error).message };
     }
-  }, [user, handle401]);
+  }, [user, handle401, api.authApi]);
+
+  const refreshProfile = useCallback(async () => {
+    try {
+      const profileRes = await api.authApi.authControllerGetProfile();
+      const profile = (profileRes as { data?: any })?.data || {};
+
+      setUserState(prev => {
+        if (!prev) return prev;
+        const updatedUser = {
+          ...prev,
+          id: profile?.id,
+          name: profile?.name,
+          email: profile?.email ?? prev.email,
+          phone: profile?.mobileNumber || profile?.mobile_number || prev.phone,
+          address: profile?.location || profile?.address || prev.address,
+          pan: profile?.pan || prev.pan,
+          profilePicture: profile?.profilePicture || prev.profilePicture,
+        };
+        userRef.current = updatedUser;
+        setStoredDonorAuth(updatedUser);
+        return updatedUser;
+      });
+    } catch (err) {
+      console.error('Failed to refresh profile:', err);
+    }
+  }, [api.authApi]);
 
   const value: ApiContextValue = useMemo(
     () => ({
@@ -655,6 +691,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       changePassword,
       uploadProfileImage,
       updateProfile,
+      refreshProfile,
       enableAccount,
       logout,
       setUser,
@@ -677,6 +714,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       changePassword,
       uploadProfileImage,
       updateProfile,
+      refreshProfile,
       logout,
       setUser,
       forgotPassword,

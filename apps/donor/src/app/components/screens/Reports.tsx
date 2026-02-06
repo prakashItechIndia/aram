@@ -34,7 +34,6 @@ export function Reports() {
   }
 
   const fyOptions = [
-    { value: '', label: 'All Years' },
     { value: 'fy2025-26', label: 'FY 2025-26' },
     { value: 'fy2024-25', label: 'FY 2024-25' },
     { value: 'fy2023-24', label: 'FY 2023-24' },
@@ -61,9 +60,19 @@ export function Reports() {
   const [isLoading, setIsLoading] = useState(false);
 
   // Filter States
+  const [searchTerm, setSearchTerm] = useState('');
   const [searchReceipt, setSearchReceipt] = useState('');
-  const [selectedFY, setSelectedFY] = useState('');
+  const [selectedFY, setSelectedFY] = useState('fy2025-26');
   const [selectedType, setSelectedType] = useState('');
+
+  // Debounce Search Effect
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setSearchReceipt(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
   // Pagination States
   const [page, setPage] = useState(1);
@@ -236,32 +245,6 @@ export function Reports() {
         </div>
       </AramCard>
 
-      {/* Common Filters */}
-      <AramCard noPadding>
-        <div className="p-[16px] border-[#DBDBDB] flex flex-col md:flex-row gap-[12px]">
-          <div className="flex-1 relative">
-            <AramInput
-              placeholder="Search by receipt number"
-              value={searchReceipt}
-              onChange={setSearchReceipt}
-            />
-            <Search className="absolute right-[14px] top-[12px] pointer-events-none" size={18} color="#6E6E6E" />
-          </div>
-          <AramSelect
-            value={selectedFY}
-            onChange={setSelectedFY}
-            options={fyOptions}
-            className="w-full md:w-[220px]"
-          />
-          <AramSelect
-            value={selectedType}
-            onChange={setSelectedType}
-            options={donationTypeOptions}
-            className="w-full md:w-[220px]"
-          />
-        </div>
-      </AramCard>
-
       {/* Tabs */}
       <div className="flex gap-[8px] border-b border-[#DBDBDB]">
         {(['receipts', '80g', 'tax'] as const).map((tab) => (
@@ -279,18 +262,40 @@ export function Reports() {
         ))}
       </div>
 
-      {isLoading ? (
-        <AramCard>
+      <AramCard noPadding>
+        {/* Unified Filter Bar */}
+        <div className="p-[16px] border-b border-[#DBDBDB] flex flex-col md:flex-row gap-[12px]">
+          <div className="flex-1 relative">
+            <AramInput
+              placeholder="Search by receipt number"
+              value={searchTerm}
+              onChange={setSearchTerm}
+            />
+            <Search className="absolute right-[14px] top-[12px] pointer-events-none" size={18} color="#6E6E6E" />
+          </div>
+          <AramSelect
+            value={selectedFY}
+            onChange={setSelectedFY}
+            options={fyOptions}
+            className="w-full md:w-[220px]"
+          />
+          <AramSelect
+            value={selectedType}
+            onChange={setSelectedType}
+            options={donationTypeOptions}
+            className="w-full md:w-[220px]"
+          />
+        </div>
+
+        {isLoading ? (
           <div className="p-[48px] text-center">
             <div className="flex items-center justify-center gap-4">
               <div className="w-8 h-8 border-4 border-[#F36A4F] border-t-transparent rounded-full animate-spin"></div>
               <p style={{ fontSize: '16px', color: '#6E6E6E' }}>Loading reports...</p>
             </div>
           </div>
-        </AramCard>
-      ) : activeTab === 'receipts' ? (
-        <div className="flex flex-col gap-[24px]">
-          <AramCard noPadding>
+        ) : activeTab === 'receipts' ? (
+          <div className="flex flex-col">
             {/* Receipts Table */}
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -370,37 +375,31 @@ export function Reports() {
                 <p style={{ fontSize: '16px', color: '#6E6E6E' }}>No receipts available yet</p>
               </div>
             )}
-          </AramCard>
-        </div>
-      ) : activeTab === '80g' ? (
-        <div className="flex flex-col gap-[24px]">
-          <AramCard>
-            <div className="flex flex-col gap-[16px]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3>Annual 80G Summary</h3>
-                  <p style={{ fontSize: '14px', color: '#6E6E6E', marginTop: '4px' }}>
-                    These documents are generated based on successful donations.
-                  </p>
-                </div>
-                <AramButton
-                  variant="primary"
-                  disabled={!selectedFY}
-                  onClick={() => {
-                    const label = fyOptions.find(o => o.value === selectedFY)?.label || 'Summary';
-                    handleDownload80GSummary(label);
-                  }}
-                >
-                  <Download size={18} className="inline mr-2" />
-                  Download 80G Summary ({fyOptions.find(o => o.value === selectedFY)?.label || 'Select FY'})
-                </AramButton>
+          </div>
+        ) : activeTab === '80g' ? (
+          <div className="flex flex-col">
+            <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
+              <div>
+                <h3 className="text-[18px] font-semibold">Annual 80G Summary</h3>
+                <p className="text-[14px] text-[#6E6E6E] mt-[4px]">
+                  These documents are generated based on successful donations.
+                </p>
               </div>
+              <AramButton
+                variant="primary"
+                disabled={!selectedFY}
+                onClick={() => {
+                  const label = fyOptions.find(o => o.value === selectedFY)?.label || 'Summary';
+                  handleDownload80GSummary(label);
+                }}
+              >
+                <Download size={18} className="inline mr-2" />
+                Download 80G Summary ({fyOptions.find(o => o.value === selectedFY)?.label || 'Select FY'})
+              </AramButton>
             </div>
-          </AramCard>
 
-          <AramCard noPadding>
             <div className="p-[24px] border-b border-[#DBDBDB]">
-              <h3>Generated 80G Documents</h3>
+              <h3 className="text-[16px] font-semibold">Generated 80G Documents</h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -441,37 +440,31 @@ export function Reports() {
                 </tbody>
               </table>
             </div>
-          </AramCard>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-[24px]">
-          <AramCard>
-            <div className="flex flex-col gap-[16px]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3>Annual Tax Summary</h3>
-                  <p style={{ fontSize: '14px', color: '#6E6E6E', marginTop: '4px' }}>
-                    Consolidated tax certificates for your financial records.
-                  </p>
-                </div>
-                <AramButton
-                  variant="primary"
-                  disabled={!selectedFY}
-                  onClick={() => {
-                    const label = fyOptions.find(o => o.value === selectedFY)?.label || 'Summary';
-                    handleDownloadTaxSummary(label);
-                  }}
-                >
-                  <Download size={18} className="inline mr-2" />
-                  Download Tax Summary ({fyOptions.find(o => o.value === selectedFY)?.label || 'Select FY'})
-                </AramButton>
+          </div>
+        ) : (
+          <div className="flex flex-col">
+            <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
+              <div>
+                <h3 className="text-[18px] font-semibold">Annual Tax Summary</h3>
+                <p className="text-[14px] text-[#6E6E6E] mt-[4px]">
+                  Consolidated tax certificates for your financial records.
+                </p>
               </div>
+              <AramButton
+                variant="primary"
+                disabled={!selectedFY}
+                onClick={() => {
+                  const label = fyOptions.find(o => o.value === selectedFY)?.label || 'Summary';
+                  handleDownloadTaxSummary(label);
+                }}
+              >
+                <Download size={18} className="inline mr-2" />
+                Download Tax Summary ({fyOptions.find(o => o.value === selectedFY)?.label || 'Select FY'})
+              </AramButton>
             </div>
-          </AramCard>
 
-          <AramCard noPadding>
             <div className="p-[24px] border-b border-[#DBDBDB]">
-              <h3>Generated Tax Documents</h3>
+              <h3 className="text-[16px] font-semibold">Generated Tax Documents</h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -512,9 +505,9 @@ export function Reports() {
                 </tbody>
               </table>
             </div>
-          </AramCard>
-        </div>
-      )}
+          </div>
+        )}
+      </AramCard>
     </div>
   );
 }

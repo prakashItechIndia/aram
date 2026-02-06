@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 
 export function Profile() {
   const navigate = useNavigate();
-  const { user, updateProfile, changePassword, uploadProfileImage, logout } = useApi();
+  const { user, updateProfile, changePassword, uploadProfileImage, logout, refreshProfile } = useApi();
 
   const [name, setName] = useState(user?.name || '');
   const [phone, setPhone] = useState(user?.mobileNumber || user?.phone || '');
@@ -29,6 +29,11 @@ export function Profile() {
     }
   }, [user]);
 
+  // Refresh profile data from backend on mount
+  useEffect(() => {
+    refreshProfile();
+  }, [refreshProfile]);
+
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -39,6 +44,8 @@ export function Profile() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { checkAndNotify } = useDonationFormStatus();
 
@@ -47,8 +54,6 @@ export function Profile() {
     const nameError = validateField(name, validationRules.name, validationMessages.name);
     if (nameError) newErrors.name = nameError;
 
-    // For phone, we use a custom check or the shared rules if we had country context here. 
-    // For now simple required check if not using shared mobile rules (which expect 10 digits/country pattern)
     if (!phone.trim()) {
       newErrors.phone = "Phone number is required";
     }
@@ -60,9 +65,24 @@ export function Profile() {
 
     setIsUpdating(true);
     try {
+      // 1. Upload image if selected
+      if (selectedFile) {
+        const uploadRes = await uploadProfileImage(selectedFile);
+        if (!uploadRes.success) {
+          throw new Error(uploadRes.error || 'Failed to upload profile image');
+        }
+      }
+
+      // 2. Update profile details
       await updateProfile({ name, phone, pan, address });
+
       toast.success('Profile updated successfully');
       setErrors({});
+      setSelectedFile(null);
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+        setImagePreview(null);
+      }
     } catch (err: any) {
       toast.error(err.message || 'Failed to update profile');
     } finally {
@@ -119,10 +139,11 @@ export function Profile() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-
     const file = e.target.files?.[0];
     if (file) {
-      uploadProfileImage(file);
+      setSelectedFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
     }
   };
 
@@ -212,8 +233,8 @@ export function Profile() {
               onChange={handleFileChange}
             />
             <div className="w-[80px] h-[80px] rounded-full bg-[#F3F3F3] flex items-center justify-center overflow-hidden">
-              {user?.profilePicture ? (
-                <img src={user.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+              {imagePreview || user?.profilePicture ? (
+                <img src={imagePreview || user?.profilePicture} alt="Profile" className="w-full h-full object-cover" />
               ) : (
                 <span style={{ fontSize: '32px', fontWeight: 700, color: '#F36A4F' }}>
                   {name.charAt(0).toUpperCase()}
@@ -286,6 +307,11 @@ export function Profile() {
               setPhone(user?.mobileNumber || user?.phone || '');
               setPan(user?.pan || '');
               setAddress(user?.address || user?.location || '');
+              setSelectedFile(null);
+              if (imagePreview) {
+                URL.revokeObjectURL(imagePreview);
+                setImagePreview(null);
+              }
             }} variant="secondary">
               Cancel
             </AramButton>

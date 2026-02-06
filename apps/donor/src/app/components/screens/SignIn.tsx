@@ -102,25 +102,15 @@ export function SignIn() {
         } else {
           if (result.error?.toLowerCase().includes('disabled')) {
             toast('Your account is disabled', {
-              description: 'Click Okay to enable your account',
+              description: 'Click Okay to enable your account and continue',
               action: {
                 label: 'Okay',
-                onClick: async () => {
-                  const res = await enableAccount(trimmedInput);
-                  if (res.success) {
-                    toast.success('Account enabled successfully! Please sign in again.');
-                    handleSubmit();
-                  } else {
-                    toast.error(res.error || 'Failed to enable account');
-                  }
-                },
+                onClick: () => handleReenableAccount(),
               },
               cancel: {
                 label: 'Cancel',
-                onClick: () => {
-                  toast.error('You cannot login while account is disabled');
-                }
-              }
+                onClick: () => { },
+              },
             });
           } else {
             toast.error(result.error ?? 'Sign in failed');
@@ -132,6 +122,22 @@ export function SignIn() {
       } finally {
         setIsLoading(false);
       }
+    }
+  };
+
+  const handleReenableAccount = async () => {
+    try {
+      const res = await enableAccount(emailOrPhone.trim());
+      if (res.success) {
+        toast.success('Account enabled successfully! Signing you in...');
+        // Automatically try to login again
+        handleSubmit();
+      } else {
+        toast.error(res.error || 'Failed to enable account');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'An unexpected error occurred');
+    } finally {
     }
   };
 

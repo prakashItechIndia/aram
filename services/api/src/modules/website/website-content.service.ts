@@ -9,7 +9,7 @@ import type { UpdateWebsiteContentDto } from './dto/update-website-content.dto';
 
 @Injectable()
 export class WebsiteContentService {
-  constructor(@Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>) {}
+  constructor(@Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>) { }
 
   async findAll() {
     return this.db.select().from(websiteContent);
@@ -27,7 +27,7 @@ export class WebsiteContentService {
 
   async create(dto: CreateWebsiteContentDto) {
     const publishedAt = dto.status === 'Published' ? new Date() : null;
-    
+
     await this.db.insert(websiteContent).values({
       sectionKey: dto.sectionKey,
       contentJson: dto.contentJson,
@@ -37,6 +37,7 @@ export class WebsiteContentService {
       status: dto.status ?? 'Draft',
       modifiedBy: dto.modifiedBy ?? null,
       publishedAt,
+      updatedAt: new Date(),
     });
     const rows = await this.db
       .select()
