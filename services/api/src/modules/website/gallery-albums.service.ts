@@ -1,7 +1,8 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, count } from 'drizzle-orm';
 import { DRIZZLE } from '../../database/database.module';
 import { galleryAlbums } from '../../database/models/gallery-albums.model';
+import { gallery } from '../../database/models/gallery.model';
 import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';
 import * as schema from '../../database/schema';
 import type { CreateGalleryAlbumDto } from './dto/create-gallery-album.dto';
@@ -9,10 +10,31 @@ import type { UpdateGalleryAlbumDto } from './dto/update-gallery-album.dto';
 
 @Injectable()
 export class GalleryAlbumsService {
-  constructor(@Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>) {}
+  constructor(@Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>) { }
 
   async findAll() {
-    return this.db.select().from(galleryAlbums);
+    return this.db
+      .select({
+        id: galleryAlbums.id,
+        name: galleryAlbums.name,
+        coverImageUrl: galleryAlbums.coverImageUrl,
+        imageCount: count(gallery.id),
+        visibility: galleryAlbums.visibility,
+        sortOrder: galleryAlbums.sortOrder,
+        createdAt: galleryAlbums.createdAt,
+        updatedAt: galleryAlbums.updatedAt,
+      })
+      .from(galleryAlbums)
+      .leftJoin(gallery, eq(gallery.albumId, galleryAlbums.id))
+      .groupBy(
+        galleryAlbums.id,
+        galleryAlbums.name,
+        galleryAlbums.coverImageUrl,
+        galleryAlbums.visibility,
+        galleryAlbums.sortOrder,
+        galleryAlbums.createdAt,
+        galleryAlbums.updatedAt,
+      );
   }
 
   async findById(id: number) {

@@ -19,6 +19,7 @@ export class UpdateReceiptSettingsDto {
   @IsString()
   startingNumber?: string;
 
+
   @IsOptional()
   @IsInt()
   @Min(1)
@@ -46,44 +47,8 @@ export class UpdateReceiptSettingsDto {
     isDefault: boolean;
   }>;
 
-  // Generation Rules
-  @IsOptional()
-  @IsBoolean()
-  autoGenerateOnSuccess?: boolean;
+  // Generation Rules removed
 
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  generationDelay?: number;
-
-  @IsOptional()
-  @IsBoolean()
-  autoGenerateImports?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  allowManualOffline?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  allowManualBulk?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  allowBackdated?: boolean;
-
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  backdateWindow?: number;
-
-  @IsOptional()
-  @IsBoolean()
-  showBackdateStamp?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  requireReasonManual?: boolean;
 
   // Template Rules
   @IsOptional()
@@ -217,13 +182,6 @@ export class UpdateReceiptSettingsDto {
   @IsBoolean()
   requireReasonManualGen?: boolean;
 
-  @IsOptional()
-  @IsBoolean()
-  requireReasonRegenerate?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  requireReasonCancel?: boolean;
 
   @IsOptional()
   @IsString()
