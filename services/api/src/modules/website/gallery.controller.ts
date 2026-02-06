@@ -37,7 +37,7 @@ export class GalleryController {
   constructor(
     private readonly service: GalleryService,
     private readonly s3: S3Service,
-  ) {}
+  ) { }
 
   @Get()
   @ApiQuery({ name: 'albumId', required: false, type: String })
@@ -84,7 +84,7 @@ export class GalleryController {
     const ext = extname(file.originalname) || '.jpg';
     const key = `${S3_KEY_PREFIX}/${Date.now()}-${Math.random().toString(36).slice(2, 9)}${ext}`;
     const url = await this.s3.upload(key, file.buffer, file.mimetype);
-    return { imagePath: url, thumbnailPath: url };
+    return { imagePath: url, thumbnailPath: url, fileSize: file.size.toString() };
   }
 
   @Post()
@@ -109,18 +109,18 @@ export class GalleryController {
   async downloadImage(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
     const item = await this.service.findById(id);
     if (!item) throw new BadRequestException('Gallery item not found');
-    
+
     // Extract the S3 key from the full URL
     const url = new URL(item.imagePath);
     const key = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
-    
+
     // Generate filename from title or path
     const ext = extname(item.imagePath).slice(1) || 'jpg';
     const filename = item.title ? `${item.title}.${ext}` : `image.${ext}`;
-    
+
     // Generate signed URL with Content-Disposition header
     const signedUrl = await this.s3.getSignedDownloadUrl(key, filename);
-    
+
     // Redirect to signed URL
     res.redirect(signedUrl);
   }

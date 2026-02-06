@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, Inject } from '@nestjs/common';
+import { ConflictException, Injectable, Inject, BadRequestException } from '@nestjs/common';
 import { eq, and, sql, desc, like, or } from 'drizzle-orm';
 import { DRIZZLE } from '../../database/database.module';
 import { tUser } from '../../database/models/t-user.model';
@@ -13,6 +13,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { generateStrongPassword } from '../../common/utils/password.util';
 import { QueryDonationsDto } from './dto/query-donations.dto';
 import { QueryDonorsListDto } from './dto/query-donors-list.dto';
+import { ReceiptSettingsService } from '../receipt-settings/receipt-settings.service';
 
 /** User_Type value for donor/portal users (T_USER). */
 const DONOR_USER_TYPE = 'Standard User';
@@ -38,6 +39,7 @@ export class DonorsService {
     @Inject(DRIZZLE) private db: NodeMsSqlDatabase<typeof schema>,
     private emailService: EmailService,
     private notificationsService: NotificationsService,
+    private receiptSettingsService: ReceiptSettingsService,
   ) {
     // ONE-TIME FIX: SQL Server UNIQUE constraints only allow one NULL.
     // We need a filtered index to allow multiple donors without a PAN.
@@ -512,38 +514,63 @@ export class DonorsService {
       donorId = newDonorRows[0].id;
     }
 
-    // 2. Find Category Id by categoryCode (frontend sends "aram-sei", "building", etc.)
     const catRows = await this.db
       .select()
       .from(donationCategories)
       .where(eq(donationCategories.categoryCode, dto.donationType));
     const categoryId = catRows[0]?.id || 1;
+    const catName = catRows[0]?.displayName || 'General Fund';
+    const is80gEligible = catRows[0]?.is80gEligible ?? false;
 
-    // 3. Insert into e_challans using donorId (from donors table)
-    // Generate Challan Number: AR + YYMMDD + Sequence (4 digits)
-    const yy = now.getFullYear().toString().slice(-2);
-    const mm = (now.getMonth() + 1).toString().padStart(2, '0');
-    const dd = now.getDate().toString().padStart(2, '0');
-    const datePrefix = `AR${yy}${mm}${dd}`;
+    // 3. Fetch Settings for validation
+    const settings = await this.receiptSettingsService.findSettings();
 
-    // Find last challan for today to determine sequence
-    const lastChallanRows = await this.db
-      .select({ challanNumber: eChallans.challanNumber })
-      .top(1)
-      .from(eChallans)
-      .where(like(eChallans.challanNumber, `${datePrefix}%`))
-      .orderBy(desc(eChallans.id));
+    // 4. Validate Mandatory Fields
+    // Donor Name is always required (per UI "Always Required")
+    if (!dto.name?.trim()) throw new BadRequestException('Donor Name is required');
 
-    let sequence = 1;
-    if (lastChallanRows[0]?.challanNumber) {
-      const lastSeqStr = lastChallanRows[0].challanNumber.replace(datePrefix, '');
-      const lastSeq = parseInt(lastSeqStr, 10);
-      if (!isNaN(lastSeq)) {
-        sequence = lastSeq + 1;
+    if (settings.mobileRequired && !dto.mobile?.trim()) {
+      throw new BadRequestException('Mobile Number is required');
+    }
+    if (settings.emailRequired && !normalizedEmail) {
+      throw new BadRequestException('Email Address is required');
+    }
+    if (settings.addressRequired && !dto.address?.trim()) {
+      throw new BadRequestException('Address is required');
+    }
+    if (settings.donationCategoryRequired && !dto.donationType) {
+      throw new BadRequestException('Donation Category is required');
+    }
+    if (settings.donationTypeRequired && !dto.donationType) {
+      throw new BadRequestException('Donation Type is required');
+    }
+
+    // 5. PAN Validation & Formatting
+    let pan = dto.pan ? dto.pan.trim() : null;
+
+    if (pan && settings.panAutoUppercase) {
+      pan = pan.toUpperCase();
+    }
+
+    // Check PAN Requirement Rule
+    if (settings.panRule === 'always') {
+      if (!pan) throw new BadRequestException('PAN Card is mandatory for all donations');
+    } else if (settings.panRule === 'threshold') {
+      const threshold = settings.panThreshold || 0;
+      if (dto.amount >= threshold && !pan) {
+        throw new BadRequestException(`PAN Card is mandatory for donations of ₹${threshold} and above`);
+      }
+    } else if (settings.panRule === 'optional') {
+      // Optional for International donors (NOT India)
+      const isInternational = dto.country && dto.country.toLowerCase() !== 'india';
+      if (!isInternational && !pan) {
+        throw new BadRequestException('PAN Card is mandatory for domestic (India) donors');
       }
     }
 
-    const challanNumber = `${datePrefix}${sequence.toString().padStart(4, '0')}`;
+    // 6. Insert into e_challans using donorId (from donors table)
+    // Generate Challan Number from Settings
+    const challanNumber = await this.receiptSettingsService.generateNextReceiptNumber(categoryId);
 
     await this.db.insert(eChallans).values({
       challanNumber,
@@ -555,8 +582,7 @@ export class DonorsService {
       createdByUserId: userId,
     });
 
-    // 4. Send Email Receipt
-    const catName = catRows[0]?.displayName || 'General Fund';
+    // 7. Send Email Receipt
     try {
       await this.emailService.sendDonationReceipt(normalizedEmail, dto.name, {
         amount: dto.amount,
@@ -564,10 +590,10 @@ export class DonorsService {
         date: now.toISOString().split('T')[0],
         type: catName,
         email: normalizedEmail,
-        pan: dto.pan || null,
+        pan: pan || null,
         address: dto.address || null,
         phone: dto.mobile || null,
-        eligible80G: catRows[0]?.is80gEligible ?? false,
+        eligible80G: is80gEligible,
       });
     } catch (err) {
       console.error('Failed to send donation receipt email:', err);

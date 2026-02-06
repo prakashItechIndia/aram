@@ -15,23 +15,14 @@ export const receiptSettings = mssqlTable('receipt_settings', {
   id: int('id').primaryKey().identity(),
   configJson: nvarchar('config_json', { length: 'max' }),
   // Numbering & Series
-  receiptPrefix: nvarchar('receipt_prefix', { length: 64 }),
-  startingNumber: nvarchar('starting_number', { length: 32 }),
+
   paddingLength: int('padding_length'),
   noGapEnforcement: bit('no_gap_enforcement').notNull().default(true),
   autoCreateNewSeries: bit('auto_create_new_series').notNull().default(true),
   manualApprovalRequired: bit('manual_approval_required').notNull().default(false),
   receiptTypesJson: nvarchar('receipt_types_json', { length: 'max' }),
-  // Generation Rules
-  autoGenerateOnSuccess: bit('auto_generate_on_success').notNull().default(true),
-  generationDelay: int('generation_delay').notNull().default(0),
-  autoGenerateImports: bit('auto_generate_imports').notNull().default(false),
-  allowManualOffline: bit('allow_manual_offline').notNull().default(true),
-  allowManualBulk: bit('allow_manual_bulk').notNull().default(true),
-  allowBackdated: bit('allow_backdated').notNull().default(true),
-  backdateWindow: int('backdate_window'),
-  showBackdateStamp: bit('show_backdate_stamp').notNull().default(true),
-  requireReasonManual: bit('require_reason_manual').notNull().default(true),
+  // Generation Rules removed
+
   // Template Rules
   defaultTemplateOnline: nvarchar('default_template_online', { length: 128 }),
   defaultTemplateOffline: nvarchar('default_template_offline', { length: 128 }),
@@ -67,8 +58,7 @@ export const receiptSettings = mssqlTable('receipt_settings', {
   requireReasonReprint: bit('require_reason_reprint').notNull().default(false),
   requireReasonCorrection: bit('require_reason_correction').notNull().default(true),
   requireReasonManualGen: bit('require_reason_manual_gen').notNull().default(true),
-  requireReasonRegenerate: bit('require_reason_regenerate').notNull().default(true),
-  requireReasonCancel: bit('require_reason_cancel').notNull().default(true),
+
   createdAt: datetime2('created_at', { precision: 3 }).default(sql`GETDATE()`),
   updatedAt: datetime2('updated_at', { precision: 3 }),
   updatedBy: nvarchar('updated_by', { length: 128 }),

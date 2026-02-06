@@ -95,6 +95,18 @@ function galleryAssetUrl(path: string): string {
   return `${origin}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
+function formatBytes(bytes: number, decimals = 2) {
+  if (!+bytes) return '0 B';
+
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
+
 export function GalleryScreen() {
   const { api, apiFetch, user, logout } = useApi();
   const [images, setImages] = useState<GalleryImage[]>([]);
@@ -110,6 +122,16 @@ export function GalleryScreen() {
   const [filterTag, setFilterTag] = useState('');
   const [filterVisibility, setFilterVisibility] = useState('');
   const [filterSearch, setFilterSearch] = useState('');
+  const [searchText, setSearchText] = useState('');
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFilterSearch(searchText);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
 
   const fetchAlbums = useCallback(async () => {
     try {
@@ -168,6 +190,8 @@ export function GalleryScreen() {
     }
   }, [apiFetch, filterAlbum, filterTag, filterVisibility, filterSearch, isInitialLoad, fetchAlbums]);
 
+  const totalStorage = images.reduce((acc, img) => acc + (Number(img.fileSize) || 0), 0);
+
   useEffect(() => {
     fetchGallery();
   }, [fetchGallery]);
@@ -183,6 +207,9 @@ export function GalleryScreen() {
   const [showPreview, setShowPreview] = useState(false);
   const [previewImage, setPreviewImage] = useState<GalleryImage | null>(null);
   const [showNewAlbum, setShowNewAlbum] = useState(false);
+  const [editingAlbum, setEditingAlbum] = useState<Album | null>(null);
+  const [existingAlbumImages, setExistingAlbumImages] = useState<GalleryImage[]>([]);
+  const [loadingAlbumImages, setLoadingAlbumImages] = useState(false);
   const [newAlbumName, setNewAlbumName] = useState('');
   const [newAlbumDescription, setNewAlbumDescription] = useState('');
   const [newAlbumVisibility, setNewAlbumVisibility] = useState<'Public' | 'Private'>('Public');
@@ -199,6 +226,7 @@ export function GalleryScreen() {
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadAlbumId, setUploadAlbumId] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -331,7 +359,7 @@ export function GalleryScreen() {
       for (const id of selectedImages) {
         const res = await apiFetch(`/website/gallery/${id}`, {
           method: 'PATCH',
-          body: JSON.stringify({ albumId: albumId || null })
+          body: JSON.stringify({ albumId: albumId ? Number(albumId) : null })
         });
         if (!res.ok) throw new Error(await res.text());
       }
@@ -400,21 +428,44 @@ export function GalleryScreen() {
     }
     try {
       setSaving(true);
-      const res = await apiFetch('/website/gallery/albums', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: newAlbumName,
-          description: newAlbumDescription,
-          visibility: newAlbumVisibility,
-        })
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const album = await res.json();
+      let albumId = '';
+
+      if (editingAlbum) {
+        // Update existing album
+        const res = await apiFetch(`/website/gallery/albums/${editingAlbum.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            name: newAlbumName,
+            visibility: newAlbumVisibility,
+            // Description is not in DTO/Model yet based on provided files, but was in UI state
+            // If description is needed, backend model needs update. 
+            // For now sending it if API ignores it, or omit if strictly validated. 
+            // Assuming it might be used later or ignored.
+          })
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const updated = await res.json();
+        albumId = updated.id;
+        toast.success('Album updated successfully');
+      } else {
+        // Create new album
+        const res = await apiFetch('/website/gallery/albums', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: newAlbumName,
+            visibility: newAlbumVisibility,
+          })
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const album = await res.json();
+        albumId = album.id;
+        toast.success('Album created successfully');
+      }
 
       if (newAlbumCover) {
         const formData = new FormData();
         formData.append('file', newAlbumCover);
-        const coverRes = await apiFetch(`/website/gallery/albums/${album.id}/cover`, {
+        const coverRes = await apiFetch(`/website/gallery/albums/${albumId}/cover`, {
           method: 'POST',
           body: formData
         });
@@ -425,14 +476,27 @@ export function GalleryScreen() {
         for (const file of newAlbumImages) {
           const formData = new FormData();
           formData.append('file', file);
-          formData.append('title', file.name.split('.')[0]);
-          formData.append('albumId', album.id);
-          formData.append('visibility', newAlbumVisibility);
           const uploadRes = await apiFetch('/website/gallery/upload', {
             method: 'POST',
             body: formData
           });
           if (!uploadRes.ok) throw new Error(await uploadRes.text());
+          const uploadData = await uploadRes.json();
+
+          const createRes = await apiFetch('/website/gallery', {
+            method: 'POST',
+            body: JSON.stringify({
+              title: file.name.split('.')[0],
+              imagePath: uploadData.imagePath,
+              thumbnailPath: uploadData.thumbnailPath,
+              fileSize: uploadData.fileSize,
+              albumId: Number(albumId),
+              visibility: newAlbumVisibility,
+              altText: '',
+              description: newAlbumDescription // using album description as default or empty
+            })
+          });
+          if (!createRes.ok) throw new Error(await createRes.text());
         }
       }
 
@@ -440,14 +504,14 @@ export function GalleryScreen() {
         for (const id of selectedImages) {
           const moveRes = await apiFetch(`/website/gallery/${id}`, {
             method: 'PATCH',
-            body: JSON.stringify({ albumId: album.id })
+            body: JSON.stringify({ albumId: Number(albumId) })
           });
           if (!moveRes.ok) throw new Error(await moveRes.text());
         }
       }
 
-      toast.success('Album created successfully');
       setShowNewAlbum(false);
+      setEditingAlbum(null);
       setNewAlbumName('');
       setNewAlbumDescription('');
       setNewAlbumCover(null);
@@ -458,9 +522,53 @@ export function GalleryScreen() {
       await fetchGallery();
       await fetchAlbums();
     } catch (e: unknown) {
-      toast.error((e as Error)?.message ?? 'Failed to create album');
+      toast.error((e as Error)?.message ?? 'Failed to save album');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const openEditAlbum = async (album: Album) => {
+    setEditingAlbum(album);
+    setNewAlbumName(album.name);
+    setNewAlbumVisibility(album.visibility);
+    setNewAlbumDescription('');
+    setShowNewAlbum(true);
+
+    setLoadingAlbumImages(true);
+    try {
+      const res = await apiFetch(`/website/gallery?albumId=${album.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setExistingAlbumImages(data.map((row: any) => mapApiToImage(row)));
+        } else {
+          setExistingAlbumImages([]);
+        }
+      } else {
+        throw new Error('Failed to fetch images');
+      }
+    } catch (error) {
+      console.error('Failed to load album images', error);
+      toast.error('Failed to load existing images');
+    } finally {
+      setLoadingAlbumImages(false);
+    }
+  };
+
+  const handleRemoveFromAlbum = async (imageId: string) => {
+    try {
+      const res = await apiFetch(`/website/gallery/${imageId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ albumId: null })
+      });
+      if (!res.ok) throw new Error(await res.text());
+
+      setExistingAlbumImages(prev => prev.filter(img => img.id !== imageId));
+      toast.success('Image removed from album');
+      await fetchAlbums();
+    } catch (e: unknown) {
+      toast.error((e as Error)?.message ?? 'Failed to remove image from album');
     }
   };
 
@@ -480,6 +588,7 @@ export function GalleryScreen() {
     setFilterTag('');
     setFilterVisibility('');
     setFilterSearch('');
+    setSearchText('');
   };
 
   const handleDownload = (image: GalleryImage) => {
@@ -544,9 +653,10 @@ export function GalleryScreen() {
           const errText = await uploadRes.text();
           throw new Error(errText || `Upload failed for ${file.name}`);
         }
-        const { imagePath, thumbnailPath } = (await uploadRes.json()) as {
+        const { imagePath, thumbnailPath, fileSize } = (await uploadRes.json()) as {
           imagePath: string;
           thumbnailPath?: string;
+          fileSize?: string;
         };
         const title = file.name.replace(/\.[^.]+$/, '') || file.name;
         const createRes = await apiFetch('/website/gallery', {
@@ -556,6 +666,8 @@ export function GalleryScreen() {
             imagePath,
             thumbnailPath: thumbnailPath ?? imagePath,
             visibility: 'Public',
+            fileSize,
+            ...(uploadAlbumId ? { albumId: Number(uploadAlbumId) } : {}),
           }),
         });
         if (!createRes.ok) {
@@ -570,6 +682,7 @@ export function GalleryScreen() {
       }
       setUploadFiles([]);
       setShowUpload(false);
+      setUploadAlbumId('');
       await fetchGallery();
     } catch (e: unknown) {
       setUploadError((e as Error)?.message ?? 'Upload failed');
@@ -678,8 +791,8 @@ export function GalleryScreen() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6E6E6E] pointer-events-none" />
               <input
                 type="text"
-                value={filterSearch}
-                onChange={(e) => setFilterSearch(e.target.value)}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
                 placeholder="Search images..."
                 className="w-full h-[44px] pl-[36px] pr-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#0D0D0D] placeholder:text-[#9E9E9E] focus:outline-none focus:border-[#F36A4F]"
               />
@@ -713,7 +826,7 @@ export function GalleryScreen() {
 
             <div className="bg-white rounded-[16px] border border-[#DBDBDB] p-[16px]">
               <p className="text-[13px] text-[#6E6E6E] mb-1">Storage Used</p>
-              <p className="text-[24px] font-semibold text-[#0D0D0D]">—</p>
+              <p className="text-[24px] font-semibold text-[#0D0D0D]">{formatBytes(totalStorage)}</p>
             </div>
           </div>
 
@@ -874,11 +987,20 @@ export function GalleryScreen() {
                           </button>
                         </div>
                         <div>
-                          {image.visibility === 'Public' ? (
-                            <Eye className="w-4 h-4 text-[#2E7D32]" />
-                          ) : (
-                            <EyeOff className="w-4 h-4 text-[#FFFFFF]/60" />
-                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePreview(image);
+                            }}
+                            className="hover:opacity-80 transition-opacity"
+                            title="Preview"
+                          >
+                            {image.visibility === 'Public' ? (
+                              <Eye className="w-4 h-4 text-[#2E7D32]" />
+                            ) : (
+                              <EyeOff className="w-4 h-4 text-[#FFFFFF]/60" />
+                            )}
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -927,11 +1049,17 @@ export function GalleryScreen() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {image.visibility === 'Public' ? (
-                        <Eye className="w-4 h-4 text-[#2E7D32]" />
-                      ) : (
-                        <EyeOff className="w-4 h-4 text-[#6E6E6E]" />
-                      )}
+                      <button
+                        onClick={() => handlePreview(image)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
+                        title="Preview"
+                      >
+                        {image.visibility === 'Public' ? (
+                          <Eye className="w-4 h-4 text-[#2E7D32]" />
+                        ) : (
+                          <EyeOff className="w-4 h-4 text-[#6E6E6E]" />
+                        )}
+                      </button>
                       <button
                         onClick={() => handleDownload(image)}
                         className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
@@ -1040,7 +1168,22 @@ export function GalleryScreen() {
               )}
 
               <div className="mt-6 space-y-3">
-                <h4 className="text-[13px] font-semibold text-[#0D0D0D]">Processing Options</h4>
+                <div>
+                  <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                    Add to Album (Optional)
+                  </label>
+                  <select
+                    onChange={(e) => setUploadAlbumId(e.target.value)}
+                    className="w-full h-[40px] px-[12px] rounded-[8px] border border-[#DBDBDB] text-[13px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                  >
+                    <option value="">No Album (Gallery Root)</option>
+                    {albums.map((album: Album) => (
+                      <option key={album.id} value={album.id}>{album.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <h4 className="text-[13px] font-semibold text-[#0D0D0D] pt-2">Processing Options</h4>
                 <label className="flex items-center gap-2">
                   <input type="checkbox" defaultChecked className="w-4 h-4 accent-[#F36A4F]" />
                   <span className="text-[13px] text-[#3D3D3D]">
@@ -1066,6 +1209,7 @@ export function GalleryScreen() {
                   setShowUpload(false);
                   setUploadFiles([]);
                   setUploadError(null);
+                  setUploadAlbumId('');
                 }}
                 className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
               >
@@ -1285,549 +1429,610 @@ export function GalleryScreen() {
             </div>
           </div>
         </div>
-      )}
+      )
+      }
 
       {/* Albums Sidebar Drawer */}
-      {showAlbums && (
-        <div
-          className="fixed inset-0 z-50 overflow-hidden"
-          onClick={() => {
-            setShowAlbums(false);
-            setIsMovingToAlbum(false);
-          }}
-        >
-          <div className="absolute inset-0 bg-black/50" />
+      {
+        showAlbums && (
           <div
-            className="absolute inset-y-0 right-0 max-w-[400px] w-full bg-white shadow-xl flex flex-col"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 overflow-hidden"
+            onClick={() => {
+              setShowAlbums(false);
+              setIsMovingToAlbum(false);
+            }}
           >
-            <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
-              <h2 className="text-[20px] font-semibold text-[#0D0D0D]">
-                {isMovingToAlbum ? 'Move to Album' : 'Albums'}
-              </h2>
-              <div className="flex items-center gap-2">
+            <div className="absolute inset-0 bg-black/50" />
+            <div
+              className="absolute inset-y-0 right-0 max-w-[400px] w-full bg-white shadow-xl flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
+                <h2 className="text-[20px] font-semibold text-[#0D0D0D]">
+                  {isMovingToAlbum ? 'Move to Album' : 'Albums'}
+                </h2>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setEditingAlbum(null);
+                      setNewAlbumName('');
+                      setNewAlbumDescription('');
+                      setNewAlbumVisibility('Public');
+                      setShowNewAlbum(true);
+                    }}
+                    className="h-[36px] px-[16px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-white text-[13px] font-medium flex items-center gap-2"
+                  >
+                    <FolderPlus className="w-4 h-4" />
+                    New Album
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowAlbums(false);
+                      setIsMovingToAlbum(false);
+                    }}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
+                  >
+                    <X className="w-5 h-5 text-[#3D3D3D]" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-[24px] overflow-auto flex-1 space-y-3">
+                {isMovingToAlbum && (
+                  <div
+                    onClick={() => handleBulkMove(null)}
+                    className="p-[16px] bg-[#F8F8F8] rounded-[12px] border-2 border-dashed border-[#DBDBDB] hover:border-[#F36A4F] hover:bg-white transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-[56px] h-[56px] rounded-[12px] bg-[#E0E0E0] flex items-center justify-center">
+                        <X className="w-6 h-6 text-[#9E9E9E]" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-[15px] font-semibold text-[#0D0D0D]">No Album</h4>
+                        <p className="text-[12px] text-[#6E6E6E]">Remove from current album</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {albums.map((album: Album) => (
+                  <div
+                    key={album.id}
+                    onClick={() => {
+                      if (isMovingToAlbum) {
+                        handleBulkMove(album.id);
+                      } else {
+                        setFilterAlbum(album.id);
+                        setShowAlbums(false);
+                      }
+                    }}
+                    className={`p-[16px] bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB] hover:bg-white transition-colors cursor-pointer group ${filterAlbum === album.id && !isMovingToAlbum ? 'ring-2 ring-[#F36A4F] bg-white' : ''
+                      }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={galleryAssetUrl(album.coverImage)}
+                        alt={album.name}
+                        className="w-[56px] h-[56px] rounded-[12px] object-cover"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-[15px] font-semibold text-[#0D0D0D] truncate group-hover:text-[#F36A4F] transition-colors">
+                          {album.name}
+                        </h4>
+                        <div className="flex items-center gap-3 mt-1 text-[12px] text-[#6E6E6E]">
+                          <span>{album.imageCount} images</span>
+                          <span>•</span>
+                          <span>{album.visibility}</span>
+                          {album.createdOn && (
+                            <>
+                              <span>•</span>
+                              <span>{album.createdOn}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditAlbum(album);
+                        }}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#E0E0E0] text-[#6E6E6E] opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Edit Album"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {albums.length === 0 && (
+                  <div className="py-12 text-center text-[#6E6E6E]">
+                    <Folder className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                    <p className="text-[14px]">No albums yet.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Bulk Apply Tag Modal */}
+      {
+        showBulkTag && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-[24px]">
+            <div className="bg-white rounded-[16px] w-full max-w-[500px]">
+              <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
+                <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Apply Tag</h3>
                 <button
-                  onClick={() => setShowNewAlbum(true)}
-                  className="h-[36px] px-[16px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-white text-[13px] font-medium flex items-center gap-2"
-                >
-                  <FolderPlus className="w-4 h-4" />
-                  New Album
-                </button>
-                <button
-                  onClick={() => {
-                    setShowAlbums(false);
-                    setIsMovingToAlbum(false);
-                  }}
+                  onClick={() => setShowBulkTag(false)}
                   className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
                 >
                   <X className="w-5 h-5 text-[#3D3D3D]" />
                 </button>
               </div>
-            </div>
 
-            <div className="p-[24px] overflow-auto flex-1 space-y-3">
-              {isMovingToAlbum && (
-                <div
-                  onClick={() => handleBulkMove(null)}
-                  className="p-[16px] bg-[#F8F8F8] rounded-[12px] border-2 border-dashed border-[#DBDBDB] hover:border-[#F36A4F] hover:bg-white transition-all cursor-pointer group"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-[56px] h-[56px] rounded-[12px] bg-[#E0E0E0] flex items-center justify-center">
-                      <X className="w-6 h-6 text-[#9E9E9E]" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-[15px] font-semibold text-[#0D0D0D]">No Album</h4>
-                      <p className="text-[12px] text-[#6E6E6E]">Remove from current album</p>
-                    </div>
-                  </div>
+              <div className="p-[24px]">
+                <div className="mb-6 p-4 bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB]">
+                  <p className="text-[13px] text-[#3D3D3D]">
+                    Adding tags to <strong>{selectedImages.length}</strong> image(s).
+                  </p>
                 </div>
-              )}
 
-              {albums.map((album: Album) => (
-                <div
-                  key={album.id}
-                  onClick={() => {
-                    if (isMovingToAlbum) {
-                      handleBulkMove(album.id);
-                    } else {
-                      setFilterAlbum(album.id);
-                      setShowAlbums(false);
-                    }
-                  }}
-                  className={`p-[16px] bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB] hover:bg-white transition-colors cursor-pointer group ${filterAlbum === album.id && !isMovingToAlbum ? 'ring-2 ring-[#F36A4F] bg-white' : ''
-                    }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <img
-                      src={galleryAssetUrl(album.coverImage)}
-                      alt={album.name}
-                      className="w-[56px] h-[56px] rounded-[12px] object-cover"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-[15px] font-semibold text-[#0D0D0D] truncate group-hover:text-[#F36A4F] transition-colors">
-                        {album.name}
-                      </h4>
-                      <div className="flex items-center gap-3 mt-1 text-[12px] text-[#6E6E6E]">
-                        <span>{album.imageCount} images</span>
-                        <span>•</span>
-                        <span>{album.visibility}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {albums.length === 0 && (
-                <div className="py-12 text-center text-[#6E6E6E]">
-                  <Folder className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                  <p className="text-[14px]">No albums yet.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Bulk Apply Tag Modal */}
-      {showBulkTag && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-[24px]">
-          <div className="bg-white rounded-[16px] w-full max-w-[500px]">
-            <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
-              <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Apply Tag</h3>
-              <button
-                onClick={() => setShowBulkTag(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
-              >
-                <X className="w-5 h-5 text-[#3D3D3D]" />
-              </button>
-            </div>
-
-            <div className="p-[24px]">
-              <div className="mb-6 p-4 bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB]">
-                <p className="text-[13px] text-[#3D3D3D]">
-                  Adding tags to <strong>{selectedImages.length}</strong> image(s).
-                </p>
-              </div>
-
-              <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                Select Tags to Apply
-              </label>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {bulkTags.map((tag: string) => (
-                  <span
-                    key={tag}
-                    className="px-2 py-1 bg-[#FEF1EE] text-[12px] text-[#F36A4F] rounded flex items-center gap-1"
-                  >
-                    {tag}
-                    <button
-                      onClick={() => setBulkTags(bulkTags.filter((t: string) => t !== tag))}
-                      className="hover:text-[#E55A3F]"
+                <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                  Select Tags to Apply
+                </label>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {bulkTags.map((tag: string) => (
+                    <span
+                      key={tag}
+                      className="px-2 py-1 bg-[#FEF1EE] text-[12px] text-[#F36A4F] rounded flex items-center gap-1"
                     >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
+                      {tag}
+                      <button
+                        onClick={() => setBulkTags(bulkTags.filter((t: string) => t !== tag))}
+                        className="hover:text-[#E55A3F]"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <select
+                  onChange={(e) => {
+                    if (e.target.value && !bulkTags.includes(e.target.value)) {
+                      setBulkTags([...bulkTags, e.target.value]);
+                    }
+                    e.target.value = '';
+                  }}
+                  className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                >
+                  <option value="">Add tag...</option>
+                  {TAGS.filter((tag: string) => !bulkTags.includes(tag)).map((tag: string) => (
+                    <option key={tag} value={tag}>
+                      {tag}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <select
-                onChange={(e) => {
-                  if (e.target.value && !bulkTags.includes(e.target.value)) {
-                    setBulkTags([...bulkTags, e.target.value]);
-                  }
-                  e.target.value = '';
-                }}
-                className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
-              >
-                <option value="">Add tag...</option>
-                {TAGS.filter((tag: string) => !bulkTags.includes(tag)).map((tag: string) => (
-                  <option key={tag} value={tag}>
-                    {tag}
-                  </option>
-                ))}
-              </select>
-            </div>
 
-            <div className="p-[24px] border-t border-[#DBDBDB] flex justify-end gap-3">
-              <button
-                onClick={() => setShowBulkTag(false)}
-                className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleBulkTagUpdate(bulkTags)}
-                disabled={saving || bulkTags.length === 0}
-                className="h-[44px] px-[24px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] disabled:opacity-50 text-white text-[14px] font-medium transition-colors"
-              >
-                {saving ? 'Applying...' : `Apply Tags to ${selectedImages.length} Images`}
-              </button>
+              <div className="p-[24px] border-t border-[#DBDBDB] flex justify-end gap-3">
+                <button
+                  onClick={() => setShowBulkTag(false)}
+                  className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleBulkTagUpdate(bulkTags)}
+                  disabled={saving || bulkTags.length === 0}
+                  className="h-[44px] px-[24px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] disabled:opacity-50 text-white text-[14px] font-medium transition-colors"
+                >
+                  {saving ? 'Applying...' : `Apply Tags to ${selectedImages.length} Images`}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Bulk Set Visibility Modal */}
-      {showBulkVisibility && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-[24px]">
-          <div className="bg-white rounded-[16px] w-full max-w-[400px]">
-            <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
-              <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Set Visibility</h3>
-              <button
-                onClick={() => setShowBulkVisibility(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
-              >
-                <X className="w-5 h-5 text-[#3D3D3D]" />
-              </button>
-            </div>
-
-            <div className="p-[24px]">
-              <div className="mb-6 p-4 bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB]">
-                <p className="text-[13px] text-[#3D3D3D]">
-                  Updating visibility for <strong>{selectedImages.length}</strong> image(s).
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+      {
+        showBulkVisibility && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-[24px]">
+            <div className="bg-white rounded-[16px] w-full max-w-[400px]">
+              <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
+                <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Set Visibility</h3>
                 <button
-                  onClick={() => setBulkVisibility('Public')}
-                  className={`h-[44px] rounded-[12px] border flex items-center justify-center gap-2 text-[14px] font-medium transition-all ${bulkVisibility === 'Public' ? 'bg-[#E8F5E9] border-[#2E7D32] text-[#2E7D32]' : 'bg-white border-[#DBDBDB] hover:border-[#F36A4F] text-[#3D3D3D]'}`}
+                  onClick={() => setShowBulkVisibility(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
                 >
-                  <Eye className="w-4 h-4" />
-                  Public
-                </button>
-                <button
-                  onClick={() => setBulkVisibility('Private')}
-                  className={`h-[44px] rounded-[12px] border flex items-center justify-center gap-2 text-[14px] font-medium transition-all ${bulkVisibility === 'Private' ? 'bg-[#F5F5F5] border-[#6E6E6E] text-[#6E6E6E]' : 'bg-white border-[#DBDBDB] hover:border-[#F36A4F] text-[#3D3D3D]'}`}
-                >
-                  <EyeOff className="w-4 h-4" />
-                  Private
+                  <X className="w-5 h-5 text-[#3D3D3D]" />
                 </button>
               </div>
-            </div>
 
-            <div className="p-[24px] border-t border-[#DBDBDB] flex justify-end gap-3">
-              <button
-                onClick={() => setShowBulkVisibility(false)}
-                className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleBulkVisibilityUpdate(bulkVisibility)}
-                disabled={saving}
-                className="h-[44px] px-[24px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] disabled:opacity-50 text-white text-[14px] font-medium transition-colors"
-              >
-                {saving ? 'Updating...' : `Set to ${bulkVisibility}`}
-              </button>
+              <div className="p-[24px]">
+                <div className="mb-6 p-4 bg-[#F8F8F8] rounded-[12px] border border-[#DBDBDB]">
+                  <p className="text-[13px] text-[#3D3D3D]">
+                    Updating visibility for <strong>{selectedImages.length}</strong> image(s).
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setBulkVisibility('Public')}
+                    className={`h-[44px] rounded-[12px] border flex items-center justify-center gap-2 text-[14px] font-medium transition-all ${bulkVisibility === 'Public' ? 'bg-[#E8F5E9] border-[#2E7D32] text-[#2E7D32]' : 'bg-white border-[#DBDBDB] hover:border-[#F36A4F] text-[#3D3D3D]'}`}
+                  >
+                    <Eye className="w-4 h-4" />
+                    Public
+                  </button>
+                  <button
+                    onClick={() => setBulkVisibility('Private')}
+                    className={`h-[44px] rounded-[12px] border flex items-center justify-center gap-2 text-[14px] font-medium transition-all ${bulkVisibility === 'Private' ? 'bg-[#F5F5F5] border-[#6E6E6E] text-[#6E6E6E]' : 'bg-white border-[#DBDBDB] hover:border-[#F36A4F] text-[#3D3D3D]'}`}
+                  >
+                    <EyeOff className="w-4 h-4" />
+                    Private
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-[24px] border-t border-[#DBDBDB] flex justify-end gap-3">
+                <button
+                  onClick={() => setShowBulkVisibility(false)}
+                  className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleBulkVisibilityUpdate(bulkVisibility)}
+                  disabled={saving}
+                  className="h-[44px] px-[24px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] disabled:opacity-50 text-white text-[14px] font-medium transition-colors"
+                >
+                  {saving ? 'Updating...' : `Set to ${bulkVisibility}`}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* New Album Modal */}
-      {showNewAlbum && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-[24px]">
-          <div className="bg-white rounded-[16px] w-full max-w-[600px] max-h-[90vh] flex flex-col">
-            <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
-              <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Create New Album</h3>
-              <button
-                onClick={() => setShowNewAlbum(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
-              >
-                <X className="w-5 h-5 text-[#3D3D3D]" />
-              </button>
-            </div>
-
-            <div className="p-[24px] overflow-auto flex-1 space-y-6">
-              <div>
-                <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                  Album Name *
-                </label>
-                <input
-                  type="text"
-                  value={newAlbumName}
-                  onChange={(e) => setNewAlbumName(e.target.value)}
-                  placeholder="e.g., Annual Event 2025"
-                  className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
-                />
+      {
+        showNewAlbum && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-[24px]">
+            <div className="bg-white rounded-[16px] w-full max-w-[600px] max-h-[90vh] flex flex-col">
+              <div className="p-[24px] border-b border-[#DBDBDB] flex items-center justify-between">
+                <h3 className="text-[18px] font-semibold text-[#0D0D0D]">{editingAlbum ? 'Edit Album' : 'Create New Album'}</h3>
+                <button
+                  onClick={() => setShowNewAlbum(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F3F3]"
+                >
+                  <X className="w-5 h-5 text-[#3D3D3D]" />
+                </button>
               </div>
 
-              <div>
-                <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                  Description
-                </label>
-                <textarea
-                  value={newAlbumDescription}
-                  onChange={(e) => setNewAlbumDescription(e.target.value)}
-                  className="w-full h-[80px] px-[12px] py-[10px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F] resize-none"
-                  placeholder="What is this album about?"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-[24px]">
+              <div className="p-[24px] overflow-auto flex-1 space-y-6">
                 <div>
                   <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                    Visibility
+                    Album Name *
                   </label>
-                  <select
-                    value={newAlbumVisibility}
-                    onChange={(e) => setNewAlbumVisibility(e.target.value as any)}
+                  <input
+                    type="text"
+                    value={newAlbumName}
+                    onChange={(e) => setNewAlbumName(e.target.value)}
+                    placeholder="e.g., Annual Event 2025"
                     className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
-                  >
-                    <option>Public</option>
-                    <option>Private</option>
-                  </select>
+                  />
                 </div>
 
                 <div>
                   <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                    Cover Image
+                    Description
                   </label>
-                  <div className="flex items-center gap-3">
+                  <textarea
+                    value={newAlbumDescription}
+                    onChange={(e) => setNewAlbumDescription(e.target.value)}
+                    className="w-full h-[80px] px-[12px] py-[10px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F] resize-none"
+                    placeholder="What is this album about?"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-[24px]">
+                  <div>
+                    <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                      Visibility
+                    </label>
+                    <select
+                      value={newAlbumVisibility}
+                      onChange={(e) => setNewAlbumVisibility(e.target.value as any)}
+                      className="w-full h-[44px] px-[12px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F]"
+                    >
+                      <option>Public</option>
+                      <option>Private</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                      Cover Image
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const input = document.createElement('input');
+                          input.type = 'file';
+                          input.accept = 'image/*';
+                          input.onchange = (e: any) => setNewAlbumCover(e.target.files[0]);
+                          input.click();
+                        }}
+                        className="h-[44px] px-[16px] rounded-[12px] border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[13px] font-medium text-[#3D3D3D] flex-1 flex items-center justify-center gap-2"
+                      >
+                        <ImageIcon className="w-4 h-4" />
+                        {newAlbumCover ? 'Change Cover' : 'Pick Cover'}
+                      </button>
+                      {newAlbumCover && (
+                        <div className="w-11 h-11 rounded-lg border border-[#DBDBDB] overflow-hidden relative group">
+                          <img
+                            src={URL.createObjectURL(newAlbumCover)}
+                            className="w-full h-full object-cover"
+                            alt="Cover preview"
+                          />
+                          <button
+                            onClick={() => setNewAlbumCover(null)}
+                            className="absolute inset-0 bg-black/50 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-[#F0F0F0]">
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="text-[13px] font-semibold text-[#0D0D0D]">
+                      Upload Images to this Album
+                    </label>
                     <button
                       type="button"
                       onClick={() => {
                         const input = document.createElement('input');
                         input.type = 'file';
                         input.accept = 'image/*';
-                        input.onchange = (e: any) => setNewAlbumCover(e.target.files[0]);
+                        input.multiple = true;
+                        input.onchange = (e: any) => {
+                          const files = Array.from(e.target.files as FileList);
+                          setNewAlbumImages((prev: File[]) => [...prev, ...files]);
+                        };
                         input.click();
                       }}
-                      className="h-[44px] px-[16px] rounded-[12px] border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[13px] font-medium text-[#3D3D3D] flex-1 flex items-center justify-center gap-2"
+                      className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium flex items-center gap-1"
                     >
-                      <ImageIcon className="w-4 h-4" />
-                      {newAlbumCover ? 'Change Cover' : 'Pick Cover'}
+                      <Plus className="w-4 h-4" />
+                      Add Images
                     </button>
-                    {newAlbumCover && (
-                      <div className="w-11 h-11 rounded-lg border border-[#DBDBDB] overflow-hidden relative group">
-                        <img
-                          src={URL.createObjectURL(newAlbumCover)}
-                          className="w-full h-full object-cover"
-                          alt="Cover preview"
-                        />
-                        <button
-                          onClick={() => setNewAlbumCover(null)}
-                          className="absolute inset-0 bg-black/50 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    )}
                   </div>
-                </div>
-              </div>
 
-              <div className="pt-4 border-t border-[#F0F0F0]">
-                <div className="flex items-center justify-between mb-3">
-                  <label className="text-[13px] font-semibold text-[#0D0D0D]">
-                    Upload Images to this Album
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const input = document.createElement('input');
-                      input.type = 'file';
-                      input.accept = 'image/*';
-                      input.multiple = true;
-                      input.onchange = (e: any) => {
-                        const files = Array.from(e.target.files as FileList);
-                        setNewAlbumImages((prev: File[]) => [...prev, ...files]);
-                      };
-                      input.click();
-                    }}
-                    className="text-[13px] text-[#F36A4F] hover:text-[#E55A3F] font-medium flex items-center gap-1"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Images
-                  </button>
-                </div>
-
-                {newAlbumImages.length > 0 ? (
-                  <div className="grid grid-cols-4 gap-3 max-h-[150px] overflow-y-auto pr-1">
-                    {newAlbumImages.map((file: File, i: number) => (
-                      <div key={i} className="relative aspect-square rounded-[8px] border border-[#DBDBDB] overflow-hidden group">
-                        <img
-                          src={URL.createObjectURL(file)}
-                          className="w-full h-full object-cover"
-                          alt="Preview"
-                        />
-                        <button
-                          onClick={() => setNewAlbumImages((prev: File[]) => prev.filter((_: File, idx: number) => idx !== i))}
-                          className="absolute top-1 right-1 w-5 h-5 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-8 border border-dashed border-[#DBDBDB] rounded-[12px] flex flex-col items-center justify-center bg-[#FDFDFD]">
-                    <Upload className="w-6 h-6 text-[#9E9E9E] mb-2" />
-                    <p className="text-[12px] text-[#9E9E9E]">No images added yet</p>
-                  </div>
-                )}
-              </div>
-
-              {selectedImages.length > 0 && isMovingToAlbum && (
-                <div className="p-3 bg-[#FEF1EE] rounded-[12px] border border-[#F36A4F]/20 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#F36A4F] text-white flex items-center justify-center text-[12px] font-bold">
-                    {selectedImages.length}
-                  </div>
-                  <p className="text-[12px] text-[#3D3D3D]">
-                    Selected images will be moved to this new album automatically.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="p-[24px] border-t border-[#DBDBDB] flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setShowNewAlbum(false);
-                  setNewAlbumImages([]);
-                  setNewAlbumCover(null);
-                }}
-                className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateAlbum}
-                disabled={saving || !newAlbumName.trim()}
-                className="h-[44px] px-[24px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] disabled:opacity-50 text-white text-[14px] font-medium transition-colors"
-              >
-                {saving ? 'Creating...' : 'Create Album'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
-          <div className="bg-white rounded-[16px] w-[480px]">
-            <div className="p-[24px] border-b border-[#DBDBDB]">
-              <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Delete Images</h3>
-              <p className="text-[13px] text-[#6E6E6E] mt-1">
-                Please provide a reason for deleting these images
-              </p>
-            </div>
-
-            <div className="p-[24px]">
-              <div className="mb-4 p-[12px] bg-[#FFEBEE] rounded-[8px]">
-                <p className="text-[13px] text-[#C62828]">
-                  You are about to delete <strong>{selectedImages.length}</strong> image(s)
-                </p>
-              </div>
-
-              <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
-                Reason for Deletion *
-              </label>
-              <textarea
-                value={deleteReason}
-                onChange={(e) => setDeleteReason(e.target.value)}
-                className="w-full h-[100px] px-[12px] py-[10px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F] resize-none"
-                placeholder="e.g., Outdated content, quality issues, duplicate"
-              />
-            </div>
-
-            <div className="p-[24px] border-t border-[#DBDBDB] flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setDeleteReason('');
-                }}
-                className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                disabled={!deleteReason.trim()}
-                className="h-[44px] px-[20px] rounded-full bg-[#C62828] hover:bg-[#B71C1C] text-white text-[14px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Confirm Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Preview Modal */}
-      {showPreview && previewImage && (
-        <div
-          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[70] p-[24px]"
-          onClick={() => setShowPreview(false)}
-        >
-          <button
-            onClick={() => setShowPreview(false)}
-            className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
-          >
-            <X className="w-6 h-6" />
-          </button>
-
-          <div className="max-w-[90vw] max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={galleryAssetUrl(previewImage.thumbnail)}
-              alt={previewImage.altText}
-              className="max-w-full max-h-[calc(90vh-120px)] object-contain rounded-[12px]"
-            />
-
-            <div className="bg-white/10 backdrop-blur-md rounded-[12px] p-[16px] mt-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <h3 className="text-[16px] font-semibold text-white mb-1">
-                    {previewImage.title}
-                  </h3>
-                  {previewImage.caption && (
-                    <p className="text-[13px] text-white/80 mb-2">{previewImage.caption}</p>
-                  )}
-                  <div className="flex items-center gap-3 text-[12px] text-white/70">
-                    {previewImage.photographer && <span>Photo by {previewImage.photographer}</span>}
-                    {previewImage.uploadedOn && <span>•</span>}
-                    {previewImage.uploadedOn && <span>{previewImage.uploadedOn}</span>}
-                  </div>
-                  {previewImage.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {previewImage.tags.map((tag: string) => (
-                        <span
-                          key={tag}
-                          className="px-2 py-0.5 bg-white/20 text-[11px] text-white rounded"
-                        >
-                          {tag}
-                        </span>
+                  {newAlbumImages.length > 0 ? (
+                    <div className="grid grid-cols-4 gap-3 max-h-[150px] overflow-y-auto pr-1">
+                      {newAlbumImages.map((file: File, i: number) => (
+                        <div key={i} className="relative aspect-square rounded-[8px] border border-[#DBDBDB] overflow-hidden group">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            className="w-full h-full object-cover"
+                            alt="Preview"
+                          />
+                          <button
+                            onClick={() => setNewAlbumImages((prev: File[]) => prev.filter((_: File, idx: number) => idx !== i))}
+                            className="absolute top-1 right-1 w-5 h-5 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
                       ))}
+                    </div>
+                  ) : (
+                    <div className="py-8 border border-dashed border-[#DBDBDB] rounded-[12px] flex flex-col items-center justify-center bg-[#FDFDFD]">
+                      <Upload className="w-6 h-6 text-[#9E9E9E] mb-2" />
+                      <p className="text-[12px] text-[#9E9E9E]">No images added yet</p>
                     </div>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDownload(previewImage);
-                    }}
-                    className="h-[36px] px-[16px] rounded-full bg-white/20 hover:bg-white/30 text-white text-[13px] font-medium flex items-center gap-2 transition-colors"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowPreview(false);
-                      handleEdit(previewImage);
-                    }}
-                    className="h-[36px] px-[16px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] text-white text-[13px] font-medium flex items-center gap-2 transition-colors"
-                  >
-                    <Edit className="w-4 h-4" />
-                    Edit
-                  </button>
+                {editingAlbum && (
+                  <div className="pt-4 border-t border-[#F0F0F0]">
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="text-[13px] font-semibold text-[#0D0D0D]">
+                        Existing Images ({existingAlbumImages.length})
+                      </label>
+                    </div>
+                    {loadingAlbumImages ? (
+                      <div className="text-[12px] text-[#9E9E9E] py-4 text-center">Loading images...</div>
+                    ) : existingAlbumImages.length > 0 ? (
+                      <div className="grid grid-cols-4 gap-3 max-h-[150px] overflow-y-auto pr-1">
+                        {existingAlbumImages.map((img) => (
+                          <div key={img.id} className="relative aspect-square rounded-[8px] border border-[#DBDBDB] overflow-hidden group">
+                            <img
+                              src={galleryAssetUrl(img.thumbnail)}
+                              className="w-full h-full object-cover"
+                              alt={img.altText}
+                            />
+                            <button
+                              onClick={() => handleRemoveFromAlbum(img.id)}
+                              className="absolute top-1 right-1 w-5 h-5 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Remove from album"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-[12px] text-[#9E9E9E] py-4 text-center">No images in this album.</div>
+                    )}
+                  </div>
+                )}
+
+                {selectedImages.length > 0 && isMovingToAlbum && (
+                  <div className="p-3 bg-[#FEF1EE] rounded-[12px] border border-[#F36A4F]/20 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-[#F36A4F] text-white flex items-center justify-center text-[12px] font-bold">
+                      {selectedImages.length}
+                    </div>
+                    <p className="text-[12px] text-[#3D3D3D]">
+                      Selected images will be moved to this new album automatically.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-[24px] border-t border-[#DBDBDB] flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowNewAlbum(false);
+                    setNewAlbumImages([]);
+                    setNewAlbumCover(null);
+                  }}
+                  className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateAlbum}
+                  disabled={saving || !newAlbumName.trim()}
+                  className="h-[44px] px-[24px] rounded-full bg-[#F36A4F] hover:bg-[#E55A3F] disabled:opacity-50 text-white text-[14px] font-medium transition-colors"
+                >
+                  {saving ? (editingAlbum ? 'Updating...' : 'Creating...') : (editingAlbum ? 'Update Album' : 'Create Album')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Delete Modal */}
+      {
+        showDeleteModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
+            <div className="bg-white rounded-[16px] w-[480px]">
+              <div className="p-[24px] border-b border-[#DBDBDB]">
+                <h3 className="text-[18px] font-semibold text-[#0D0D0D]">Delete Images</h3>
+                <p className="text-[13px] text-[#6E6E6E] mt-1">
+                  Please provide a reason for deleting these images
+                </p>
+              </div>
+
+              <div className="p-[24px]">
+                <div className="mb-4 p-[12px] bg-[#FFEBEE] rounded-[8px]">
+                  <p className="text-[13px] text-[#C62828]">
+                    You are about to delete <strong>{selectedImages.length}</strong> image(s)
+                  </p>
+                </div>
+
+                <label className="block text-[13px] font-medium text-[#3D3D3D] mb-2">
+                  Reason for Deletion *
+                </label>
+                <textarea
+                  value={deleteReason}
+                  onChange={(e) => setDeleteReason(e.target.value)}
+                  className="w-full h-[100px] px-[12px] py-[10px] rounded-[12px] border border-[#DBDBDB] text-[14px] text-[#3D3D3D] focus:outline-none focus:border-[#F36A4F] resize-none"
+                  placeholder="e.g., Outdated content, quality issues, duplicate"
+                />
+              </div>
+
+              <div className="p-[24px] border-t border-[#DBDBDB] flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteReason('');
+                  }}
+                  className="h-[44px] px-[20px] rounded-full border border-[#DBDBDB] hover:bg-[#F3F3F3] text-[14px] font-medium text-[#3D3D3D]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  disabled={!deleteReason.trim()}
+                  className="h-[44px] px-[20px] rounded-full bg-[#C62828] hover:bg-[#B71C1C] text-white text-[14px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Confirm Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Preview Modal */}
+      {
+        showPreview && previewImage && (
+          <div
+            className="fixed inset-0 bg-black/90 flex items-center justify-center z-[70] p-[24px]"
+            onClick={() => setShowPreview(false)}
+          >
+            <button
+              onClick={() => setShowPreview(false)}
+              className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            <div className="w-full max-w-[1000px] h-[700px] flex flex-col bg-transparent" onClick={(e) => e.stopPropagation()}>
+              <div className="flex-1 flex items-center justify-center min-h-0">
+                <img
+                  src={galleryAssetUrl(previewImage.thumbnail)}
+                  alt={previewImage.altText}
+                  className="max-w-full max-h-full object-contain rounded-[12px]"
+                />
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-md rounded-[12px] p-[16px] mt-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <h3 className="text-[16px] font-semibold text-white mb-1">
+                      {previewImage.title}
+                    </h3>
+                    {previewImage.caption && (
+                      <p className="text-[13px] text-white/80 mb-2">{previewImage.caption}</p>
+                    )}
+                    <div className="flex items-center gap-3 text-[12px] text-white/70">
+                      {previewImage.photographer && <span>Photo by {previewImage.photographer}</span>}
+                      {previewImage.uploadedOn && <span>•</span>}
+                      {previewImage.uploadedOn && <span>{previewImage.uploadedOn}</span>}
+                    </div>
+                    {previewImage.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {previewImage.tags.map((tag: string) => (
+                          <span
+                            key={tag}
+                            className="px-2 py-0.5 bg-white/20 text-[11px] text-white rounded"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownload(previewImage);
+                      }}
+                      className="h-[36px] px-[16px] rounded-full bg-white/20 hover:bg-white/30 text-white text-[13px] font-medium flex items-center gap-2 transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download
+                    </button>
+
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }

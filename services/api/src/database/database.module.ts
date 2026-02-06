@@ -1,5 +1,6 @@
 import { Module, Global } from '@nestjs/common';
 import { drizzle } from 'drizzle-orm/node-mssql';
+import * as sql from 'mssql';
 import type { config } from 'mssql';
 import * as schema from './schema';
 import { ConfigService } from '@nestjs/config';
@@ -76,16 +77,20 @@ function getMssqlConfig(configService: ConfigService): config {
     {
       provide: DRIZZLE,
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const connection = getMssqlConfig(configService);
+      useFactory: async (configService: ConfigService) => {
+        const connectionConfig = getMssqlConfig(configService);
         if (configService.get('NODE_ENV') === 'development') {
-          const len = connection.password?.length ?? 0;
-          console.log(`[DB] Connecting: ${connection.server}:${connection.port}/${connection.database} as ${connection.user} (password length: ${len})`);
+          const len = connectionConfig.password?.length ?? 0;
+          console.log(`[DB] Connecting: ${connectionConfig.server}:${connectionConfig.port}/${connectionConfig.database} as ${connectionConfig.user} (password length: ${len})`);
         }
-        return drizzle({ connection, schema });
+
+        const pool = new sql.ConnectionPool(connectionConfig);
+        await pool.connect();
+
+        return drizzle({ client: pool, schema });
       },
     },
   ],
   exports: [DRIZZLE],
 })
-export class DatabaseModule {}
+export class DatabaseModule { }

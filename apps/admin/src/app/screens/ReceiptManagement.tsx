@@ -4,7 +4,7 @@ import { useApi, getApiBaseUrl } from '../context/ApiContext';
 
 type TabType =
   | 'numbering'
-  | 'generation'
+  | 'numbering'
   | 'fields'
   | 'delivery'
   | 'reissue';
@@ -84,8 +84,6 @@ export function ReceiptManagement() {
   const [requireReasonReprint, setRequireReasonReprint] = useState(false);
   const [requireReasonCorrection, setRequireReasonCorrection] = useState(true);
   const [requireReasonManualGen, setRequireReasonManualGen] = useState(true);
-  const [requireReasonRegenerate, setRequireReasonRegenerate] = useState(true);
-  const [requireReasonCancel, setRequireReasonCancel] = useState(true);
 
   // Modals
   const [showReasonModal, setShowReasonModal] = useState(false);
@@ -94,7 +92,6 @@ export function ReceiptManagement() {
 
   const tabs = [
     { id: 'numbering', label: 'Numbering & Series' },
-    { id: 'generation', label: 'Generation Rules' },
     { id: 'fields', label: 'Mandatory Fields' },
     { id: 'delivery', label: 'Delivery Settings' },
     { id: 'reissue', label: 'Reprint & Re issue' },
@@ -118,19 +115,6 @@ export function ReceiptManagement() {
       if (data.autoCreateNewSeries !== undefined) setAutoCreateNewSeries(data.autoCreateNewSeries);
       if (data.manualApprovalRequired !== undefined) setManualApprovalRequired(data.manualApprovalRequired);
       if (data.receiptTypes) setReceiptTypes(data.receiptTypes);
-
-      // Generation Rules
-      if (data.autoGenerateOnSuccess !== undefined) setAutoGenerateOnSuccess(data.autoGenerateOnSuccess);
-      if (data.generationDelay !== undefined) setGenerationDelay(String(data.generationDelay));
-      if (data.autoGenerateImports !== undefined) setAutoGenerateImports(data.autoGenerateImports);
-      if (data.allowManualOffline !== undefined) setAllowManualOffline(data.allowManualOffline);
-      if (data.allowManualBulk !== undefined) setAllowManualBulk(data.allowManualBulk);
-      if (data.allowBackdated !== undefined) setAllowBackdated(data.allowBackdated);
-      if (data.backdateWindow !== undefined) setBackdateWindow(String(data.backdateWindow));
-      if (data.showBackdateStamp !== undefined) setShowBackdateStamp(data.showBackdateStamp);
-      if (data.requireReasonManual !== undefined) setRequireReasonManual(data.requireReasonManual);
-
-
 
       // Mandatory Fields
       if (data.mobileRequired !== undefined) setMobileRequired(data.mobileRequired);
@@ -161,8 +145,6 @@ export function ReceiptManagement() {
       if (data.requireReasonReprint !== undefined) setRequireReasonReprint(data.requireReasonReprint);
       if (data.requireReasonCorrection !== undefined) setRequireReasonCorrection(data.requireReasonCorrection);
       if (data.requireReasonManualGen !== undefined) setRequireReasonManualGen(data.requireReasonManualGen);
-      if (data.requireReasonRegenerate !== undefined) setRequireReasonRegenerate(data.requireReasonRegenerate);
-      if (data.requireReasonCancel !== undefined) setRequireReasonCancel(data.requireReasonCancel);
     } catch (e: unknown) {
       setError((e as Error)?.message ?? 'Failed to load settings');
     } finally {
@@ -187,23 +169,14 @@ export function ReceiptManagement() {
 
       const payload = {
         // Numbering & Series
-        receiptPrefix,
-        startingNumber,
+        // Numbering & Series
         paddingLength: parseInt(paddingLength),
         noGapEnforcement,
         autoCreateNewSeries,
         manualApprovalRequired,
         receiptTypes,
-        // Generation Rules
-        autoGenerateOnSuccess,
-        generationDelay: parseInt(generationDelay),
-        autoGenerateImports,
-        allowManualOffline,
-        allowManualBulk,
-        allowBackdated,
-        backdateWindow: parseInt(backdateWindow),
-        showBackdateStamp,
-        requireReasonManual,
+        // Generation Rules removed
+
 
         // Mandatory Fields
         mobileRequired,
@@ -232,8 +205,7 @@ export function ReceiptManagement() {
         requireReasonReprint,
         requireReasonCorrection,
         requireReasonManualGen,
-        requireReasonRegenerate,
-        requireReasonCancel,
+
         // Metadata
         updatedBy: (user?.accessToken && 'Admin') || 'System',
         reasonForChange: saveReason,
@@ -270,8 +242,19 @@ export function ReceiptManagement() {
   };
 
   const getReceiptPreview = () => {
-    const paddedNumber = startingNumber.padStart(parseInt(paddingLength), '0');
-    return `${receiptPrefix}${paddedNumber}`;
+    // Parse the current starting number to an integer to remove leading zeros
+    const num = parseInt(startingNumber, 10) || 1;
+    const paddedNumber = String(num).padStart(parseInt(paddingLength), '0');
+    let preview = `${receiptPrefix}${paddedNumber}`;
+
+    // Handle conditional spacing based on noGapEnforcement
+    // If true: "ARAM / 2025-26 / 00001"
+    // If false: "ARAM/2025-26/00001"
+    if (noGapEnforcement) {
+      preview = preview.replace(/\//g, ' / ');
+    }
+
+    return preview;
   };
 
   return (
@@ -356,54 +339,24 @@ export function ReceiptManagement() {
                     </h3>
                     <div className="space-y-[16px]">
                       <div>
-                        <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[8px]">
-                          Receipt Prefix (Financial Year Based)
-                        </label>
-                        <input
-                          type="text"
-                          value={receiptPrefix}
-                          onChange={(e) => {
-                            setReceiptPrefix(e.target.value);
-                            setHasChanges(true);
-                          }}
-                          placeholder="ARAM/2025-26/"
-                          className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-[16px]">
-                        <div>
-                          <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[8px]">
-                            Starting Number for FY
-                          </label>
-                          <input
-                            type="text"
-                            value={startingNumber}
-                            onChange={(e) => {
-                              setStartingNumber(e.target.value);
-                              setHasChanges(true);
-                            }}
-                            placeholder="00001"
-                            className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[8px]">
-                            Number Padding Length
-                          </label>
-                          <select
-                            value={paddingLength}
-                            onChange={(e) => {
-                              setPaddingLength(e.target.value);
-                              setHasChanges(true);
-                            }}
-                            className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
-                          >
-                            <option value="4">4 digits (0001)</option>
-                            <option value="5">5 digits (00001)</option>
-                            <option value="6">6 digits (000001)</option>
-                          </select>
+                        <div className="grid grid-cols-2 gap-[16px]">
+                          <div>
+                            <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[8px]">
+                              Number Padding Length
+                            </label>
+                            <select
+                              value={paddingLength}
+                              onChange={(e) => {
+                                setPaddingLength(e.target.value);
+                                setHasChanges(true);
+                              }}
+                              className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
+                            >
+                              <option value="4">4 digits (0001)</option>
+                              <option value="5">5 digits (00001)</option>
+                              <option value="6">6 digits (000001)</option>
+                            </select>
+                          </div>
                         </div>
                       </div>
 
@@ -558,208 +511,7 @@ export function ReceiptManagement() {
                 </div>
               )}
 
-              {/* Generation Rules Tab */}
-              {activeTab === 'generation' && (
-                <div className="space-y-[24px]">
-                  {/* Auto-generation */}
-                  <div>
-                    <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D] mb-[16px]">
-                      Auto-generation Settings
-                    </h3>
-                    <div className="space-y-[16px]">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[4px]">
-                            Auto-generate receipt on payment success
-                          </label>
-                          <p className="text-[13px] leading-[18px] text-[#6E6E6E]">
-                            Automatically create receipt when payment is confirmed
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setAutoGenerateOnSuccess(!autoGenerateOnSuccess);
-                            setHasChanges(true);
-                          }}
-                          className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${autoGenerateOnSuccess ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                            }`}
-                        >
-                          <div
-                            className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${autoGenerateOnSuccess ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                              }`}
-                          />
-                        </button>
-                      </div>
 
-                      <div>
-                        <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[8px]">
-                          Delay Generation
-                        </label>
-                        <select
-                          value={generationDelay}
-                          onChange={(e) => {
-                            setGenerationDelay(e.target.value);
-                            setHasChanges(true);
-                          }}
-                          className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
-                        >
-                          <option value="0">Immediate (0 min)</option>
-                          <option value="2">2 minutes</option>
-                          <option value="5">5 minutes</option>
-                        </select>
-                        <p className="text-[13px] leading-[18px] text-[#6E6E6E] mt-[6px]">
-                          Delay helps avoid webhook race conditions
-                        </p>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <label className="text-[16px] leading-[24px] font-medium text-[#0D0D0D]">
-                          Auto-generate for imported donations
-                        </label>
-                        <button
-                          onClick={() => {
-                            setAutoGenerateImports(!autoGenerateImports);
-                            setHasChanges(true);
-                          }}
-                          className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${autoGenerateImports ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                            }`}
-                        >
-                          <div
-                            className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${autoGenerateImports ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                              }`}
-                          />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Manual Generation Permissions */}
-                  <div>
-                    <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D] mb-[16px]">
-                      Manual Generation Permissions
-                    </h3>
-                    <div className="space-y-[16px]">
-                      <div className="space-y-[12px]">
-                        <label className="flex items-center gap-[12px] cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={allowManualOffline}
-                            onChange={() => {
-                              setAllowManualOffline(!allowManualOffline);
-                              setHasChanges(true);
-                            }}
-                            className="w-[20px] h-[20px] rounded-[4px] border-2 border-[#DBDBDB] checked:bg-[#F36A4F] checked:border-[#F36A4F]"
-                          />
-                          <span className="text-[14px] leading-[20px] text-[#3D3D3D]">
-                            Allow manual generation for offline donations
-                          </span>
-                        </label>
-
-                        <label className="flex items-center gap-[12px] cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={allowManualBulk}
-                            onChange={() => {
-                              setAllowManualBulk(!allowManualBulk);
-                              setHasChanges(true);
-                            }}
-                            className="w-[20px] h-[20px] rounded-[4px] border-2 border-[#DBDBDB] checked:bg-[#F36A4F] checked:border-[#F36A4F]"
-                          />
-                          <span className="text-[14px] leading-[20px] text-[#3D3D3D]">
-                            Allow manual generation for bulk imports
-                          </span>
-                        </label>
-
-                        <label className="flex items-center gap-[12px] cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={allowBackdated}
-                            onChange={() => {
-                              setAllowBackdated(!allowBackdated);
-                              setHasChanges(true);
-                            }}
-                            className="w-[20px] h-[20px] rounded-[4px] border-2 border-[#DBDBDB] checked:bg-[#F36A4F] checked:border-[#F36A4F]"
-                          />
-                          <span className="text-[14px] leading-[20px] text-[#3D3D3D]">
-                            Allow backdated receipts (restricted to Super Admin/Finance)
-                          </span>
-                        </label>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <label className="text-[16px] leading-[24px] font-medium text-[#0D0D0D]">
-                          Require reason for manual generation override
-                        </label>
-                        <button
-                          onClick={() => {
-                            setRequireReasonManual(!requireReasonManual);
-                            setHasChanges(true);
-                          }}
-                          className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${requireReasonManual ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                            }`}
-                        >
-                          <div
-                            className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${requireReasonManual ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                              }`}
-                          />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Backdated Receipt Rules */}
-                  {allowBackdated && (
-                    <div>
-                      <h3 className="text-[18px] leading-[26px] font-semibold text-[#0D0D0D] mb-[16px]">
-                        Backdated Receipt Rules
-                      </h3>
-                      <div className="space-y-[16px]">
-                        <div>
-                          <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[8px]">
-                            Maximum Backdate Window
-                          </label>
-                          <select
-                            value={backdateWindow}
-                            onChange={(e) => {
-                              setBackdateWindow(e.target.value);
-                              setHasChanges(true);
-                            }}
-                            className="w-full h-[44px] px-[14px] text-[16px] leading-[24px] bg-white border border-[#DBDBDB] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#F36A4F] focus:ring-opacity-20"
-                          >
-                            <option value="7">7 days</option>
-                            <option value="30">30 days</option>
-                            <option value="90">90 days</option>
-                          </select>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <label className="block text-[16px] leading-[24px] font-medium text-[#0D0D0D] mb-[4px]">
-                              Show backdate stamp on receipt
-                            </label>
-                            <p className="text-[13px] leading-[18px] text-[#6E6E6E]">
-                              "Generated on [date] for donation date [date]"
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => {
-                              setShowBackdateStamp(!showBackdateStamp);
-                              setHasChanges(true);
-                            }}
-                            className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${showBackdateStamp ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                              }`}
-                          >
-                            <div
-                              className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${showBackdateStamp ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                                }`}
-                            />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
 
 
 
@@ -1320,43 +1072,7 @@ export function ReceiptManagement() {
                         </button>
                       </div>
 
-                      <div className="flex items-center justify-between">
-                        <label className="text-[16px] leading-[24px] font-medium text-[#0D0D0D]">
-                          Regeneration
-                        </label>
-                        <button
-                          onClick={() => {
-                            setRequireReasonRegenerate(!requireReasonRegenerate);
-                            setHasChanges(true);
-                          }}
-                          className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${requireReasonRegenerate ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                            }`}
-                        >
-                          <div
-                            className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${requireReasonRegenerate ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                              }`}
-                          />
-                        </button>
-                      </div>
 
-                      <div className="flex items-center justify-between">
-                        <label className="text-[16px] leading-[24px] font-medium text-[#0D0D0D]">
-                          Cancellation
-                        </label>
-                        <button
-                          onClick={() => {
-                            setRequireReasonCancel(!requireReasonCancel);
-                            setHasChanges(true);
-                          }}
-                          className={`relative w-[52px] h-[32px] rounded-[999px] transition-colors ${requireReasonCancel ? 'bg-[#F36A4F]' : 'bg-[#DBDBDB]'
-                            }`}
-                        >
-                          <div
-                            className={`absolute top-[2px] w-[28px] h-[28px] bg-white rounded-full shadow-sm transition-transform ${requireReasonCancel ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                              }`}
-                          />
-                        </button>
-                      </div>
                     </div>
                   </div>
                 </div>
